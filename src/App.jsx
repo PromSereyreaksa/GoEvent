@@ -10,9 +10,20 @@ import Blog from "./pages/Blog"
 import BlogDetail from "./pages/BlogDetail"
 import Contact from "./pages/Contact"
 import Pricing from "./pages/Pricing"
+// import PrivacyPolicy from "./pages/PrivacyPolicy"
+// import TermsAndConditions from "./pages/TermsAndConditions"
+// import Changelog from "./pages/Changelog"
+// import NotFound from "./pages/NotFound"
 import SignIn from "./pages/SignIn"
 import SignUp from "./pages/SignUp"
+// import License from "./pages/License"
+// import Product from "./pages/Product"
+// import ProductDetail from "./pages/ProductDetail"
+// import CategoryDetail from "./pages/CategoryDetail"
+// import SKUDetail from "./pages/SKUDetail"
 import Checkout from "./pages/Checkout"
+// import PayPalCheckout from "./pages/PayPalCheckout"
+// import OrderConfirmation from "./pages/OrderConfirmation"
 import "./App.css"
 
 function App() {
@@ -31,21 +42,20 @@ function App() {
               <Route path="/blog/:id" element={<BlogDetail />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/pricing" element={<Pricing />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+              <Route path="/changelog" element={<Changelog />} />
               <Route path="/sign-in" element={<SignIn />} />
               <Route path="/sign-up" element={<SignUp />} />
+              <Route path="/license" element={<License />} />
+              <Route path="/products" element={<Product />} />
+              <Route path="/product/:id" element={<ProductDetail />} />
+              <Route path="/category/:id" element={<CategoryDetail />} />
+              <Route path="/sku/:id" element={<SKUDetail />} />
               <Route path="/checkout" element={<Checkout />} />
-              {/* Remove or comment out the following lines until you implement these components */}
-              {/* <Route path="/privacy-policy" element={<PrivacyPolicy />} /> */}
-              {/* <Route path="/terms-and-conditions" element={<TermsAndConditions />} /> */}
-              {/* <Route path="/changelog" element={<Changelog />} /> */}
-              {/* <Route path="/license" element={<License />} /> */}
-              {/* <Route path="/products" element={<Product />} /> */}
-              {/* <Route path="/product/:id" element={<ProductDetail />} /> */}
-              {/* <Route path="/category/:id" element={<CategoryDetail />} /> */}
-              {/* <Route path="/sku/:id" element={<SKUDetail />} /> */}
-              {/* <Route path="/paypal-checkout" element={<PayPalCheckout />} /> */}
-              {/* <Route path="/order-confirmation" element={<OrderConfirmation />} /> */}
-              {/* <Route path="*" element={<NotFound />} /> */}
+              <Route path="/paypal-checkout" element={<PayPalCheckout />} />
+              <Route path="/order-confirmation" element={<OrderConfirmation />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
           <Footer />
