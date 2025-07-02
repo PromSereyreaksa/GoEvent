@@ -54,17 +54,20 @@ export default function Home() {
         <div className="relative z-10 max-w-7xl mx-auto px-8">
           <div className="text-center">
             <div className="max-w-4xl mx-auto mb-16">
-              <h1 className="text-[160px] md:text-8xl lg:text-[160px] font-bold leading-[115%] tracking-[-2px] text-white uppercase mb-8">
-                Plan with
+              <h1 class="text-[var(--neutral-04)] text-[160px] leading-[115%] font-bold tracking-[-2px] 
+            max-[991px]:text-[82px] 
+            max-[767px]:text-[62px] max-[767px]:tracking-[-1.5px] 
+            max-[479px]:text-[48px] max-[479px]:tracking-[-1px]">
+  Plan With
                 <span className="block text-right">Ease</span>
-              </h1>
+</h1>
             </div>
 
             {/* Hero Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start max-w-6xl mx-auto">
               <div className="flex flex-col gap-8 max-w-md">
                 <div className="flex flex-col gap-4">
-                  <p className="text-white text-lg font-semibold uppercase text-align-left">
+                  <p class="text-white text-[18px] font-semibold uppercase max-[479px]:text-[16px] text-left ">
                     Elevate your event beyond the ordinary. Seamless, smart, and designed to impress at every turn.
                   </p>
                  
@@ -83,7 +86,7 @@ export default function Home() {
                 <div className="absolute -left-20 top-1/4 transform -rotate-12 hidden lg:block">
                   <div className="bg-white rounded-3xl rounded-bl-none p-6 shadow-lg">
                     <p className="text-black text-sm font-bold">
-                      Lightning Fast Performance
+                      Lightning Fast Performance  
                     </p>
                   </div>
                 </div>
@@ -105,8 +108,8 @@ export default function Home() {
               {/* CTA */}
               <div className="flex flex-col gap-8 max-w-md">
                 <div className="flex flex-col gap-6">
-                  <p className="text-white text-lg font-semibold uppercase">
-                    Get Started Today
+                  <p className="text-white text-lg text-left font-semibold uppercase">
+                    Get started with effortless event management.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4">
                     <a
