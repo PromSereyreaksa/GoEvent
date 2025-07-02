@@ -49,44 +49,25 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-blue-500 via-blue-600 to-white pt-20 pb-20 overflow-hidden">
         {/* Background Pattern */}
-        <div className="absolute inset-0 bg-[url('/4-p-1080.png')] bg-center bg-no-repeat bg-cover opacity-20"></div>
+        <div className="absolute inset-0 bg-[url('/grid-1-2.svg')] bg-center bg-no-repeat bg-cover opacity-20"></div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-8">
           <div className="text-center">
             <div className="max-w-4xl mx-auto mb-16">
-              <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold leading-[115%] tracking-[-2px] text-white uppercase mb-8">
-                Beautiful
-                <span className="block text-right">Websites</span>
+              <h1 className="text-[160px] md:text-8xl lg:text-[160px] font-bold leading-[115%] tracking-[-2px] text-white uppercase mb-8">
+                Plan with
+                <span className="block text-right">Ease</span>
               </h1>
             </div>
 
             {/* Hero Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start max-w-6xl mx-auto">
-              {/* Reviews */}
               <div className="flex flex-col gap-8 max-w-md">
                 <div className="flex flex-col gap-4">
-                  <p className="text-white text-lg font-semibold uppercase">
-                    Trusted by thousands
+                  <p className="text-white text-lg font-semibold uppercase text-align-left">
+                    Elevate your event beyond the ordinary. Seamless, smart, and designed to impress at every turn.
                   </p>
-                  <div className="flex items-center gap-4">
-                    <div className="flex -space-x-2">
-                      <img
-                        src="/4.png"
-                        alt="User"
-                        className="w-12 h-12 rounded-full border-3 border-white"
-                      />
-                      <img
-                        src="/2.svg"
-                        alt="User"
-                        className="w-12 h-12 rounded-full border-3 border-white"
-                      />
-                      <img
-                        src="/vite.svg"
-                        alt="User"
-                        className="w-12 h-12 rounded-full border-3 border-white"
-                      />
-                    </div>
-                  </div>
+                 
                 </div>
               </div>
 
