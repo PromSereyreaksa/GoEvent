@@ -3,92 +3,73 @@ const defaultConfig = require("shadcn/ui/tailwind.config")
 
 module.exports = {
   ...defaultConfig,
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}", "*.{js,ts,jsx,tsx,mdx}"],
+  content: [
+    ...defaultConfig.content,
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "*.{js,ts,jsx,tsx,mdx}",
+  ],
   theme: {
     ...defaultConfig.theme,
     extend: {
       ...defaultConfig.theme.extend,
       colors: {
         ...defaultConfig.theme.extend.colors,
-        primary: {
-          ...defaultConfig.theme.extend.colors.primary,
-          50: "#f0f9ff",
-          100: "#e0f2fe",
-          200: "#bae6fd",
-          300: "#7dd3fc",
-          400: "#38bdf8",
-          500: "#0ea5e9",
-          600: "#0284c7",
-          700: "#0369a1",
-          800: "#075985",
-          900: "#0c4a6e",
+        "neutral-01": "#ffffff",
+        "neutral-02": "#f8f8f8",
+        "neutral-03": "#616161",
+        "neutral-04": "#000000",
+        "color-01": "#0865ff",
+        "color-02": "#0101db",
+        "color-03": "#e64240",
+        "color-04": "#ff7442",
+        blue: {
+          500: "#0865ff",
+          600: "#0865ff",
+          800: "#000092",
         },
-        secondary: {
-          ...defaultConfig.theme.extend.colors.secondary,
-          50: "#fdf4ff",
-          100: "#fae8ff",
-          200: "#f5d0fe",
-          300: "#f0abfc",
-          400: "#e879f9",
-          500: "#d946ef",
-          600: "#c026d3",
-          700: "#a21caf",
-          800: "#86198f",
-          900: "#701a75",
+        orange: {
+          500: "#ff7442",
         },
-        accent: {
-          ...defaultConfig.theme.extend.colors.accent,
-          50: "#fff7ed",
-          100: "#ffedd5",
-          200: "#fed7aa",
-          300: "#fdba74",
-          400: "#fb923c",
-          500: "#f97316",
-          600: "#ea580c",
-          700: "#c2410c",
-          800: "#9a3412",
-          900: "#7c2d12",
+        red: {
+          500: "#e64240",
         },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+        gray: {
+          50: "#f8f8f8",
+          100: "#f0f0f0",
+          200: "#e8e8e8",
+          300: "#d0d0d0",
+          400: "#a0a0a0",
+          500: "#616161",
+          600: "#4a4a4a",
+          700: "#333333",
+          800: "#1a1a1a",
+          900: "#000000",
         },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+        green: {
+          500: "#10b981",
         },
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        heading: ["Poppins", "system-ui", "sans-serif"],
+        heading: ["Plus Jakarta Sans", "sans-serif"],
       },
-      animation: {
-        "fade-in": "fadeIn 0.5s ease-in-out",
-        "slide-up": "slideUp 0.5s ease-out",
-        "bounce-slow": "bounce 2s infinite",
+      fontSize: {
+        "6xl": ["90px", { lineHeight: "115%", letterSpacing: "-2px" }],
+        "8xl": ["160px", { lineHeight: "115%", letterSpacing: "-2px" }],
+        "9xl": ["160px", { lineHeight: "115%", letterSpacing: "-2px" }],
       },
-      keyframes: {
-        fadeIn: {
-          "0%": { opacity: "0" },
-          "100%": { opacity: "1" },
-        },
-        slideUp: {
-          "0%": { transform: "translateY(20px)", opacity: "0" },
-          "100%": { transform: "translateY(0)", opacity: "1" },
-        },
+      spacing: {
+        15: "60px",
+        13: "52px",
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        ...defaultConfig.theme.extend.borderRadius,
+        "3xl": "32px",
+      },
+      backgroundImage: {
+        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+        "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
     },
   },

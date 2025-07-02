@@ -1,146 +1,223 @@
-import { Link } from "react-router-dom"
-import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin } from "lucide-react"
-
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Company Info */}
-          <div className="space-y-4">
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">GE</span>
-              </div>
-              <span className="ml-2 text-xl font-heading font-bold">Go Event</span>
-            </div>
-            <p className="text-gray-400 text-sm">
-              Creating beautiful and functional websites that help businesses grow and succeed in the digital world.
-            </p>
-            <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Twitter className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Instagram className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Youtube className="w-5 h-5" />
-              </a>
-            </div>
-          </div>
-
-          {/* Quick Links */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/about" className="text-gray-400 hover:text-white transition-colors">
+    <footer className="bg-white py-20 px-8 font-['Plus_Jakarta_Sans']">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Quick Links */}
+            <div className="flex flex-col gap-7 items-start">
+              <p className="text-black text-base font-semibold">Quick links</p>
+              <div className="flex flex-col gap-2 items-start">
+                <a
+                  href="/"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors"
+                >
+                  Home
+                </a>
+                <a
+                  href="/about"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors"
+                >
                   About Us
-                </Link>
-              </li>
-              <li>
-                <Link to="/features" className="text-gray-400 hover:text-white transition-colors">
+                </a>
+                <a
+                  href="/features"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors"
+                >
                   Features
-                </Link>
-              </li>
-              <li>
-                <Link to="/products" className="text-gray-400 hover:text-white transition-colors">
-                  Products
-                </Link>
-              </li>
-              <li>
-                <Link to="/pricing" className="text-gray-400 hover:text-white transition-colors">
+                </a>
+                <a
+                  href="/pricing"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors"
+                >
                   Pricing
-                </Link>
-              </li>
-              <li>
-                <Link to="/blog" className="text-gray-400 hover:text-white transition-colors">
+                </a>
+                <a
+                  href="/reviews"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors"
+                >
+                  Reviews
+                </a>
+                <a
+                  href="/blog"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors"
+                >
                   Blog
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact" className="text-gray-400 hover:text-white transition-colors">
-                  Contact
-                </Link>
-              </li>
-            </ul>
-          </div>
+                </a>
+              </div>
+            </div>
 
-          {/* Support */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Support</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link to="/terms-and-conditions" className="text-gray-400 hover:text-white transition-colors">
-                  Terms & Conditions
-                </Link>
-              </li>
-              <li>
-                <Link to="/license" className="text-gray-400 hover:text-white transition-colors">
-                  License
-                </Link>
-              </li>
-              <li>
-                <Link to="/changelog" className="text-gray-400 hover:text-white transition-colors">
-                  Changelog
-                </Link>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+            {/* Job Categories */}
+            <div className="flex flex-col gap-7 items-start">
+              <p className="text-black text-base font-semibold">
+                Job categories
+              </p>
+              <div className="flex flex-col gap-2 items-start">
+                <a
+                  href="#"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors"
+                >
+                  Technology & IT
+                </a>
+                <a
+                  href="#"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors"
+                >
+                  Marketing & Sales
+                </a>
+                <a
+                  href="#"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors"
+                >
+                  Design & Creative
+                </a>
+                <a
+                  href="#"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors"
+                >
+                  Real Estate
+                </a>
+                <a
+                  href="#"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors"
+                >
+                  Healthcare & Science
+                </a>
+                <a
+                  href="#"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors"
+                >
+                  Business & Finance
+                </a>
+              </div>
+            </div>
+
+            {/* Support & Resources */}
+            <div className="flex flex-col gap-7 items-start">
+              <p className="text-black text-base font-semibold">
+                Support & resources
+              </p>
+              <div className="flex flex-col gap-2 items-start">
+                <a
+                  href="/contact"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors"
+                >
                   Help Center
                 </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <a
+                  href="/about"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors"
+                >
+                  How It Works
+                </a>
+                <a
+                  href="/privacy-policy"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors"
+                >
+                  Privacy Policy
+                </a>
+                <a
+                  href="/terms-and-conditions"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors"
+                >
+                  Terms & Conditions
+                </a>
+                <a
+                  href="/license"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors"
+                >
+                  License
+                </a>
+                <a
+                  href="/changelog"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors"
+                >
+                  Changelog
+                </a>
+              </div>
+            </div>
+
+            {/* Contact Us */}
+            <div className="flex flex-col gap-7 items-start">
+              <p className="text-black text-base font-semibold">Contact us</p>
+              <div className="flex flex-col gap-2 items-start">
+                <p className="text-neutral-600">
+                  Address: 123 Job Street, New York, NY 10001
+                </p>
+                <div className="flex gap-1.25 items-center">
+                  <p className="text-neutral-600">Email:</p>
+                  <a
+                    href="mailto:support@upwize.com"
+                    className="text-neutral-600 hover:text-blue-500 transition-colors"
+                  >
+                    support@upwize.com
+                  </a>
+                </div>
+                <div className="flex gap-1.25 items-center">
+                  <p className="text-neutral-600">Phone:</p>
+                  <a
+                    href="tel:+1(123)456-7890"
+                    className="text-neutral-600 hover:text-blue-500 transition-colors"
+                  >
+                    +1 (123) 456-7890
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-10">
+            <a href="/" className="inline-block">
+              <img src="/logo.svg" alt="Footer Logo" className="h-10" />
+            </a>
+            <div className="border-t border-black/10 flex flex-wrap justify-between items-center pt-8">
+              <div className="flex flex-wrap gap-10 items-center">
+                <a
+                  href="https://x.com/"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors font-semibold"
+                >
+                  Twitter
+                </a>
+                <a
+                  href="https://www.linkedin.com/"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors font-semibold"
+                >
+                  Linkedin
+                </a>
+                <a
+                  href="https://www.instagram.com/"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors font-semibold"
+                >
+                  Instagram
+                </a>
+                <a
+                  href="/contact"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors font-semibold"
+                >
                   Support
                 </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Contact Info */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Contact Info</h3>
-            <div className="space-y-3">
-              <div className="flex items-center space-x-3">
-                <Mail className="w-5 h-5 text-primary-400" />
-                <span className="text-gray-400">hello@narithsite.com</span>
               </div>
-              <div className="flex items-center space-x-3">
-                <Phone className="w-5 h-5 text-primary-400" />
-                <span className="text-gray-400">+1 (555) 123-4567</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <MapPin className="w-5 h-5 text-primary-400" />
-                <span className="text-gray-400">123 Business St, City, State 12345</span>
+              <div className="flex flex-wrap gap-10 justify-center items-center">
+                <a
+                  href="/privacy-policy"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors font-semibold"
+                >
+                  Privacy
+                </a>
+                <a
+                  href="/terms-and-conditions"
+                  className="text-neutral-600 hover:text-blue-500 transition-colors font-semibold"
+                >
+                  Terms of use
+                </a>
+                <p className="text-neutral-600 text-base font-semibold">
+                  upwize © 2025
+                </p>
               </div>
             </div>
-
-            {/* App Store Links */}
-            <div className="mt-6 space-y-2">
-              <a href="#" className="block">
-                <img src="/placeholder.svg?height=40&width=120" alt="Download on App Store" className="h-10" />
-              </a>
-              <a href="#" className="block">
-                <img src="/placeholder.svg?height=40&width=120" alt="Get it on Google Play" className="h-10" />
-              </a>
-            </div>
           </div>
-        </div>
-
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center">
-          <p className="text-gray-400 text-sm">© 2025 GoEvent. All rights reserved.</p>
         </div>
       </div>
     </footer>
-  )
+  );
 }

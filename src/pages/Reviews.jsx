@@ -1,4 +1,4 @@
-import { Star, Quote } from "lucide-react"
+import { Star, Quote } from "lucide-react";
 
 export default function Reviews() {
   const reviews = [
@@ -74,25 +74,42 @@ export default function Reviews() {
         "Running an online store has never been easier. The e-commerce features are comprehensive, the checkout process is smooth, and the inventory management tools are exactly what I needed. Sales have increased significantly since switching to this platform.",
       helpful: 19,
     },
-  ]
+  ];
 
   const stats = [
-    { label: "Average Rating", value: "4.9/5", subtext: "Based on 2,847 reviews" },
-    { label: "Customer Satisfaction", value: "98%", subtext: "Would recommend to others" },
-    { label: "Support Response", value: "< 2 hours", subtext: "Average response time" },
+    {
+      label: "Average Rating",
+      value: "4.9/5",
+      subtext: "Based on 2,847 reviews",
+    },
+    {
+      label: "Customer Satisfaction",
+      value: "98%",
+      subtext: "Would recommend to others",
+    },
+    {
+      label: "Support Response",
+      value: "< 2 hours",
+      subtext: "Average response time",
+    },
     { label: "Active Users", value: "50K+", subtext: "Websites created" },
-  ]
+  ];
 
   const renderStars = (rating) => {
     return [...Array(5)].map((_, i) => (
-      <Star key={i} className={`w-5 h-5 ${i < rating ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
-    ))
-  }
+      <Star
+        key={i}
+        className={`w-5 h-5 ${
+          i < rating ? "text-yellow-400 fill-current" : "text-gray-300"
+        }`}
+      />
+    ));
+  };
 
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary-50 to-secondary-50 py-20">
+      <section className="bg-gradient-to-br from-primary-50 to-secondary-50 py-20 pt-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-heading font-bold text-gray-900 mb-6">
@@ -100,8 +117,8 @@ export default function Reviews() {
               <span className="text-primary-600"> Are Saying</span>
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Don't just take our word for it. Here's what real customers have to say about their experience with our
-              platform.
+              Don't just take our word for it. Here's what real customers have
+              to say about their experience with our platform.
             </p>
           </div>
         </div>
@@ -113,8 +130,12 @@ export default function Reviews() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {stats.map((stat, index) => (
               <div key={index}>
-                <div className="text-3xl font-bold text-primary-600 mb-2">{stat.value}</div>
-                <div className="text-lg font-semibold text-gray-900 mb-1">{stat.label}</div>
+                <div className="text-3xl font-bold text-primary-600 mb-2">
+                  {stat.value}
+                </div>
+                <div className="text-lg font-semibold text-gray-900 mb-1">
+                  {stat.label}
+                </div>
                 <div className="text-sm text-gray-600">{stat.subtext}</div>
               </div>
             ))}
@@ -126,30 +147,45 @@ export default function Reviews() {
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-heading font-bold text-gray-900 mb-4">Customer Reviews</h2>
-            <p className="text-xl text-gray-600">Real feedback from real customers</p>
+            <h2 className="text-3xl md:text-4xl font-heading font-bold text-gray-900 mb-4">
+              Customer Reviews
+            </h2>
+            <p className="text-xl text-gray-600">
+              Real feedback from real customers
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {reviews.map((review) => (
-              <div key={review.id} className="bg-white p-8 rounded-lg shadow-sm">
+              <div
+                key={review.id}
+                className="bg-white p-8 rounded-lg shadow-sm"
+              >
                 <div className="flex items-start space-x-4 mb-6">
                   <img
-                    src={review.avatar || "/placeholder.svg"}
+                    src="/4-p-130x130q80.png"
                     alt={review.name}
                     className="w-12 h-12 rounded-full object-cover"
                   />
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-gray-900">{review.name}</h3>
-                      <span className="text-sm text-gray-500">{review.date}</span>
+                      <h3 className="font-semibold text-gray-900">
+                        {review.name}
+                      </h3>
+                      <span className="text-sm text-gray-500">
+                        {review.date}
+                      </span>
                     </div>
                     <p className="text-sm text-gray-600 mb-2">{review.role}</p>
-                    <div className="flex items-center space-x-1">{renderStars(review.rating)}</div>
+                    <div className="flex items-center space-x-1">
+                      {renderStars(review.rating)}
+                    </div>
                   </div>
                 </div>
 
-                <h4 className="font-semibold text-gray-900 mb-3">{review.title}</h4>
+                <h4 className="font-semibold text-gray-900 mb-3">
+                  {review.title}
+                </h4>
 
                 <div className="relative mb-6">
                   <Quote className="absolute top-0 left-0 w-6 h-6 text-primary-200 -translate-x-1 -translate-y-1" />
@@ -173,7 +209,8 @@ export default function Reviews() {
             Join Thousands of Satisfied Customers
           </h2>
           <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
-            Start your free trial today and see why our customers love what we do
+            Start your free trial today and see why our customers love what we
+            do
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
@@ -192,5 +229,5 @@ export default function Reviews() {
         </div>
       </section>
     </div>
-  )
+  );
 }
