@@ -28,7 +28,7 @@ export default function Header() {
               <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">N</span>
               </div>
-              <span className="ml-2 text-xl font-heading font-bold text-gray-900">Narith's Beautiful Site</span>
+              <span className="ml-2 text-xl font-heading font-bold text-gray-900">GoEvent</span>
             </Link>
           </div>
 
