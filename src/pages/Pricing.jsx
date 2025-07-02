@@ -76,7 +76,7 @@ export default function Pricing() {
     <div className="min-h-screen bg-white font-['Plus_Jakarta_Sans']">
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-blue-500 via-blue-600 to-white pt-20 pb-96 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/placeholder.svg?height=800&width=1200')] bg-center bg-no-repeat bg-cover opacity-20"></div>
+        <div className="absolute inset-0 bg-[url('/grid-1.svg?height=800&width=1200')] bg-center bg-no-repeat bg-cover opacity-20"></div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-8">
           <div className="text-center">
