@@ -28,7 +28,7 @@ const SignUp = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-blue-600 to-white font-['Plus_Jakarta_Sans'] pt-20 pb-56 overflow-hidden">
-      <div className="absolute inset-0 bg-[url('/placeholder.svg?height=800&width=1200')] bg-center bg-no-repeat bg-cover opacity-20"></div>
+      <div className="absolute inset-0 bg-[url('/grid-1.svg?height=800&width=1200')] bg-center bg-no-repeat bg-cover opacity-20"></div>
 
       <div className="relative z-10 max-w-md mx-auto px-4">
         <div className="bg-white rounded-3xl p-10 flex flex-col gap-6 shadow-xl">
