@@ -294,18 +294,18 @@ export default function Home() {
       </section>
 
       {/* Features Grid */}
-      <section className="py-32 px-8">
-  <div className="max-w-7xl mx-auto">
-    <div className="flex flex-col gap-20">
+      <section className="py-32 px-4  bg-cover bg-center bg-no-repeat">
+  <div className="max-w-6xl mx-auto bg-gradient-to-br from-blue-500 via-blue-700 to-blue-400 backdrop-blur-lg rounded-3xl shadow-xl p-12 md:p-16">
+    <div className="flex bg-[url('/grid-1.svg')] flex-col gap-20">
       <div className="text-center max-w-3xl mx-auto animate-on-scroll">
         <div className="flex flex-col gap-4">
-          <span className="text-blue-500 text-lg font-medium">
+          <span className="text-blue-100 text-lg font-medium">
             Features
           </span>
-          <h2 className="text-5xl md:text-6xl font-semibold leading-[120%] tracking-[-2.5px] text-black">
+          <h2 className="text-5xl md:text-6xl font-semibold leading-[120%] tracking-[-2.5px] text-white">
             Everything You Need
           </h2>
-          <p className="text-lg leading-[170%] text-neutral-600">
+          <p className="text-lg leading-[170%] text-white">
             Powerful features designed to help you create amazing websites
           </p>
         </div>
