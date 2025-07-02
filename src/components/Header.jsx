@@ -64,15 +64,11 @@ export default function Header() {
         <div className="flex justify-between items-center">
           {/* Logo */}
           <a href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-lg">
-              <svg
-                className="w-5 h-5 text-blue-600"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M12 2L2 7v10c0 5.55 3.84 9.74 9 11 5.16-1.26 9-5.45 9-11V7l-10-5z" />
-              </svg>
-            </div>
+              <img
+                src="/vite.svg"
+                alt="GoEvent Logo"
+                className="w-full h-full object-contain"
+              />
             <span className={`text-xl font-bold drop-shadow-sm transition-colors ${
               isDarkBg ? 'text-white' : 'text-gray-800'
             }`}>
