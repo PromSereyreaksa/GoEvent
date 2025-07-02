@@ -10,9 +10,9 @@ export default function Footer() {
           <div className="space-y-4">
             <div className="flex items-center">
               <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">N</span>
+                <span className="text-white font-bold text-lg">GE</span>
               </div>
-              <span className="ml-2 text-xl font-heading font-bold">Narith's Beautiful Site</span>
+              <span className="ml-2 text-xl font-heading font-bold">Go Event</span>
             </div>
             <p className="text-gray-400 text-sm">
               Creating beautiful and functional websites that help businesses grow and succeed in the digital world.
@@ -138,7 +138,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center">
-          <p className="text-gray-400 text-sm">© 2024 Narith's Beautiful Site. All rights reserved.</p>
+          <p className="text-gray-400 text-sm">© 2025 GoEvent. All rights reserved.</p>
         </div>
       </div>
     </footer>
