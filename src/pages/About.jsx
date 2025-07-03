@@ -14,7 +14,7 @@ export default function About() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch('http://127.0.0.1:8000/api/team-members');
+        const response = await fetch('https://snwv9cpm-8000.asse.devtunnels.ms/api/team-members/');
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

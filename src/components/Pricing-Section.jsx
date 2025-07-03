@@ -113,7 +113,7 @@ export default function PricingSection({
         setLoading(true)
         setError(null)
         
-        const response = await fetch('http://127.0.0.1:8000/api/pricing-plans')
+        const response = await fetch('https://snwv9cpm-8000.asse.devtunnels.ms/api/pricing-plans/')
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
