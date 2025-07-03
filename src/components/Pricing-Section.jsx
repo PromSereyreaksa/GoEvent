@@ -23,9 +23,12 @@ export default function PricingSection({
   faqClassName = "",
   onPlanSelect,
   calculateYearlyPrice,
+  scrollTriggerOffset = 200, // Pixels scrolled before showing
 }) {
   const [isYearly, setIsYearly] = useState(false)
   const [visibleCards, setVisibleCards] = useState([])
+  const [hasAnimated, setHasAnimated] = useState(false)
+  const [showSection, setShowSection] = useState(false)
   const sectionRef = useRef(null)
   const cardsRef = useRef(null)
 
@@ -120,139 +123,57 @@ export default function PricingSection({
   const displayPlans = plans.length > 0 ? plans : defaultPlans
   const displayFaqs = faqs.length > 0 ? faqs : defaultFaqs
 
+  // Scroll trigger for showing the entire section
   useEffect(() => {
-  let scrollLocked = false
-  let animationComplete = false
+    const handleScroll = () => {
+      if (window.scrollY > scrollTriggerOffset && !showSection) {
+        setShowSection(true)
+      }
+    }
 
-  const lockScroll = () => {
-    document.body.style.overflow = 'hidden'
-    scrollLocked = true
-  }
+    window.addEventListener('scroll', handleScroll)
+    
+    // Check initial scroll position
+    handleScroll()
 
-  const unlockScroll = () => {
-    document.body.style.overflow = 'unset'
-    scrollLocked = false
-  }
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+    }
+  }, [scrollTriggerOffset, showSection])
 
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting && !animationComplete) {
-          const isMobile = window.innerWidth < 768
-          
-          if (isMobile) {
-            // Mobile: just show all cards immediately, NO scroll lock
-            setVisibleCards(displayPlans.map((_, index) => index))
-            animationComplete = true
-            return // Exit early, don't do any scroll locking
+  // Intersection Observer for card animations (only after section is shown)
+  useEffect(() => {
+    if (!showSection) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasAnimated) {
+            setHasAnimated(true)
+            
+            // Animate cards one by one
+            displayPlans.forEach((_, index) => {
+              setTimeout(() => {
+                setVisibleCards(prev => [...prev, index])
+              }, index * 200)
+            })
           }
-          
-          // Desktop only: use scroll lock and animation
-          setTimeout(() => {
-            if (!animationComplete) {
-              lockScroll() // Only lock on desktop
-              
-              displayPlans.forEach((_, index) => {
-                setTimeout(() => {
-                  setVisibleCards(prev => [...prev, index])
-                  
-                  if (index === displayPlans.length - 1) {
-                    setTimeout(() => {
-                      unlockScroll()
-                      animationComplete = true
-                    }, 600)
-                  }
-                }, index * 200)
-              })
-            }
-          })
-        }
-      })
-    },
-    { 
-      threshold: 0.4,
-      rootMargin: '-50px 0px'
+        })
+      },
+      { 
+        threshold: 0.3,
+        rootMargin: '0px 0px -100px 0px'
+      }
+    )
+
+    if (cardsRef.current) {
+      observer.observe(cardsRef.current)
     }
-  )
 
-  if (cardsRef.current) {
-    observer.observe(cardsRef.current)
-  }
-
-  return () => {
-    observer.disconnect()
-    if (scrollLocked) {
-      unlockScroll()
+    return () => {
+      observer.disconnect()
     }
-  }
-}, [displayPlans.length])
-
-// Alternative: Completely separate mobile and desktop logic
-useEffect(() => {
-  const isMobile = window.innerWidth < 768
-  
-  if (isMobile) {
-    // Mobile: Show all cards immediately, no intersection observer
-    setVisibleCards(displayPlans.map((_, index) => index))
-    return
-  }
-
-  // Desktop only logic
-  let scrollLocked = false
-  let animationComplete = false
-
-  const lockScroll = () => {
-    document.body.style.overflow = 'hidden'
-    scrollLocked = true
-  }
-
-  const unlockScroll = () => {
-    document.body.style.overflow = 'unset'
-    scrollLocked = false
-  }
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting && !animationComplete) {
-          setTimeout(() => {
-            if (!animationComplete) {
-              lockScroll()
-              
-              displayPlans.forEach((_, index) => {
-                setTimeout(() => {
-                  setVisibleCards(prev => [...prev, index])
-                  
-                  if (index === displayPlans.length - 1) {
-                    setTimeout(() => {
-                      unlockScroll()
-                      animationComplete = true
-                    }, 600)
-                  }
-                }, index * 200)
-              })
-            }
-          })
-        }
-      })
-    },
-    { 
-      threshold: 0.4,
-      rootMargin: '-50px 0px'
-    }
-  )
-
-  if (cardsRef.current) {
-    observer.observe(cardsRef.current)
-  }
-
-  return () => {
-    observer.disconnect()
-    if (scrollLocked) {
-      unlockScroll()
-    }
-  }
-}, [displayPlans.length])
+  }, [displayPlans.length, hasAnimated, showSection])
 
   const getDisplayPrice = (plan) => {
     if (isYearly) {
@@ -283,6 +204,11 @@ useEffect(() => {
     }
   }
 
+  // Don't render anything until scroll trigger is met
+  if (!showSection) {
+    return null
+  }
+
   return (
     <div className={`bg-white font-['Plus_Jakarta_Sans'] ${className}`}>
       <style jsx>{`
@@ -295,8 +221,8 @@ useEffect(() => {
         }
         .card-animate {
           opacity: 0;
-          transform: translateY(30px) scale(0.95);
-          transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+          transform: translateY(50px) scale(0.9);
+          transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .card-animate.visible {
           opacity: 1;
@@ -309,59 +235,72 @@ useEffect(() => {
           transform: translateY(-8px) scale(1.02);
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
+        .section-fade-in {
+          animation: fadeInUp 0.8s ease-out;
+        }
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
       `}</style>
 
       {/* Hero Section - REDUCED bottom padding */}
-<section className={`pt-16 sm:pt-28 pb-6 sm:pb-12 px-4 sm:px-8 ${heroClassName}`}>
-  <div className="absolute inset-0 bg-[url('/grid-1.svg?height=800&width=1200')] bg-center bg-no-repeat bg-cover opacity-20"></div>
-  <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-8">
-    <div className="text-center">
-      <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-8xl font-bold leading-[115%] tracking-[-1px] sm:tracking-[-2px] text-gray-900 mb-4 sm:mb-6">{title}</h1>
-      <p className="text-base sm:text-lg md:text-xl text-gray-900 max-w-3xl mx-auto px-4 sm:px-0">{description}</p>
-    </div>
-  </div>
-  <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-white via-white/90 to-transparent z-20"></div>
-</section>
-
-{/* Pricing Toggle - REDUCED padding and margin */}
-{showToggle && (
-  <section className="py-2 sm:py-4 px-4 sm:px-8">
-    <div className="max-w-7xl mx-auto">
-      <div className="flex justify-center mb-4 sm:mb-8">
-        <div className="bg-gray-50 backdrop-blur-lg rounded-full p-2 flex items-center gap-2">
-          <div
-            className={`rounded-full px-4 sm:px-6 py-2 sm:py-3 flex items-center gap-2 cursor-pointer transition-all ${
-              !isYearly ? "bg-white shadow-sm" : "hover:bg-gray-100"
-            }`}
-            onClick={() => setIsYearly(false)}
-          >
-            <span className={`text-sm sm:text-base font-semibold ${!isYearly ? "text-black" : "text-gray-600"}`}>
-              {toggleOptions.monthly}
-            </span>
-          </div>
-          <div
-            className={`rounded-full px-4 sm:px-6 py-2 sm:py-3 flex items-center gap-2 cursor-pointer transition-all ${
-              isYearly ? "bg-white shadow-sm" : "hover:bg-gray-100"
-            }`}
-            onClick={() => setIsYearly(true)}
-          >
-            <span className={`text-sm sm:text-base font-semibold ${isYearly ? "text-black" : "text-gray-600"}`}>
-              {toggleOptions.yearly}
-            </span>
-            <span className="bg-orange-500 text-white rounded-full px-2 py-1 text-xs font-semibold">
-              {toggleOptions.yearlyDiscount}
-            </span>
+      <section className={`section-fade-in pt-16 sm:pt-28 pb-6 sm:pb-12 px-4 sm:px-8 ${heroClassName}`}>
+        <div className="absolute inset-0 bg-[url('/grid-1.svg?height=800&width=1200')] bg-center bg-no-repeat bg-cover opacity-20"></div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-8">
+          <div className="text-center">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-8xl font-bold leading-[115%] tracking-[-1px] sm:tracking-[-2px] text-gray-900 mb-4 sm:mb-6">{title}</h1>
+            <p className="text-base sm:text-lg md:text-xl text-gray-900 max-w-3xl mx-auto px-4 sm:px-0">{description}</p>
           </div>
         </div>
-      </div>
-    </div>
-  </section>
-)}
+        <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-white via-white/90 to-transparent z-20"></div>
+      </section>
 
-{/* Pricing Cards - REDUCED top padding */}
-<section className="pt-0 sm:pt-2 pb-10 sm:pb-20 px-4 sm:px-8">
-  <div className="max-w-7xl mx-auto">
-   
+      {/* Pricing Toggle - REDUCED padding and margin */}
+      {showToggle && (
+        <section className="py-2 sm:py-4 px-4 sm:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex justify-center mb-4 sm:mb-8">
+              <div className="bg-gray-50 backdrop-blur-lg rounded-full p-2 flex items-center gap-2">
+                <div
+                  className={`rounded-full px-4 sm:px-6 py-2 sm:py-3 flex items-center gap-2 cursor-pointer transition-all ${
+                    !isYearly ? "bg-white shadow-sm" : "hover:bg-gray-100"
+                  }`}
+                  onClick={() => setIsYearly(false)}
+                >
+                  <span className={`text-sm sm:text-base font-semibold ${!isYearly ? "text-black" : "text-gray-600"}`}>
+                    {toggleOptions.monthly}
+                  </span>
+                </div>
+                <div
+                  className={`rounded-full px-4 sm:px-6 py-2 sm:py-3 flex items-center gap-2 cursor-pointer transition-all ${
+                    isYearly ? "bg-white shadow-sm" : "hover:bg-gray-100"
+                  }`}
+                  onClick={() => setIsYearly(true)}
+                >
+                  <span className={`text-sm sm:text-base font-semibold ${isYearly ? "text-black" : "text-gray-600"}`}>
+                    {toggleOptions.yearly}
+                  </span>
+                  <span className="bg-orange-500 text-white rounded-full px-2 py-1 text-xs font-semibold">
+                    {toggleOptions.yearlyDiscount}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Pricing Cards - REDUCED top padding */}
+      <section className="pt-0 sm:pt-2 pb-10 sm:pb-20 px-4 sm:px-8">
+        <div className="max-w-7xl mx-auto">
+         
           {/* Desktop Grid */}
           <div ref={cardsRef} className={`hidden md:grid md:grid-cols-3 gap-8 ${cardsClassName}`}>
             {displayPlans.map((plan, index) => (
