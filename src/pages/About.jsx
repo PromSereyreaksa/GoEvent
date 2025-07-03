@@ -29,8 +29,8 @@ export default function About() {
 
   const team = [
     {
-      name: "Narith Johnson",
-      role: "Co-founder & CEO",
+      name: "Narith Chesda",
+      role: "Founder",
       image: "/placeholder.svg?height=128&width=128",
       bio: "Ex CDO at Fynd. Co-founder of BrandBoost and Co-pilot",
       social: {
@@ -269,10 +269,10 @@ export default function About() {
                 </p>
                 <div className="flex flex-col sm:flex-row lg:flex-col gap-3 justify-center lg:justify-start">
                   <button className="px-6 py-3 text-gray-700 font-medium hover:text-gray-900 transition-colors text-center">
-                    About us
+                    About our culture
                   </button>
                   <button className="px-6 py-3 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-500 text-white font-medium rounded-lg hover:bg-slate-700 transition-colors">
-                    Open positions
+                    Join our team
                   </button>
                 </div>
               </div>
@@ -353,7 +353,7 @@ export default function About() {
       <section className="bg-blue-600 py-16 sm:py-24 lg:py-32 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 text-center">
-            {/*
+{/*             
               { number: "10K+", label: "Happy Customers" },
               { number: "50K+", label: "Websites Created" },
               { number: "99.9%", label: "Uptime" },

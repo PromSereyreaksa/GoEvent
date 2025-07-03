@@ -14,6 +14,7 @@ import TermAndConditions from "./pages/TermAndConditions";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Checkout from "./pages/Checkout";
+import ViewEvent from "./pages/EventManagement";
 import NotFound from "./pages/NotFound";
 import "./App.css";
 
@@ -40,6 +41,7 @@ function App() {
             <Route path="/sign-in" element={<SignIn />} />
             <Route path="/sign-up" element={<SignUp />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/events" element={<ViewEvent />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Your Event - GoEvent</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+  <div class="max-w-6xl mx-auto px-6 py-12">
+    <h1 class="text-4xl font-bold mb-8">🎉 Create Your Event</h1>
+
+    <!-- Form Section -->
+    <form class="space-y-10">
+      <!-- Basic Info -->
+      <div class="bg-white p-6 rounded-xl shadow-md space-y-6">
+        <h2 class="text-2xl font-semibold">Event Details</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block font-medium mb-1">Event Name</label>
+            <input type="text" class="w-full border rounded-lg px-4 py-2" placeholder="e.g., John & Mary's Wedding" />
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Venue Name</label>
+            <input type="text" class="w-full border rounded-lg px-4 py-2" placeholder="e.g., Phnom Penh Hotel" />
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Event Date</label>
+            <input type="date" class="w-full border rounded-lg px-4 py-2" />
+          </div>
+          <div class="flex gap-4">
+            <div class="flex-1">
+              <label class="block font-medium mb-1">Start Time</label>
+              <input type="time" class="w-full border rounded-lg px-4 py-2" />
+            </div>
+            <div class="flex-1">
+              <label class="block font-medium mb-1">End Time</label>
+              <input type="time" class="w-full border rounded-lg px-4 py-2" />
+            </div>
+          </div>
+        </div>
+        <div>
+          <label class="block font-medium mb-1">Description</label>
+          <textarea class="w-full border rounded-lg px-4 py-2" rows="4" placeholder="Describe the event details here..."></textarea>
+        </div>
+      </div>
+
+      <!-- Media Embeds -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Google Map -->
+        <div class="bg-white p-6 rounded-xl shadow-md space-y-4">
+          <h2 class="text-xl font-semibold">Google Map Location</h2>
+          <input type="text" class="w-full border rounded-lg px-4 py-2" placeholder="Paste Google Maps URL here" />
+          <div class="aspect-video">
+            <iframe
+              class="w-full h-full rounded-lg border"
+              src="https://maps.google.com/maps?q=Phnom%20Penh&t=&z=13&ie=UTF8&iwloc=&output=embed"
+              allowfullscreen
+            ></iframe>
+          </div>
+        </div>
+
+        <!-- YouTube Video -->
+        <div class="bg-white p-6 rounded-xl shadow-md space-y-4">
+          <h2 class="text-xl font-semibold">YouTube Video</h2>
+          <input type="text" class="w-full border rounded-lg px-4 py-2" placeholder="Paste YouTube video URL" />
+          <div class="aspect-video">
+            <iframe
+              class="w-full h-full rounded-lg border"
+              src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+              title="Event Video"
+              allowfullscreen
+            ></iframe>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap gap-4 justify-end">
+        <button type="button" class="px-6 py-2 rounded-lg bg-gray-200 hover:bg-gray-300">Save Draft</button>
+        <button type="submit" class="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">Publish</button>
+        <button type="button" class="px-6 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600">Delete</button>
+      </div>
+    </form>
+  </div>
+</body>
+</html>
