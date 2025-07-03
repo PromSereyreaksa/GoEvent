@@ -374,9 +374,11 @@ className="bg-white text-black sm:ml-10 px-4 py-3 sm:py-5 rounded-full font-medi
       </section>
 
       {/* Pricing Section */}
+      <div className="min-h-screen bg-white font-['Plus_Jakarta_Sans'] text-neutral-600">
       <section id="pricing" className="animate-on-scroll">
-        <DefaultPricing />
+        <DefaultPricing/>
       </section>
+    </div>
 
       {/* Reviews Section */}
       <section id="reviews" className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 lg:px-8 bg-gray-50 animate-on-scroll">
