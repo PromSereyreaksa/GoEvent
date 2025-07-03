@@ -4,30 +4,34 @@ import { useEffect, useState } from "react";
 import { Calendar, Users, Sparkles, ArrowRight, Target, AlertCircle } from "lucide-react";
 
 export default function About() {
-  const [teamMembers, setTeamMembers] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Fetch team members from API
   useEffect(() => {
     const fetchTeamMembers = async () => {
       try {
-        setLoading(true)
-        setError(null)
-        const response = await fetch("https://snwv9cpm-8000.asse.devtunnels.ms/api/team-members/")
+        setLoading(true);
+        setError(null);
+        const response = await fetch('https://snwv9cpm-8000.asse.devtunnels.ms/api/team-members/');
+        
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json()
-        setTeamMembers(data)
+        
+        const data = await response.json();
+        setTeamMembers(data);
       } catch (err) {
-        setError(err.message)
+        console.error('Error fetching team members:', err);
+        setError(err.message);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    fetchTeamMembers()
-  }, [])
+    };
+
+    fetchTeamMembers();
+  }, []);
 
   // Add scroll animation effect
   useEffect(() => {
@@ -389,36 +393,56 @@ export default function About() {
 
               {/* Team Members Grid */}
               {!loading && !error && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
                   {teamMembers.map((member, index) => (
-                    <div key={index} className="bg-white rounded-3xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+                    <div
+                      key={member.id || index}
+                      className={`text-center animate-on-scroll delay-${
+                        200 + index * 100
+                      }`}
+                    >
                       {/* Profile Image */}
-                      <div className="mb-6">
-                        <img
-                          src={member.avatar || "/placeholder.svg?height=128&width=128"}
-                          alt={member.name}
-                          className="w-32 h-32 rounded-full mx-auto object-cover"
-                          onError={(e) => {
-                            e.target.src = "/placeholder.svg?height=128&width=128"
-                          }}
-                        />
+                      <div className="relative mb-6">
+                        <div className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 mx-auto rounded-full overflow-hidden bg-gray-100">
+                          <img
+                            src={member.avatar || "/placeholder.svg?height=128&width=128"}
+                            alt={member.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.src = "/placeholder.svg?height=128&width=128";
+                            }}
+                          />
+                        </div>
                       </div>
+
                       {/* Member Info */}
-                      <div className="text-center mb-6">
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">{member.name}</h3>
-                        <p className="text-blue-600 font-medium mb-3">{member.role}</p>
-                        <p className="text-gray-600 text-sm leading-relaxed">{member.description}</p>
+                      <div className="mb-4">
+                        <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">
+                          {member.name}
+                        </h3>
+                        <p className="text-blue-600 font-medium text-sm mb-3">
+                          {member.role}
+                        </p>
+                        <p className="text-gray-600 text-sm leading-relaxed">
+                          {member.description}
+                        </p>
                       </div>
+
                       {/* Social Links */}
-                      <div className="flex justify-center space-x-4">
+                      <div className="flex justify-center gap-4">
                         {member.facebook_url && (
                           <a
                             href={member.facebook_url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-gray-400 hover:text-blue-600 transition-colors"
+                            title="Facebook"
                           >
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <svg
+                              className="w-5 h-5"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
                               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                             </svg>
                           </a>
@@ -428,9 +452,14 @@ export default function About() {
                             href={member.telegram_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-gray-400 hover:text-blue-600 transition-colors"
+                            className="text-gray-400 hover:text-blue-500 transition-colors"
+                            title="Telegram"
                           >
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <svg
+                              className="w-5 h-5"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
                               <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
                             </svg>
                           </a>
