@@ -136,13 +136,13 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-blue-500 via-blue-600 to-white pt-20 pb-20 overflow-hidden">
         {/* Background Pattern */}
-        <div className="absolute inset-0 bg-[url('/grid-1-2.svg')] bg-center bg-no-repeat bg-cover opacity-20"></div>
-        <div className="relative z-10 max-w-7xl mx-auto px-8">
+        <div className="absolute inset-0 bg-[url('/cta-grid.svg')] bg-center bg-no-repeat bg-cover opacity-20"></div>
+        <div className="relative z-10 max-w-7xl mx-auto px-8 rounded-3xl overflow-hidden">
           <div className="text-center">
             <div className="mx-auto px-5 mb-16 animate-on-scroll">
-              <h1 className="text-[160px] mr-5 md:text-8xl lg:text-[160px] font-bold leading-[100%] tracking-[-2px] text-white uppercase mb-8">
+              <h1 className="text-8xl mr-5 sm:text-xs md:text-9xl lg:text-[160px] font-bold leading-[100%] tracking-[-2px] text-white uppercase mb-8">
                 Plan with
-                <span className="block text-right">Ease</span>
+                <span className="block md:mr-20 mr-15 text-right">Ease</span>
               </h1>
             </div>
 
@@ -158,13 +158,13 @@ export default function Home() {
               </div>
 
               {/* Main Image */}
-              <div className="relative animate-on-scroll delay-300">
-                <img
-                  src="/Hand-Image.png"
-                  alt="Platform Preview"
-                  className="max-w-2xl mx-auto "
-                />
-                {/* Floating Cards */}
+                      <div className="relative animate-on-scroll delay-300">
+                      <img
+                        src="/Hand-Image-p-1080.png"
+                        alt="Platform Preview"
+                        className="max-w-2xl mx-auto w-full sm:w-3/4 md:w-2/3 lg:w-full"
+                      />
+                      {/* Floating Cards */}
                 <div className="absolute -left-20 top-1/4 transform -rotate-12 hidden lg:block">
                   <div className="bg-white rounded-3xl rounded-bl-none p-6 shadow-lg">
                     <p className="text-black text-sm font-bold">
@@ -207,44 +207,15 @@ export default function Home() {
         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white via-white/90 to-transparent z-30"></div>
       </section>
 
-      {/* Counter Section */}
-      <section className="py-32 px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-wrap justify-between items-start gap-10">
-            <div className="flex-1 min-w-[400px] animate-on-scroll">
-              <div className="flex flex-col gap-4 max-w-lg">
-                <h2 className="text-5xl md:text-6xl font-semibold leading-[120%] tracking-[-2.5px] text-black">
-                  Trusted by Industry Leaders
-                </h2>
-                <p className="text-lg leading-[170%] text-neutral-600 w-[95%]">
-                  Join thousands of businesses who have transformed their online
-                  presence with our platform.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-20 animate-on-scroll delay-200">
-              <div className="flex flex-col gap-2">
-                <div className="text-6xl font-bold text-black">10K+</div>
-                <div className="text-neutral-600">Happy Customers</div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <div className="text-6xl font-bold text-black">50K+</div>
-                <div className="text-neutral-600">Websites Created</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Special Feature Section */}
       <section className="py-32 px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-            <div className="bg-gradient-to-b from-blue-500 to-white bg-[url('/placeholder.svg?height=400&width=400')] bg-center bg-no-repeat rounded-3xl flex flex-col justify-end items-center pt-36 px-5 pb-0 overflow-hidden animate-on-scroll">
+            <div className="bg-gradient-to-b from-blue-500 to-white bg-center bg-no-repeat rounded-3xl flex flex-col justify-end items-center pt-36 px-5 pb-0 overflow-hidden animate-on-scroll">
               <img
-                src="/placeholder.svg?height=400&width=600"
+                src="/CTA-Device.svg"
                 alt="Feature Preview"
-                className="w-full rounded-t-3xl shadow-2xl"
+                className="w-full max-w-2xl rounded-t-3xl shadow-2xl"
               />
             </div>
             <div className="flex flex-col gap-20 pr-24 animate-on-scroll delay-200">
@@ -294,10 +265,10 @@ export default function Home() {
       </section>
 
       {/* Features Grid */}
-      <section className="py-32 px-4  bg-cover bg-center bg-no-repeat">
-  <div className="max-w-6xl mx-auto bg-gradient-to-br from-blue-500 via-blue-700 to-blue-400 backdrop-blur-lg rounded-3xl shadow-xl p-12 md:p-16">
-    <div className="flex bg-[url('/grid-1.svg')] flex-col gap-20">
-      <div className="text-center max-w-3xl mx-auto animate-on-scroll">
+      <section className="py-32  bg-cover bg-center bg-no-repeat">
+  <div className="max-w-90% mx-auto bg-gradient-to-br from-blue-500 via-blue-700 to-blue-400 backdrop-blur-lg rounded-3xl shadow-xl p-12 md:p-16">
+    <div className="fle bg-[url('/grid-1.svg')] flex-col gap-20">
+      <div className="text-center max-w-2xl mx-auto animate-on-scroll">
         <div className="flex flex-col gap-4">
           <span className="text-blue-100 text-lg font-medium">
             Features
