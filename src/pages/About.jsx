@@ -199,19 +199,19 @@ export default function About() {
             <div className="flex flex-col sm:flex-row gap-8 sm:gap-12 justify-center items-center mt-16 sm:mt-20 animate-on-scroll delay-400">
               <div className="text-center">
                 <div className="text-2xl sm:text-3xl font-bold text-white mb-1">
-                  6+
+                  9
                 </div>
                 <div className="text-white/70 text-sm">Team Members</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl sm:text-3xl font-bold text-white mb-1">
-                  10K+
+                  15
                 </div>
                 <div className="text-white/70 text-sm">Events Created</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl sm:text-3xl font-bold text-white mb-1">
-                  50K+
+                  30
                 </div>
                 <div className="text-white/70 text-sm">Happy Customers</div>
               </div>
