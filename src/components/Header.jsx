@@ -1,186 +1,143 @@
-"use client"  
+"use client"
 
-import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
+import { useState, useEffect } from "react"
+import { Menu, X, ExternalLink } from "lucide-react"
 
 export default function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const [isDarkBg, setIsDarkBg] = useState(true);
-
-  const navigation = [
-    { name: "Home", href: "/" },
-    { name: "Features", href: "/features" },
-    { name: "About", href: "/about" },
-    { name: "Reviews", href: "/reviews" },
-  ];
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isVisible, setIsVisible] = useState(true)
+  const [lastScrollY, setLastScrollY] = useState(0)
+  const [isDarkBg, setIsDarkBg] = useState(true)
 
   useEffect(() => {
     const controlNavbar = () => {
-      const currentScrollY = window.scrollY;
-      
+      const currentScrollY = window.scrollY
+
       // Determine if we're over a dark or light background
-      // Adjust these values based on your page layout
-      if (currentScrollY < 600) { // Hero section (dark blue)
-        setIsDarkBg(true);
-      } else { // Other sections (potentially light)
-        setIsDarkBg(false);
+      if (currentScrollY < 600) {
+        setIsDarkBg(true)
+      } else {
+        setIsDarkBg(false)
       }
-      
+
       // Show navbar when at top of page or scrolling up
       if (currentScrollY < 100) {
-        setIsVisible(true);
+        setIsVisible(true)
       } else if (currentScrollY < lastScrollY) {
-        // Scrolling up
-        setIsVisible(true);
+        setIsVisible(true)
       } else {
-        // Scrolling down past 100px (roughly first page)
-        setIsVisible(false);
-        setIsMenuOpen(false); // Close mobile menu when hiding navbar
+        setIsVisible(false)
+        setIsMenuOpen(false)
       }
-      
-      setLastScrollY(currentScrollY);
-    };
 
-    window.addEventListener('scroll', controlNavbar);
-    
-    return () => {
-      window.removeEventListener('scroll', controlNavbar);
-    };
-  }, [lastScrollY]);
+      setLastScrollY(currentScrollY)
+    }
+
+    window.addEventListener("scroll", controlNavbar)
+    return () => window.removeEventListener("scroll", controlNavbar)
+  }, [lastScrollY])
 
   return (
-    <header 
-      className={`fixed top-0 left-0 right-0 z-50 py-4 px-8 font-['Plus_Jakarta_Sans'] transition-all duration-300 ${
-        isVisible ? 'translate-y-0' : '-translate-y-full'
-      } ${
-        isDarkBg 
-          ? 'bg-transparent' 
-          : 'bg-white/95 backdrop-blur-md shadow-sm'
-      }`}
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 py-4 px-4 sm:px-8 font-['Plus_Jakarta_Sans'] transition-all duration-500 ${
+        isVisible ? "translate-y-0" : "-translate-y-full"
+      } ${isDarkBg ? "bg-transparent" : "bg-white/95 backdrop-blur-md shadow-sm"}`}
     >
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2">
-              <img
-                src="/vite.svg"
-                alt="GoEvent Logo"
-                className="w-full h-full object-contain"
-              />
-            <span className={`text-xl font-bold drop-shadow-sm transition-colors ${
-              isDarkBg ? 'text-white' : 'text-gray-800'
-            }`}>
+          <a href="/" className="flex items-center gap-3 group">
+            <div className="relative">
+              <div className="absolute inset-0 bg-blue-400 rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-sm"></div>
+            </div>
+            <span
+              className={`text-xl font-bold transition-all duration-300 ${
+                isDarkBg ? "text-white drop-shadow-lg" : "text-gray-800"
+              } group-hover:scale-105`}
+            >
               GoEvent
             </span>
           </a>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex">
-            <div
-              className={`rounded-2xl px-8 py-3 backdrop-blur-md border transition-colors ${
-                isDarkBg 
-                  ? 'bg-white/20 border-white/30' 
-                  : 'bg-gray-100/80 border-gray-200/50'
+          {/* Desktop Navigation - Only About and Sign up */}
+          <div className="hidden lg:flex items-center gap-4">
+            <a
+              href="/about"
+              className={`px-4 py-2 rounded-full font-medium transition-all duration-300 inline-flex items-center gap-2 group ${
+                isDarkBg
+                  ? "text-white/90 hover:text-white hover:bg-white/10"
+                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
               }`}
-              style={{
-                borderRadius: "16px",
-                boxShadow: isDarkBg
-                  ? "inset 0 4px 4px 0 rgba(255, 255, 255, 0.25), 0 8px 32px 0 rgba(0, 0, 0, 0.1)"
-                  : "inset 0 4px 4px 0 rgba(0, 0, 0, 0.05), 0 8px 32px 0 rgba(0, 0, 0, 0.1)",
-              }}
             >
-              <div className="flex items-center gap-8">
-                {navigation.map((item) => (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    className={`text-base font-medium transition-colors drop-shadow-sm ${
-                      isDarkBg 
-                        ? 'text-white hover:text-white/80' 
-                        : 'text-gray-700 hover:text-gray-900'
-                    }`}
-                  >
-                    {item.name}
-                  </a>
-                ))}
-              </div>
-            </div>
-          </nav>
+              <span>About</span>
+              <ExternalLink className="w-3 h-3 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
+            </a>
 
-          {/* Sign up button */}
-          <div className="hidden lg:block">
             <a
               href="/sign-up"
-              className="bg-white text-blue-600 px-8 py-3 rounded-full font-semibold hover:bg-gray-50 transition-colors shadow-lg hover:shadow-xl"
+              className="bg-white text-blue-600 px-6 py-3 rounded-full font-semibold hover:bg-gray-50 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2 group"
             >
-              Sign up
+              <span>Sign up</span>
+              <ExternalLink className="w-4 h-4 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
             </a>
           </div>
 
           {/* Mobile menu button */}
           <button
-            className={`lg:hidden w-8 p-0 transition-colors drop-shadow-md ${
-              isDarkBg 
-                ? 'text-white hover:text-gray-200' 
-                : 'text-gray-700 hover:text-gray-900'
-            }`}
+            className={`lg:hidden p-2 rounded-xl transition-all duration-300 ${
+              isDarkBg
+                ? "text-white hover:bg-white/20 border border-white/20"
+                : "text-gray-700 hover:bg-gray-100 border border-gray-200"
+            } hover:scale-105`}
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            {isMenuOpen ? (
-              <X className="w-6 h-6" />
-            ) : (
-              <Menu className="w-6 h-6" />
-            )}
+            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile Navigation - Only About and Sign up */}
         {isMenuOpen && (
-          <div className="lg:hidden mt-4">
+          <div className="lg:hidden mt-4 animate-in slide-in-from-top-2 duration-300">
             <div
-              className={`rounded-2xl p-6 backdrop-blur-md border transition-colors ${
-                isDarkBg 
-                  ? 'bg-white/20 border-white/30' 
-                  : 'bg-gray-100/90 border-gray-200/50'
+              className={`rounded-2xl p-6 backdrop-blur-md border transition-all duration-300 ${
+                isDarkBg ? "bg-white/15 border-white/25 shadow-2xl" : "bg-gray-50/95 border-gray-200/60 shadow-xl"
               }`}
               style={{
-                borderRadius: "16px",
+                borderRadius: "20px",
                 boxShadow: isDarkBg
-                  ? "inset 0 4px 4px 0 rgba(255, 255, 255, 0.25), 0 8px 32px 0 rgba(0, 0, 0, 0.1)"
-                  : "inset 0 4px 4px 0 rgba(0, 0, 0, 0.05), 0 8px 32px 0 rgba(0, 0, 0, 0.1)",
+                  ? "inset 0 4px 6px 0 rgba(255, 255, 255, 0.2), 0 15px 50px 0 rgba(0, 0, 0, 0.2)"
+                  : "inset 0 4px 6px 0 rgba(0, 0, 0, 0.03), 0 15px 50px 0 rgba(0, 0, 0, 0.15)",
               }}
             >
               <div className="flex flex-col gap-4">
-                {navigation.map((item) => (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    className={`text-base font-medium transition-colors drop-shadow-sm ${
-                      isDarkBg 
-                        ? 'text-white hover:text-white/80' 
-                        : 'text-gray-700 hover:text-gray-900'
-                    }`}
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {item.name}
-                  </a>
-                ))}
-                <div className={`pt-4 border-t ${isDarkBg ? 'border-white/20' : 'border-gray-300/50'}`}>
-                  <a
-                    href="/sign-up"
-                    className="bg-white text-blue-600 px-6 py-3 rounded-full font-semibold hover:bg-gray-50 transition-colors inline-block text-center shadow-lg"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Sign up
-                  </a>
-                </div>
+                {/* About Link */}
+                <a
+                  href="/about"
+                  className={`px-4 py-3 rounded-xl font-medium transition-all duration-300 inline-flex items-center gap-2 group ${
+                    isDarkBg
+                      ? "text-white/90 hover:text-white hover:bg-white/10"
+                      : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <span>About</span>
+                  <ExternalLink className="w-3 h-3 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
+                </a>
+
+                {/* Sign up Button */}
+                <a
+                  href="/sign-up"
+                  className="bg-white text-blue-600 px-6 py-3 rounded-full font-semibold hover:bg-gray-50 transition-all duration-300 inline-flex items-center justify-center gap-2 text-center shadow-lg w-full group"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <span>Sign up</span>
+                  <ExternalLink className="w-4 h-4 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
+                </a>
               </div>
             </div>
           </div>
         )}
       </div>
     </header>
-  );
+  )
 }

@@ -138,17 +138,24 @@ export default function PricingSection({
     (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting && !animationComplete) {
-          // Add a small delay to ensure user has scrolled enough
+          const isMobile = window.innerWidth < 768
+          
+          if (isMobile) {
+            // Mobile: just show all cards immediately, NO scroll lock
+            setVisibleCards(displayPlans.map((_, index) => index))
+            animationComplete = true
+            return // Exit early, don't do any scroll locking
+          }
+          
+          // Desktop only: use scroll lock and animation
           setTimeout(() => {
             if (!animationComplete) {
-              lockScroll()
+              lockScroll() // Only lock on desktop
               
-              // Animate cards one by one
               displayPlans.forEach((_, index) => {
                 setTimeout(() => {
                   setVisibleCards(prev => [...prev, index])
                   
-                  // Unlock scroll after last card animation
                   if (index === displayPlans.length - 1) {
                     setTimeout(() => {
                       unlockScroll()
@@ -158,13 +165,13 @@ export default function PricingSection({
                 }, index * 200)
               })
             }
-          }, 100) // 500ms delay to ensure all cards are visible
+          })
         }
       })
     },
     { 
-      threshold: 0.5, // Higher threshold - 60% of container must be visible
-      rootMargin: '-50px 0px' // Require container to be 50px inside viewport
+      threshold: 0.4,
+      rootMargin: '-50px 0px'
     }
   )
 
@@ -172,7 +179,73 @@ export default function PricingSection({
     observer.observe(cardsRef.current)
   }
 
-  // Cleanup function
+  return () => {
+    observer.disconnect()
+    if (scrollLocked) {
+      unlockScroll()
+    }
+  }
+}, [displayPlans.length])
+
+// Alternative: Completely separate mobile and desktop logic
+useEffect(() => {
+  const isMobile = window.innerWidth < 768
+  
+  if (isMobile) {
+    // Mobile: Show all cards immediately, no intersection observer
+    setVisibleCards(displayPlans.map((_, index) => index))
+    return
+  }
+
+  // Desktop only logic
+  let scrollLocked = false
+  let animationComplete = false
+
+  const lockScroll = () => {
+    document.body.style.overflow = 'hidden'
+    scrollLocked = true
+  }
+
+  const unlockScroll = () => {
+    document.body.style.overflow = 'unset'
+    scrollLocked = false
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && !animationComplete) {
+          setTimeout(() => {
+            if (!animationComplete) {
+              lockScroll()
+              
+              displayPlans.forEach((_, index) => {
+                setTimeout(() => {
+                  setVisibleCards(prev => [...prev, index])
+                  
+                  if (index === displayPlans.length - 1) {
+                    setTimeout(() => {
+                      unlockScroll()
+                      animationComplete = true
+                    }, 600)
+                  }
+                }, index * 200)
+              })
+            }
+          })
+        }
+      })
+    },
+    { 
+      threshold: 0.4,
+      rootMargin: '-50px 0px'
+    }
+  )
+
+  if (cardsRef.current) {
+    observer.observe(cardsRef.current)
+  }
+
   return () => {
     observer.disconnect()
     if (scrollLocked) {
