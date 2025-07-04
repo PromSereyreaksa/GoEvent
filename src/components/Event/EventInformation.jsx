@@ -71,6 +71,17 @@ export function EventInformation({ event, onEdit, onDelete, onBack }) {
     onEdit(event);
     setShowDropdown(false);
   };
+
+  // Format date for agenda display
+  const formatAgendaDate = (dateString) => {
+    if (!dateString) return { day: "", month: "" };
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = date
+      .toLocaleDateString("en-US", { month: "short" })
+      .toUpperCase();
+    return { day, month };
+  };
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -312,49 +323,77 @@ export function EventInformation({ event, onEdit, onDelete, onBack }) {
             <h2 className="text-3xl font-bold text-gray-900 mb-6">Agenda</h2>
 
             <div className="space-y-6">
-              {event.agenda.map((day, dayIndex) => (
-                <div
-                  key={day.id}
-                  className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl p-8 border border-blue-200"
-                >
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white font-bold">
-                      {String(dayIndex + 1).padStart(2, "0")}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-blue-900">
-                        Day {dayIndex + 1}
-                      </h3>
-                      {day.date && (
-                        <p className="text-blue-700">{formatDate(day.date)}</p>
-                      )}
-                    </div>
-                  </div>
+              {event.agenda.map((day, dayIndex) => {
+                const { day: dayNumber, month } = formatAgendaDate(day.date);
+                return (
+                  <div
+                    key={day.id}
+                    className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl p-8 border border-blue-200"
+                  >
+                    {/* Custom Date and Location Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-stretch gap-4 sm:gap-0 mb-6 bg-white rounded-2xl p-4 sm:p-6 border border-blue-200 shadow-sm">
+                      {/* Date Display */}
+                      <div className="flex items-center justify-center sm:justify-start">
+                        {/* Day and Month Vertical Stack */}
+                        <div className="text-center min-w-[60px]">
+                          <div className="text-3xl sm:text-4xl font-bold text-blue-900 leading-none">
+                            {dayNumber || String(dayIndex + 1).padStart(2, "0")}
+                          </div>
+                          <div className="text-xs font-bold text-blue-700 tracking-widest mt-1">
+                            {month || "DAY"}
+                          </div>
+                        </div>
 
-                  <div className="space-y-4">
-                    {day.activities &&
-                      day.activities.map(
-                        (activity) =>
-                          activity.time &&
-                          activity.activity && (
-                            <div
-                              key={activity.id}
-                              className="bg-white rounded-2xl p-4 border border-blue-100"
-                            >
-                              <div className="flex items-center gap-4">
-                                <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold min-w-fit">
-                                  {formatTime(activity.time)}
+                        {/* Vertical Divider - Hidden on mobile */}
+                        <div className="hidden sm:block w-px h-16 bg-gradient-to-b from-blue-200 via-blue-400 to-blue-200 mx-6"></div>
+
+                        {/* Horizontal Divider - Visible on mobile */}
+                        <div className="block sm:hidden w-full h-px bg-gradient-to-r from-transparent via-blue-300 to-transparent my-3"></div>
+                      </div>
+
+                      {/* Location and Day Info */}
+                      <div className="flex-1 flex flex-col justify-center text-center sm:text-left">
+                        <div className="text-lg sm:text-xl font-bold text-gray-900 mb-1">
+                          {event.venue || "Event Venue"}
+                        </div>
+                        <div className="text-sm text-gray-600 flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            Day {dayIndex + 1}
+                          </span>
+                          {day.date && (
+                            <span className="text-gray-500 text-xs sm:text-sm">
+                              {formatDate(day.date)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      {day.activities &&
+                        day.activities.map(
+                          (activity) =>
+                            activity.time &&
+                            activity.activity && (
+                              <div
+                                key={activity.id}
+                                className="bg-white rounded-2xl p-4 border border-blue-100"
+                              >
+                                <div className="flex items-center gap-4">
+                                  <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold min-w-fit">
+                                    {formatTime(activity.time)}
+                                  </div>
+                                  <p className="text-gray-800 font-medium">
+                                    {activity.activity}
+                                  </p>
                                 </div>
-                                <p className="text-gray-800 font-medium">
-                                  {activity.activity}
-                                </p>
                               </div>
-                            </div>
-                          )
-                      )}
+                            )
+                        )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

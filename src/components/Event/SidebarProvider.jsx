@@ -21,6 +21,29 @@ export const SidebarProvider = ({ children }) => {
     setIsMobileOpen(false);
   };
 
+  // Close mobile sidebar when clicking outside or on escape key
+  useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        closeMobileSidebar();
+      }
+    };
+
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsMobileOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   return (
     <SidebarContext.Provider
       value={{
@@ -63,10 +86,10 @@ export const SidebarTrigger = ({ className = "" }) => {
   return (
     <button
       onClick={toggleSidebar}
-      className={`p-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors ${className}`}
+      className={`p-1.5 sm:p-2 text-gray-600 hover:bg-gray-100 rounded-lg sm:rounded-xl transition-colors min-w-[36px] min-h-[36px] sm:min-w-[40px] sm:min-h-[40px] flex items-center justify-center ${className}`}
       aria-label="Toggle sidebar"
     >
-      <Menu className="w-5 h-5" />
+      <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
     </button>
   );
 };

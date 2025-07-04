@@ -1,4 +1,4 @@
-// Custom Breadcrumb Components
+// Custom Breadcrumb Components - Mobile Responsive
 export const Breadcrumb = ({ children, className = "" }) => (
   <nav className={`flex ${className}`} aria-label="Breadcrumb">
     {children}
@@ -16,14 +16,16 @@ export const BreadcrumbItem = ({ children }) => (
 );
 
 export const BreadcrumbPage = ({ children }) => (
-  <span className="font-medium text-gray-900">{children}</span>
+  <span className="font-medium text-gray-900 text-sm sm:text-base truncate">
+    {children}
+  </span>
 );
 
 // Custom Separator Component
 export const Separator = ({ orientation = "horizontal", className = "" }) => (
   <div
     className={`bg-gray-200 ${
-      orientation === "vertical" ? "w-px h-4" : "h-px w-full"
+      orientation === "vertical" ? "w-px h-3 sm:h-4" : "h-px w-full"
     } ${className}`}
   />
 );

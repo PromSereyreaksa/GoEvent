@@ -27,6 +27,7 @@ import {
   animationStyles,
   useScrollAnimation,
 } from "../components/Event/animations";
+import "../styles/mobile-enhancements.css";
 
 // Main Event Management Component
 export default function EventManagement() {
@@ -197,26 +198,35 @@ export default function EventManagement() {
   // Event List View
   if (currentView === "list") {
     return (
-      <div className="min-h-screen bg-white font-['Plus_Jakarta_Sans']">
+      <div className="min-h-screen bg-white font-['Plus_Jakarta_Sans'] overflow-hidden smooth-scroll">
         <style jsx>{animationStyles}</style>
 
         <SidebarProvider>
           <AppSidebar onNavigate={handleNavigation} currentView={currentView} />
           <SidebarInset>
             {/* Main Content */}
-            <main className="flex-1 overflow-auto">
-              {/* Header */}
-              <div className="flex h-16 shrink-0 items-center gap-2 bg-white border-b border-gray-200 px-6">
-                <SidebarTrigger className="-ml-1" />
-                <Separator orientation="vertical" className="mr-2 h-4" />
-                <Breadcrumb>
+            <main className="flex-1 overflow-auto safe-area-padding">
+              {/* Header - Mobile Responsive */}
+              <div className="flex h-14 sm:h-16 shrink-0 items-center gap-2 sm:gap-4 bg-white border-b border-gray-200 px-4 sm:px-6">
+                <SidebarTrigger className="-ml-1 p-1.5 sm:p-2" />
+                <Separator
+                  orientation="vertical"
+                  className="mr-2 h-4 hidden sm:block"
+                />
+                <Breadcrumb className="hidden sm:block">
                   <BreadcrumbList>
                     <BreadcrumbItem>
                       <BreadcrumbPage>Dashboard</BreadcrumbPage>
                     </BreadcrumbItem>
                   </BreadcrumbList>
                 </Breadcrumb>
-                <div className="ml-auto flex items-center gap-3">
+                {/* Mobile title */}
+                <div className="sm:hidden">
+                  <h1 className="text-lg font-semibold text-gray-900">
+                    Dashboard
+                  </h1>
+                </div>
+                <div className="ml-auto flex items-center gap-2 sm:gap-3">
                   <NotificationsDropdown notifications={notifications} />
                 </div>
               </div>
@@ -237,7 +247,7 @@ export default function EventManagement() {
   // Event Information View
   if (currentView === "view") {
     return (
-      <div className="min-h-screen bg-white font-['Plus_Jakarta_Sans']">
+      <div className="min-h-screen bg-white font-['Plus_Jakarta_Sans'] overflow-hidden smooth-scroll">
         <style jsx>{animationStyles}</style>
         <EventInformation
           event={viewingEvent}
@@ -251,17 +261,20 @@ export default function EventManagement() {
 
   // Create/Edit Event Form View
   return (
-    <div className="min-h-screen bg-white font-['Plus_Jakarta_Sans']">
+    <div className="min-h-screen bg-white font-['Plus_Jakarta_Sans'] overflow-hidden smooth-scroll">
       <style jsx>{animationStyles}</style>
 
       <SidebarProvider>
         <AppSidebar onNavigate={handleNavigation} currentView={currentView} />
         <SidebarInset>
-          {/* Header */}
-          <div className="flex h-16 shrink-0 items-center gap-2 bg-white border-b border-gray-200 px-6">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <Breadcrumb>
+          {/* Header - Mobile Responsive */}
+          <div className="flex h-14 sm:h-16 shrink-0 items-center gap-2 sm:gap-4 bg-white border-b border-gray-200 px-4 sm:px-6">
+            <SidebarTrigger className="-ml-1 p-1.5 sm:p-2" />
+            <Separator
+              orientation="vertical"
+              className="mr-2 h-4 hidden sm:block"
+            />
+            <Breadcrumb className="hidden sm:block">
               <BreadcrumbList>
                 <BreadcrumbItem>
                   <BreadcrumbPage>
@@ -270,11 +283,17 @@ export default function EventManagement() {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
+            {/* Mobile title */}
+            <div className="sm:hidden">
+              <h1 className="text-lg font-semibold text-gray-900">
+                {currentView === "create" ? "Create Event" : "Edit Event"}
+              </h1>
+            </div>
           </div>
 
           {/* Main Content */}
-          <main className="flex-1 overflow-auto">
-            <section className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 lg:px-8">
+          <main className="flex-1 overflow-auto safe-area-padding">
+            <section className="py-8 sm:py-12 lg:py-16 xl:py-24 px-4 sm:px-6 lg:px-8">
               <EventForm
                 formData={formData}
                 onInputChange={handleInputChange}

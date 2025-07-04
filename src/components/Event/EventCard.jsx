@@ -32,10 +32,10 @@ export function EventCard({ event, onView }) {
   return (
     <div
       onClick={() => onView(event)}
-      className="bg-white rounded-3xl border border-gray-200 overflow-hidden hover:shadow-2xl hover:scale-105 transition-all duration-300 animate-on-scroll cursor-pointer"
+      className="bg-white rounded-2xl sm:rounded-3xl border border-gray-200 overflow-hidden hover:shadow-2xl hover:scale-105 transition-all duration-300 animate-on-scroll cursor-pointer active:scale-95"
     >
       {/* Event Image */}
-      <div className="relative h-64 bg-gradient-to-br from-blue-100 to-blue-200">
+      <div className="relative h-48 sm:h-56 lg:h-64 bg-gradient-to-br from-blue-100 to-blue-200">
         <img
           src={event.image || "/placeholder.svg?height=256&width=400"}
           alt={event.name}
@@ -44,34 +44,36 @@ export function EventCard({ event, onView }) {
       </div>
 
       {/* Event Content */}
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xl font-bold text-black">{event.name}</h3>
-          <span className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-xs font-semibold">
+      <div className="p-4 sm:p-6">
+        <div className="flex items-start justify-between mb-3 gap-2">
+          <h3 className="text-lg sm:text-xl font-bold text-black line-clamp-2 leading-tight">
+            {event.name}
+          </h3>
+          <span className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-xs font-semibold flex-shrink-0">
             {getEventTypeLabel(event.eventType)}
           </span>
         </div>
 
-        <div className="space-y-3">
-          <div className="flex items-center gap-3 text-gray-600">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center">
-              <MapPin className="w-4 h-4 text-blue-600" />
+        <div className="space-y-2 sm:space-y-3">
+          <div className="flex items-center gap-2 sm:gap-3 text-gray-600">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
+              <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600" />
             </div>
-            <span className="text-sm font-medium">{event.venue}</span>
+            <span className="text-sm font-medium truncate">{event.venue}</span>
           </div>
 
-          <div className="flex items-center gap-3 text-gray-600">
-            <div className="w-8 h-8 bg-gradient-to-br from-green-100 to-green-200 rounded-xl flex items-center justify-center">
-              <Calendar className="w-4 h-4 text-green-600" />
+          <div className="flex items-center gap-2 sm:gap-3 text-gray-600">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-green-100 to-green-200 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
+              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-600" />
             </div>
             <span className="text-sm font-medium">
               {formatDate(event.date)}
             </span>
           </div>
 
-          <div className="flex items-center gap-3 text-gray-600">
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center">
-              <Clock className="w-4 h-4 text-purple-600" />
+          <div className="flex items-center gap-2 sm:gap-3 text-gray-600">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600" />
             </div>
             <span className="text-sm font-medium">
               {formatTime(event.startTime)} - {formatTime(event.endTime)}
@@ -85,18 +87,20 @@ export function EventCard({ event, onView }) {
 
 export function EmptyEventCard({ onCreate }) {
   return (
-    <div className="text-center py-20 animate-on-scroll">
-      <div className="bg-white rounded-3xl p-12 max-w-md mx-auto border border-gray-200 shadow-2xl">
-        <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-3xl flex items-center justify-center mx-auto mb-6">
-          <Calendar className="w-8 h-8 text-blue-600" />
+    <div className="col-span-full text-center py-16 sm:py-20 animate-on-scroll">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-8 sm:p-12 max-w-md mx-auto border border-gray-200 shadow-2xl">
+        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl sm:rounded-3xl flex items-center justify-center mx-auto mb-4 sm:mb-6">
+          <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
         </div>
-        <h3 className="text-xl font-bold text-black mb-2">No Events Yet</h3>
-        <p className="text-gray-600 mb-6">
+        <h3 className="text-lg sm:text-xl font-bold text-black mb-2">
+          No Events Yet
+        </h3>
+        <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">
           Get started by creating your first event
         </p>
         <button
           onClick={onCreate}
-          className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-xl hover:scale-105 transition-all duration-300"
+          className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-xl hover:scale-105 transition-all duration-300 w-full sm:w-auto active:scale-95"
         >
           Create Your First Event
         </button>
