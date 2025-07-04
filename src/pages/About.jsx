@@ -8,8 +8,7 @@ import {
   Target,
   AlertCircle,
 } from "lucide-react";
-
-const baseUrl = import.meta.env.REACT_APP_API_BASE_URL || "http://192.168.31.249:9000";
+import { teamAPI } from "../utils/api";
 
 export default function About() {
   const [teamMembers, setTeamMembers] = useState([]);
@@ -22,13 +21,10 @@ export default function About() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch(`${baseUrl}/site_setting/team-members/`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+        const data = await teamAPI.getMembers();
         setTeamMembers(data);
       } catch (err) {
+        console.error('Error fetching team members:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -404,22 +400,19 @@ export default function About() {
                       {/* Profile Image */}
                       <div className="mb-6">
                         <img
-  src={
-    member.avatar
-      ? member.avatar.startsWith("http")
-        ? member.avatar.replace(
-            "localhost:8000",
-            baseUrl.replace(/^https?:\/\//, "")
-          )
-        : `${baseUrl}${member.avatar}`
-      : "/placeholder.svg?height=128&width=128"
-  }
-  alt={member.name}
-  className="w-32 h-32 rounded-full mx-auto object-cover"
-  onError={(e) => {
-    e.target.src = "/placeholder.svg?height=128&width=128";
-  }}
-/>
+                          src={
+                            member.avatar
+                              ? member.avatar.startsWith("http")
+                                ? member.avatar
+                                : `${import.meta.env.VITE_API_URL || "https://snwv9cpm-8000.asse.devtunnels.ms"}${member.avatar}`
+                              : "/placeholder.svg?height=128&width=128"
+                          }
+                          alt={member.name}
+                          className="w-32 h-32 rounded-full mx-auto object-cover"
+                          onError={(e) => {
+                            e.target.src = "/placeholder.svg?height=128&width=128";
+                          }}
+                        />
                       </div>
                       {/* Member Info */}
                       <div className="text-center mb-6">
