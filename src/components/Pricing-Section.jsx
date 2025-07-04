@@ -2,7 +2,6 @@
 
 import { Check, X } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
-import {process} from "process";
 const baseUrl = import.meta.env.REACT_APP_API_BASE_URL;
 
 
