@@ -1,0 +1,371 @@
+import {
+  ArrowLeft,
+  Calendar,
+  MapPin,
+  Clock,
+  Edit3,
+  Trash2,
+  Play,
+  Users,
+  Heart,
+} from "lucide-react";
+
+export function EventInformation({ event, onEdit, onDelete, onBack }) {
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const formatTime = (timeString) => {
+    const [hours, minutes] = timeString.split(":");
+    const date = new Date();
+    date.setHours(Number.parseInt(hours), Number.parseInt(minutes));
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  const getYouTubeVideoId = (url) => {
+    if (!url) return null;
+    const regExp =
+      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+  };
+
+  const getEventTypeLabel = (eventType) => {
+    const eventTypes = {
+      wedding: "Wedding",
+    };
+    return eventTypes[eventType] || "Wedding";
+  };
+
+  // Sample photo album data
+  const photoAlbum = [
+    "/placeholder.svg?height=200&width=300",
+    "/placeholder.svg?height=200&width=300",
+    "/placeholder.svg?height=200&width=300",
+    "/placeholder.svg?height=200&width=300",
+  ];
+
+  return (
+    <div className="min-h-screen bg-white font-['Plus_Jakarta_Sans']">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={onBack}
+                className="p-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                aria-label="Go back"
+              >
+                <ArrowLeft className="w-6 h-6" />
+              </button>
+              <h1 className="text-2xl font-bold text-gray-900">{event.name}</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onEdit(event)}
+                className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl transition-colors"
+                aria-label="Edit event"
+              >
+                <Edit3 className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => onDelete(event.id)}
+                className="p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl transition-colors"
+                aria-label="Delete event"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Event Image */}
+        <div className="relative mb-12 animate-on-scroll">
+          <div className="relative h-80 bg-gradient-to-br from-blue-100 to-blue-200 rounded-3xl overflow-hidden">
+            <img
+              src={event.image || "/placeholder.svg?height=320&width=800"}
+              alt={event.name}
+              className="w-full h-full object-cover"
+            />
+            {/* Decorative wavy lines overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+          </div>
+
+          {/* Decorative wavy lines below image */}
+          <div className="mt-4 space-y-2">
+            <div className="h-1 bg-gradient-to-r from-blue-200 via-blue-300 to-blue-200 rounded-full opacity-60"></div>
+            <div className="h-1 bg-gradient-to-r from-blue-100 via-blue-200 to-blue-100 rounded-full opacity-40"></div>
+            <div className="h-1 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded-full opacity-30"></div>
+          </div>
+        </div>
+
+        {/* Event Details Section */}
+        <div className="mb-12 animate-on-scroll delay-200">
+          <h2 className="text-3xl font-bold text-gray-900 mb-6">
+            Event Details
+          </h2>
+
+          <div className="bg-white rounded-3xl p-8 border border-gray-200 shadow-lg">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center">
+                  <Calendar className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Date</p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {formatDate(event.date)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Time</p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {formatTime(event.startTime)} - {formatTime(event.endTime)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center">
+                  <MapPin className="w-6 h-6 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Venue</p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {event.venue}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-pink-100 to-pink-200 rounded-2xl flex items-center justify-center">
+                  <Heart className="w-6 h-6 text-pink-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Event Type</p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {getEventTypeLabel(event.eventType)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {event.details && (
+              <div className="pt-6 border-t border-gray-200">
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                  Description
+                </h3>
+                <p className="text-gray-700 leading-relaxed">{event.details}</p>
+              </div>
+            )}
+
+            {event.hosts && event.hosts.length > 0 && (
+              <div className="pt-6 border-t border-gray-200 mt-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                  Hosts
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {event.hosts.map((host, index) => (
+                    <div key={host.id} className="bg-gray-50 rounded-2xl p-4">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl flex items-center justify-center">
+                          <Users className="w-5 h-5 text-orange-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">
+                            {index === 0 ? "Bride" : "Groom"}
+                          </p>
+                          <p className="font-semibold text-gray-900">
+                            {host.name}
+                          </p>
+                        </div>
+                      </div>
+                      {host.parentNames && host.parentNames.length > 0 && (
+                        <div>
+                          <p className="text-sm text-gray-600 mb-2">Parents:</p>
+                          <div className="space-y-1">
+                            {host.parentNames.map(
+                              (parentName, parentIndex) =>
+                                parentName && (
+                                  <p
+                                    key={parentIndex}
+                                    className="text-sm text-gray-700 bg-white rounded-lg px-3 py-1"
+                                  >
+                                    {parentName}
+                                  </p>
+                                )
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Agenda Section */}
+        {event.agenda && event.agenda.length > 0 && (
+          <div className="mb-12 animate-on-scroll delay-300">
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">Agenda</h2>
+
+            <div className="space-y-6">
+              {event.agenda.map((day, dayIndex) => (
+                <div
+                  key={day.id}
+                  className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl p-8 border border-blue-200"
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white font-bold">
+                      {String(dayIndex + 1).padStart(2, "0")}
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-blue-900">
+                        Day {dayIndex + 1}
+                      </h3>
+                      {day.date && (
+                        <p className="text-blue-700">{formatDate(day.date)}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {day.activities &&
+                      day.activities.map(
+                        (activity) =>
+                          activity.time &&
+                          activity.activity && (
+                            <div
+                              key={activity.id}
+                              className="bg-white rounded-2xl p-4 border border-blue-100"
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold min-w-fit">
+                                  {formatTime(activity.time)}
+                                </div>
+                                <p className="text-gray-800 font-medium">
+                                  {activity.activity}
+                                </p>
+                              </div>
+                            </div>
+                          )
+                      )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Photo Album Section */}
+        <div className="mb-12 animate-on-scroll delay-400">
+          <h2 className="text-3xl font-bold text-gray-900 mb-6">Photo Album</h2>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {photoAlbum.map((photo, index) => (
+              <div
+                key={index}
+                className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl overflow-hidden hover:scale-105 transition-transform duration-300 cursor-pointer"
+              >
+                <img
+                  src={photo}
+                  alt={`Event photo ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Video Section */}
+        {event.youtubeUrl && getYouTubeVideoId(event.youtubeUrl) && (
+          <div className="mb-12 animate-on-scroll delay-500">
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">
+              Event Video
+            </h2>
+
+            <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-lg">
+              <div className="relative aspect-video bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl overflow-hidden">
+                <iframe
+                  src={`https://www.youtube.com/embed/${getYouTubeVideoId(
+                    event.youtubeUrl
+                  )}`}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  title="Event Video"
+                  className="absolute inset-0"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Map Section */}
+        {event.googleMapLink && (
+          <div className="mb-12 animate-on-scroll delay-600">
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">Location</h2>
+
+            <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-lg">
+              <div className="relative aspect-video bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl overflow-hidden">
+                <iframe
+                  src={`https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY&q=${encodeURIComponent(
+                    event.venue
+                  )}`}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Event Location"
+                  className="absolute inset-0"
+                />
+              </div>
+              <div className="mt-4 flex items-center gap-3">
+                <MapPin className="w-5 h-5 text-gray-500" />
+                <div>
+                  <p className="font-semibold text-gray-900">{event.venue}</p>
+                  {event.googleMapLink && (
+                    <a
+                      href={event.googleMapLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 text-sm transition-colors"
+                    >
+                      Open in Google Maps
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
