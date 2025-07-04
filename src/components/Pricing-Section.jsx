@@ -2,7 +2,7 @@
 
 import { Check, X } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
-const baseUrl = import.meta.env.REACT_APP_API_BASE_URL || "http://192.168.31.249:9000";
+import { pricingAPI } from "../utils/api"
 // const baseUrl = import.meta.env.REACT_APP_API_BASE_URL || "http://192.168.226.155:9000";
 
 // Pa$$w0rd!
@@ -21,7 +21,7 @@ export default function PricingSection({
   onPlanSelect,
 }) {
   const [fetchedPlans, setFetchedPlans] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(true)  
   const [error, setError] = useState(null)
   const [visibleCards, setVisibleCards] = useState([])
   const [hasAnimated, setHasAnimated] = useState(false)
@@ -117,12 +117,7 @@ export default function PricingSection({
         setLoading(true)
         setError(null)
         
-        const response = await fetch(`${baseUrl}/site_setting/pricing-plans/`)
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        
-        const data = await response.json()
+        const data = await pricingAPI.getPlans()
         
         // Transform API data to match component structure
         const transformedPlans = data.map((plan, index) => ({

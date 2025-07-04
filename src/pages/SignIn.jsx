@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { Eye, EyeOff, Mail, Lock } from "lucide-react"
 // Check if user is authenticated
-import { isAuthenticated, authenticatedFetch } from '@/utils/auth'
 // const baseUrl = 'http://192.168.226.155:9000'
 const baseUrl = import.meta.env.REACT_APP_API_BASE_URL || "http://192.168.31.249:9000";
 

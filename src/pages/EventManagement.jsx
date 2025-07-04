@@ -27,6 +27,7 @@ import {
   animationStyles,
   useScrollAnimation,
 } from "../components/Event/animations";
+import { eventAPI } from "../utils/api";
 import "../styles/mobile-enhancements.css";
 
 // Main Event Management Component
@@ -35,6 +36,8 @@ export default function EventManagement() {
   const [events, setEvents] = useState(sampleEvents);
   const [editingEvent, setEditingEvent] = useState(null);
   const [viewingEvent, setViewingEvent] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     eventType: "",
     customEventType: "",
@@ -50,6 +53,28 @@ export default function EventManagement() {
     googleMapLink: "",
     image: "",
   });
+
+  // Fetch events from API
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await eventAPI.getEvents();
+        setEvents(data);
+      } catch (err) {
+        console.error('Error fetching events:', err);
+        setError(err.message);
+        // Fall back to sample events if API fails
+        setEvents(sampleEvents);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    // Uncomment the line below to enable API integration
+    // fetchEvents();
+  }, []);
 
   // Add scroll animation effect
   useEffect(() => {
@@ -143,41 +168,94 @@ export default function EventManagement() {
     setCurrentView("view");
   };
 
-  const handleDeleteEvent = (eventId) => {
+  const handleDeleteEvent = async (eventId) => {
     console.log("Deleting event with ID:", eventId);
     console.log("Current events:", events);
 
     if (window.confirm("Are you sure you want to delete this event?")) {
-      const updatedEvents = events.filter((event) => {
-        console.log("Checking event:", event.id, "against:", eventId);
-        return event.id !== eventId;
-      });
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Delete event via API
+        await eventAPI.deleteEvent(eventId);
+        
+        const updatedEvents = events.filter((event) => {
+          console.log("Checking event:", event.id, "against:", eventId);
+          return event.id !== eventId;
+        });
 
-      console.log("Updated events:", updatedEvents);
-      setEvents(updatedEvents);
+        console.log("Updated events:", updatedEvents);
+        setEvents(updatedEvents);
+      } catch (err) {
+        console.error('Error deleting event:', err);
+        setError(err.message);
+        
+        // Fallback to local state update if API fails
+        const updatedEvents = events.filter((event) => {
+          console.log("Checking event:", event.id, "against:", eventId);
+          return event.id !== eventId;
+        });
+
+        console.log("Updated events:", updatedEvents);
+        setEvents(updatedEvents);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const handleSaveEvent = () => {
-    if (currentView === "create") {
-      const newEvent = {
-        ...formData,
-        id: Date.now(),
-      };
-      setEvents([...events, newEvent]);
-    } else if (currentView === "edit") {
-      setEvents(
-        events.map((event) =>
-          event.id === editingEvent.id
-            ? { ...formData, id: editingEvent.id }
-            : event
-        )
-      );
+  const handleSaveEvent = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      if (currentView === "create") {
+        // Create new event via API
+        const newEvent = await eventAPI.createEvent(formData);
+        setEvents([...events, newEvent]);
+      } else if (currentView === "edit") {
+        // Update existing event via API
+        const updatedEvent = await eventAPI.updateEvent(editingEvent.id, formData);
+        setEvents(
+          events.map((event) =>
+            event.id === editingEvent.id ? updatedEvent : event
+          )
+        );
+      }
+      
+      setCurrentView("list");
+      resetForm();
+      setEditingEvent(null);
+      setViewingEvent(null);
+    } catch (err) {
+      console.error('Error saving event:', err);
+      setError(err.message);
+      
+      // Fallback to local state update if API fails
+      if (currentView === "create") {
+        const newEvent = {
+          ...formData,
+          id: Date.now(),
+        };
+        setEvents([...events, newEvent]);
+      } else if (currentView === "edit") {
+        setEvents(
+          events.map((event) =>
+            event.id === editingEvent.id
+              ? { ...formData, id: editingEvent.id }
+              : event
+          )
+        );
+      }
+      
+      setCurrentView("list");
+      resetForm();
+      setEditingEvent(null);
+      setViewingEvent(null);
+    } finally {
+      setLoading(false);
     }
-    setCurrentView("list");
-    resetForm();
-    setEditingEvent(null);
-    setViewingEvent(null);
   };
 
   const handleCancel = () => {
@@ -231,11 +309,25 @@ export default function EventManagement() {
                 </div>
               </div>
 
+              {/* Error Display */}
+              {error && (
+                <div className="mx-4 sm:mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-2xl">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center">
+                      <span className="text-red-600 text-xs">!</span>
+                    </div>
+                    <p className="text-red-800 font-medium">Error</p>
+                  </div>
+                  <p className="text-red-600 text-sm mt-1">{error}</p>
+                </div>
+              )}
+
               <EventList
                 events={events}
                 onCreateEvent={handleCreateEvent}
                 onViewEvent={handleViewEvent}
                 analyticsData={analyticsData}
+                loading={loading}
               />
             </main>
           </SidebarInset>
