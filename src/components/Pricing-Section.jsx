@@ -2,7 +2,7 @@
 
 import { Check, X } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
-const baseUrl = import.meta.env.REACT_APP_API_BASE_URL;
+const baseUrl = import.meta.env.REACT_APP_API_BASE_URL || "http://192.168.226.155:9000";
 
 
 export default function PricingSection({
@@ -116,7 +116,7 @@ export default function PricingSection({
         setLoading(true)
         setError(null)
         
-        const response = await fetch(`${baseUrl}/pricing-plans/`)
+        const response = await fetch(`${baseUrl}/site_setting/pricing-plans/`)
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
