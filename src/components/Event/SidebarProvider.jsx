@@ -4,13 +4,13 @@ import { SidebarContext, useSidebar } from "./SidebarContext";
 
 // Enhanced Sidebar Provider with CSS-only mobile detection to prevent flicker
 export const SidebarProvider = ({ children }) => {
-  const [isCollapsed, setIsCollapsed] = useState(true); // Start with sidebar collapsed
+  const [isCollapsed, setIsCollapsed] = useState(false); // Start with sidebar expanded
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const toggleSidebar = () => {
     // On mobile, toggle the mobile overlay
     // On desktop, toggle the collapsed state
-    if (window.innerWidth < 768) {
+    if (window.innerWidth < 1024) {
       setIsMobileOpen(!isMobileOpen);
     } else {
       setIsCollapsed(!isCollapsed);
@@ -30,7 +30,7 @@ export const SidebarProvider = ({ children }) => {
     };
 
     const handleResize = () => {
-      if (window.innerWidth >= 768) {
+      if (window.innerWidth >= 1024) {
         setIsMobileOpen(false);
       }
     };
@@ -51,21 +51,15 @@ export const SidebarProvider = ({ children }) => {
         toggleSidebar,
         isMobileOpen,
         closeMobileSidebar,
+        setIsCollapsed,
       }}
     >
-      <div className="flex h-screen bg-gray-50">
-        {/* Mobile Overlay */}
-        {isMobileOpen && (
-          <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300 md:hidden"
-            onClick={closeMobileSidebar}
-          />
-        )}
-        {children}
-      </div>
+      {children}
     </SidebarContext.Provider>
   );
 };
+
+export { useSidebar };
 
 export const SidebarInset = ({ children }) => {
   const { isCollapsed } = useSidebar();

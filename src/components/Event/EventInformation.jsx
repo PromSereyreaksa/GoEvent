@@ -140,7 +140,7 @@ export function EventInformation({ event, onEdit, onDelete, onBack }) {
               >
                 <ArrowLeft className="w-6 h-6" />
               </button>
-              <h1 className="text-2xl font-bold text-gray-900 text-center">
+              <h1 className="text-xl font-bold text-gray-900 text-center">
                 {event.name}
               </h1>
             </div>
@@ -320,7 +320,7 @@ export function EventInformation({ event, onEdit, onDelete, onBack }) {
         {/* Agenda Section */}
         {event.agenda && event.agenda.length > 0 && (
           <div className="mb-12 animate-on-scroll delay-300">
-            <h2 className="text-3xl font-bold text-gray-900 mb-6">Agenda</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">Agenda</h2>
 
             <div className="space-y-6">
               {event.agenda.map((day, dayIndex) => {
@@ -400,7 +400,7 @@ export function EventInformation({ event, onEdit, onDelete, onBack }) {
 
         {/* Photo Album Section */}
         <div className="mb-12 animate-on-scroll delay-400">
-          <h2 className="text-3xl font-bold text-gray-900 mb-6">Photo Album</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-6">Photo Gallary</h2>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {photoAlbum.map((photo, index) => (

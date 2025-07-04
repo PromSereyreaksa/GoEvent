@@ -1,4 +1,3 @@
-import { Plus } from "lucide-react";
 import { EventCard, EmptyEventCard } from "./EventCard";
 import { AnalyticsWidget } from "./AnalyticsWidget";
 
@@ -21,13 +20,6 @@ export function EventList({
               Manage all your events in one place
             </p>
           </div>
-          <button
-            onClick={onCreateEvent}
-            className="bg-blue-600 text-white hover:bg-blue-700 px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold hover:shadow-2xl hover:scale-105 transition-all duration-300 inline-flex items-center justify-center gap-2 shadow-lg animate-on-scroll delay-200 w-full sm:w-fit active:scale-95"
-          >
-            <Plus className="w-5 h-5" />
-            Create Event
-          </button>
         </div>
 
         {/* Analytics Widget */}

@@ -1,10 +1,30 @@
-import { Calendar, Plus, Home, BarChart3, Settings, X } from "lucide-react";
+import {
+  Plus,
+  Home,
+  BarChart3,
+  Settings,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
+  Users,
+  Activity,
+} from "lucide-react";
 import { useSidebar } from "./SidebarContext";
 
-// Enhanced App Sidebar Component with CSS-only responsive design
-export const AppSidebar = ({ onNavigate, currentView }) => {
-  const { isCollapsed, toggleSidebar, isMobileOpen, closeMobileSidebar } =
-    useSidebar();
+// Enhanced App Sidebar Component with Homepage styling
+export const AppSidebar = ({ onNavigate, currentView, isOpen, onClose }) => {
+  const {
+    isCollapsed,
+    toggleSidebar,
+    isMobileOpen,
+    closeMobileSidebar,
+    setIsCollapsed,
+  } = useSidebar();
+
+  // Use props for mobile state if provided (Homepage style), otherwise use context
+  const mobileOpen = isOpen !== undefined ? isOpen : isMobileOpen;
+  const closeMobile = onClose || closeMobileSidebar;
 
   const sidebarItems = [
     {
@@ -12,12 +32,6 @@ export const AppSidebar = ({ onNavigate, currentView }) => {
       icon: Home,
       view: "list",
       isActive: currentView === "list",
-    },
-    {
-      title: "Create Event",
-      icon: Plus,
-      view: "create",
-      isActive: currentView === "create",
     },
     {
       title: "Analytics",
@@ -34,145 +48,178 @@ export const AppSidebar = ({ onNavigate, currentView }) => {
   ];
 
   const handleNavigation = (view) => {
-    onNavigate(view);
-    closeMobileSidebar();
+    if (onNavigate) {
+      onNavigate(view);
+    }
+    if (closeMobile) {
+      closeMobile();
+    }
   };
 
-  const sidebarSections = [
-    {
-      type: "navigation",
-      items: sidebarItems,
-    },
-    {
-      type: "profile",
-      user: {
-        name: "Prom Sereyreaksa",
-        email: "prumsereyreaksa@gmail.com",
-        avatar: "reaksa.jpg",
-      },
-    },
-  ];
+  const user = {
+    name: "Prom Sereyreaksa",
+    email: "prumsereyreaksa@gmail.com",
+    avatar: "reaksa.jpg",
+  };
 
   return (
-    <aside
-      className={`fixed left-0 top-0 h-full bg-white border-r border-gray-200 flex flex-col z-50 shadow-2xl transition-all duration-300 ease-in-out
-        -translate-x-full md:translate-x-0
-        ${isMobileOpen ? "translate-x-0" : ""}
-        w-64 md:w-16 ${!isCollapsed ? "md:w-64" : ""}`}
-    >
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <a href="/" className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center">
-            <Calendar className="w-5 h-5 text-white" />
+    <>
+      {/* Mobile Overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={closeMobile}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed left-0 top-0 h-full bg-gradient-to-b from-blue-700 via-blue-500 to-white border-r border-blue-200 z-50 transition-all duration-300 ${
+          isCollapsed ? "w-16" : "w-64"
+        } ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+      >
+        {/* Header */}
+        <div className="p-6 border-b border-blue-200/50">
+          <div className="flex items-center justify-between">
+            {!isCollapsed && (
+              <div className="flex items-center">
+                <h1 className="font-bold text-white text-xl">GoEvent</h1>
+              </div>
+            )}
+
+            {isCollapsed && (
+              <div className="mx-auto">
+                <span className="text-white font-bold text-l">GE</span>
+              </div>
+            )}
+
+            {/* Mobile close button */}
+            <button
+              onClick={closeMobile}
+              className="lg:hidden p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Desktop collapse button */}
+            {!isCollapsed && (
+              <button
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="hidden lg:flex p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            )}
           </div>
-          <div className="block md:hidden md:group-[.expanded]:block">
-            <h1 className="font-bold text-gray-900 text-lg">GoEvent</h1>
-            <p className="text-xs text-gray-600">Event Management</p>
-          </div>
-          {!isCollapsed && (
-            <div className="hidden md:block">
-              <h1 className="font-bold text-gray-900 text-lg">GoEvent</h1>
-              <p className="text-xs text-gray-600">Event Management</p>
+
+          {/* Expand button when collapsed */}
+          {isCollapsed && (
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="hidden lg:flex p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
           )}
-        </a>
+        </div>
 
-        <button
-          onClick={closeMobileSidebar}
-          className="p-2 text-gray-500 hover:bg-gray-100 rounded-xl transition-colors md:hidden"
-          aria-label="Close sidebar"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-
-      {sidebarSections.map((section, idx) => {
-        if (section.type === "navigation") {
-          return (
-            <nav className="flex-1 p-4" key={idx}>
-              <ul className="space-y-2">
-                {section.items.map((item) => (
-                  <li key={item.title}>
-                    <button
-                      onClick={() => handleNavigation(item.view)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left transition-all duration-200 group ${
-                        item.isActive
-                          ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg"
-                          : "text-gray-700 hover:bg-gray-50 hover:shadow-md"
-                      } md:justify-center ${
-                        !isCollapsed ? "md:justify-start" : ""
-                      }`}
-                      title={isCollapsed ? item.title : ""}
-                    >
-                      <item.icon className={`w-5 h-5 flex-shrink-0`} />
-                      <span className="font-semibold truncate md:hidden">
-                        {item.title}
-                      </span>
-                      {!isCollapsed && (
-                        <span className="font-semibold truncate hidden md:block">
-                          {item.title}
-                        </span>
-                      )}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          );
-        }
-        if (section.type === "profile") {
-          return (
-            <div className="p-4 border-t border-gray-200 md:hidden" key={idx}>
-              <div className="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 transition-colors">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">
-                    {section.user.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 truncate">
-                    {section.user.name}
-                  </p>
-                  <p className="text-xs text-gray-600 truncate">
-                    {section.user.email}
-                  </p>
-                </div>
+        {/* User Info */}
+        {!isCollapsed && user && (
+          <div className="p-4 border-b border-blue-200/50">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-white via-blue-100 to-blue-200 rounded-full flex items-center justify-center shadow-sm">
+                <span className="text-blue-700 font-medium text-sm">
+                  {user.name?.charAt(0) || "U"}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white truncate">
+                  {user.name || "User"}
+                </p>
+                <p className="text-xs text-blue-100 truncate">{user.email}</p>
               </div>
             </div>
-          );
-        }
-        if (section.type === "profile" && !isCollapsed) {
-          return (
-            <div
-              className="p-4 border-t border-gray-200 hidden md:block"
-              key={idx}
-            >
-              <div className="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 transition-colors">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">
-                    {section.user.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 truncate">
-                    {section.user.name}
-                  </p>
-                  <p className="text-xs text-gray-600 truncate">
-                    {section.user.email}
-                  </p>
-                </div>
-              </div>
+          </div>
+        )}
+
+        {/* Collapsed User Avatar */}
+        {isCollapsed && user && (
+          <div className="p-4 border-b border-blue-200/50 flex justify-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-white via-blue-100 to-blue-200 rounded-full flex items-center justify-center shadow-sm">
+              <span className="text-blue-700 font-medium text-xs">
+                {user.name?.charAt(0) || "U"}
+              </span>
             </div>
-          );
-        }
-        return null;
-      })}
-    </aside>
+          </div>
+        )}
+
+        {/* Navigation */}
+        <nav className="p-4 space-y-2 flex-1">
+          {sidebarItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <div key={item.view} className="relative group">
+                <button
+                  onClick={() => handleNavigation(item.view)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                    isCollapsed ? "justify-center" : "justify-start"
+                  } ${
+                    item.isActive
+                      ? "bg-white/20 text-white border border-white/30 shadow-sm"
+                      : "text-blue-100 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  <Icon
+                    className={`w-5 h-5 flex-shrink-0 ${
+                      item.isActive
+                        ? "text-white"
+                        : "text-blue-200 group-hover:text-white"
+                    }`}
+                  />
+                  {!isCollapsed && (
+                    <span className="font-medium text-sm">{item.title}</span>
+                  )}
+                </button>
+
+                {/* Tooltip for collapsed state */}
+                {isCollapsed && (
+                  <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                    {item.title}
+                    <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-gray-900"></div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </nav>
+
+        {/* Footer Upgrade Section */}
+        {!isCollapsed && (
+          <div className="p-4 border-t border-blue-200/50">
+            <div className="bg-gradient-to-r from-white/10 to-white/5 rounded-lg p-4 backdrop-blur-sm">
+              <div className="flex items-center gap-3 mb-2">
+                <BarChart3 className="w-5 h-5 text-white" />
+                <span className="font-semibold text-sm text-white">
+                  Upgrade Plan
+                </span>
+              </div>
+              <p className="text-xs text-blue-100 mb-3">
+                Get access to premium features and unlimited events.
+              </p>
+              <button
+                onClick={() => handleNavigation("pricing")}
+                className="w-full bg-gradient-to-r from-white via-blue-50 to-blue-100 text-blue-700 text-xs font-semibold py-2 px-3 rounded-lg hover:shadow-lg transition-all duration-200"
+              >
+                Upgrade Now
+              </button>
+            </div>
+          </div>
+        )}
+      </aside>
+    </>
   );
 };

@@ -1,23 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Menu } from "lucide-react";
 import {
   SidebarProvider,
-  SidebarInset,
-  SidebarTrigger,
+  useSidebar,
 } from "../components/Event/SidebarProvider";
 import { AppSidebar } from "../components/Event/AppSidebar";
 import { NotificationsDropdown } from "../components/Event/NotificationsDropdown";
 import { EventList } from "../components/Event/EventList";
 import { EventForm } from "../components/Event/EventForm";
 import { EventInformation } from "../components/Event/EventInformation";
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbPage,
-  Separator,
-} from "../components/Event/BreadcrumbComponents";
 import {
   analyticsData,
   notifications,
@@ -63,7 +56,7 @@ export default function EventManagement() {
         const data = await eventAPI.getEvents();
         setEvents(data);
       } catch (err) {
-        console.error('Error fetching events:', err);
+        console.error("Error fetching events:", err);
         setError(err.message);
         // Fall back to sample events if API fails
         setEvents(sampleEvents);
@@ -71,7 +64,7 @@ export default function EventManagement() {
         setLoading(false);
       }
     };
-    
+
     // Uncomment the line below to enable API integration
     // fetchEvents();
   }, []);
@@ -97,7 +90,7 @@ export default function EventManagement() {
   }, []);
 
   // Hide footer
-      useEffect(() => {
+  useEffect(() => {
     const footer = document.querySelector("footer");
     if (footer) {
       footer.style.display = "none";
@@ -109,7 +102,6 @@ export default function EventManagement() {
       }
     };
   }, []);
-
 
   const resetForm = () => {
     setFormData({
@@ -191,10 +183,10 @@ export default function EventManagement() {
       try {
         setLoading(true);
         setError(null);
-        
+
         // Delete event via API
         await eventAPI.deleteEvent(eventId);
-        
+
         const updatedEvents = events.filter((event) => {
           console.log("Checking event:", event.id, "against:", eventId);
           return event.id !== eventId;
@@ -203,9 +195,9 @@ export default function EventManagement() {
         console.log("Updated events:", updatedEvents);
         setEvents(updatedEvents);
       } catch (err) {
-        console.error('Error deleting event:', err);
+        console.error("Error deleting event:", err);
         setError(err.message);
-        
+
         // Fallback to local state update if API fails
         const updatedEvents = events.filter((event) => {
           console.log("Checking event:", event.id, "against:", eventId);
@@ -224,29 +216,32 @@ export default function EventManagement() {
     try {
       setLoading(true);
       setError(null);
-      
+
       if (currentView === "create") {
         // Create new event via API
         const newEvent = await eventAPI.createEvent(formData);
         setEvents([...events, newEvent]);
       } else if (currentView === "edit") {
         // Update existing event via API
-        const updatedEvent = await eventAPI.updateEvent(editingEvent.id, formData);
+        const updatedEvent = await eventAPI.updateEvent(
+          editingEvent.id,
+          formData
+        );
         setEvents(
           events.map((event) =>
             event.id === editingEvent.id ? updatedEvent : event
           )
         );
       }
-      
+
       setCurrentView("list");
       resetForm();
       setEditingEvent(null);
       setViewingEvent(null);
     } catch (err) {
-      console.error('Error saving event:', err);
+      console.error("Error saving event:", err);
       setError(err.message);
-      
+
       // Fallback to local state update if API fails
       if (currentView === "create") {
         const newEvent = {
@@ -263,7 +258,7 @@ export default function EventManagement() {
           )
         );
       }
-      
+
       setCurrentView("list");
       resetForm();
       setEditingEvent(null);
@@ -288,66 +283,82 @@ export default function EventManagement() {
     }
   };
 
+  // Event List View Main Content Component
+  const EventListContent = () => {
+    const { isCollapsed, toggleSidebar } = useSidebar();
+
+    return (
+      <div
+        className={`transition-all duration-300 ${
+          isCollapsed ? "lg:ml-16" : "lg:ml-64"
+        }`}
+      >
+        {/* Top Navigation Bar */}
+        <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200/60 px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                onClick={toggleSidebar}
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+
+              <div className="relative max-w-md">
+                <h1 className="text-xl font-bold text-gray-900">
+                  Event Dashboard
+                </h1>
+                <p className="text-sm text-gray-600">
+                  Manage your events and analytics
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <NotificationsDropdown notifications={notifications} />
+            </div>
+          </div>
+        </div>
+
+        {/* Page Content */}
+        <div className="px-4 sm:px-6 lg:px-8 py-8">
+          {/* Error Display */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center">
+                  <span className="text-red-600 text-xs">!</span>
+                </div>
+                <p className="text-red-800 font-medium">Error</p>
+              </div>
+              <p className="text-red-600 text-sm mt-1">{error}</p>
+            </div>
+          )}
+
+          <EventList
+            events={events}
+            onCreateEvent={handleCreateEvent}
+            onViewEvent={handleViewEvent}
+            analyticsData={analyticsData}
+            loading={loading}
+          />
+        </div>
+      </div>
+    );
+  };
+
   // Event List View
   if (currentView === "list") {
     return (
-      <div className="min-h-screen bg-white font-['Plus_Jakarta_Sans'] overflow-hidden smooth-scroll">
-        <style jsx>{animationStyles}</style>
+      <SidebarProvider>
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 font-['Plus_Jakarta_Sans']">
+          <style jsx>{animationStyles}</style>
 
-        <SidebarProvider>
-          <AppSidebar onNavigate={handleNavigation} currentView={currentView} />
-          <SidebarInset>
-            {/* Main Content */}
-            <main className="flex-1 overflow-auto safe-area-padding">
-              {/* Header - Mobile Responsive */}
-              <div className="flex h-14 sm:h-16 shrink-0 items-center gap-2 sm:gap-4 bg-white border-b border-gray-200 px-4 sm:px-6">
-                <SidebarTrigger className="-ml-1 p-1.5 sm:p-2" />
-                <Separator
-                  orientation="vertical"
-                  className="mr-2 h-4 hidden sm:block"
-                />
-                <Breadcrumb className="hidden sm:block">
-                  <BreadcrumbList>
-                    <BreadcrumbItem>
-                      <BreadcrumbPage>Dashboard</BreadcrumbPage>
-                    </BreadcrumbItem>
-                  </BreadcrumbList>
-                </Breadcrumb>
-                {/* Mobile title */}
-                <div className="sm:hidden">
-                  <h1 className="text-lg font-semibold text-gray-900">
-                    Dashboard
-                  </h1>
-                </div>
-                <div className="ml-auto flex items-center gap-2 sm:gap-3">
-                  <NotificationsDropdown notifications={notifications} />
-                </div>
-              </div>
+          <AppSidebar onNavigate={setCurrentView} currentView={currentView} />
 
-              {/* Error Display */}
-              {error && (
-                <div className="mx-4 sm:mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-2xl">
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center">
-                      <span className="text-red-600 text-xs">!</span>
-                    </div>
-                    <p className="text-red-800 font-medium">Error</p>
-                  </div>
-                  <p className="text-red-600 text-sm mt-1">{error}</p>
-                </div>
-              )}
-
-              <EventList
-                events={events}
-                onCreateEvent={handleCreateEvent}
-                onViewEvent={handleViewEvent}
-                analyticsData={analyticsData}
-                loading={loading}
-              />
-            </main>
-          </SidebarInset>
-        </SidebarProvider>
-      </div>
+          <EventListContent />
+        </div>
+      </SidebarProvider>
     );
   }
 
@@ -366,53 +377,83 @@ export default function EventManagement() {
     );
   }
 
-  // Create/Edit Event Form View
-  return (
-    <div className="min-h-screen bg-white font-['Plus_Jakarta_Sans'] overflow-hidden smooth-scroll">
-      <style jsx>{animationStyles}</style>
+  // Create/Edit Event Form Content Component
+  const EventFormContent = () => {
+    const { isCollapsed, toggleSidebar } = useSidebar();
 
-      <SidebarProvider>
-        <AppSidebar onNavigate={handleNavigation} currentView={currentView} />
-        <SidebarInset>
-          {/* Header - Mobile Responsive */}
-          <div className="flex h-14 sm:h-16 shrink-0 items-center gap-2 sm:gap-4 bg-white border-b border-gray-200 px-4 sm:px-6">
-            <SidebarTrigger className="-ml-1 p-1.5 sm:p-2" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 h-4 hidden sm:block"
-            />
-            <Breadcrumb className="hidden sm:block">
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbPage>
-                    {currentView === "create" ? "Create Event" : "Edit Event"}
-                  </BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-            {/* Mobile title */}
-            <div className="sm:hidden">
-              <h1 className="text-lg font-semibold text-gray-900">
-                {currentView === "create" ? "Create Event" : "Edit Event"}
-              </h1>
+    return (
+      <div
+        className={`transition-all duration-300 ${
+          isCollapsed ? "lg:ml-16" : "lg:ml-64"
+        }`}
+      >
+        {/* Top Navigation Bar */}
+        <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200/60 px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                onClick={toggleSidebar}
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+
+              <div className="relative max-w-md">
+                <h1 className="text-xl font-bold text-gray-900">
+                  {currentView === "create" ? "Create Event" : "Edit Event"}
+                </h1>
+                <p className="text-sm text-gray-600">
+                  {currentView === "create"
+                    ? "Fill in the details to create a new event"
+                    : "Update your event information"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <NotificationsDropdown notifications={notifications} />
             </div>
           </div>
+        </div>
 
-          {/* Main Content */}
-          <main className="flex-1 overflow-auto safe-area-padding">
-            <section className="py-8 sm:py-12 lg:py-16 xl:py-24 px-4 sm:px-6 lg:px-8">
-              <EventForm
-                formData={formData}
-                onInputChange={handleInputChange}
-                onFileUpload={handleFileUpload}
-                onSave={handleSaveEvent}
-                onCancel={handleCancel}
-                isEdit={currentView === "edit"}
-              />
-            </section>
-          </main>
-        </SidebarInset>
-      </SidebarProvider>
-    </div>
+        {/* Page Content */}
+        <div className="px-4 sm:px-6 lg:px-8 py-8">
+          {/* Error Display */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center">
+                  <span className="text-red-600 text-xs">!</span>
+                </div>
+                <p className="text-red-800 font-medium">Error</p>
+              </div>
+              <p className="text-red-600 text-sm mt-1">{error}</p>
+            </div>
+          )}
+
+          <EventForm
+            formData={formData}
+            onInputChange={handleInputChange}
+            onFileUpload={handleFileUpload}
+            onSave={handleSaveEvent}
+            onCancel={handleCancel}
+            isEdit={currentView === "edit"}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  // Create/Edit Event Form View
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 font-['Plus_Jakarta_Sans']">
+        <style jsx>{animationStyles}</style>
+
+        <AppSidebar onNavigate={setCurrentView} currentView={currentView} />
+
+        <EventFormContent />
+      </div>
+    </SidebarProvider>
   );
 }
