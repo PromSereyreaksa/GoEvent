@@ -2,28 +2,15 @@ import { useState, useEffect } from "react";
 import { Menu } from "lucide-react";
 import { SidebarContext, useSidebar } from "./SidebarContext";
 
-// Enhanced Sidebar Provider with smooth mobile transitions
+// Enhanced Sidebar Provider with CSS-only mobile detection to prevent flicker
 export const SidebarProvider = ({ children }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true); // Start with sidebar collapsed
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-      if (!mobile) {
-        setIsMobileOpen(false);
-      }
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
   const toggleSidebar = () => {
-    if (isMobile) {
+    // On mobile, toggle the mobile overlay
+    // On desktop, toggle the collapsed state
+    if (window.innerWidth < 768) {
       setIsMobileOpen(!isMobileOpen);
     } else {
       setIsCollapsed(!isCollapsed);
@@ -31,9 +18,7 @@ export const SidebarProvider = ({ children }) => {
   };
 
   const closeMobileSidebar = () => {
-    if (isMobile) {
-      setIsMobileOpen(false);
-    }
+    setIsMobileOpen(false);
   };
 
   return (
@@ -41,16 +26,15 @@ export const SidebarProvider = ({ children }) => {
       value={{
         isCollapsed,
         toggleSidebar,
-        isMobile,
         isMobileOpen,
         closeMobileSidebar,
       }}
     >
       <div className="flex h-screen bg-gray-50">
         {/* Mobile Overlay */}
-        {isMobile && isMobileOpen && (
+        {isMobileOpen && (
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300 md:hidden"
             onClick={closeMobileSidebar}
           />
         )}
@@ -61,13 +45,12 @@ export const SidebarProvider = ({ children }) => {
 };
 
 export const SidebarInset = ({ children }) => {
-  const { isCollapsed, isMobile } = useSidebar();
+  const { isCollapsed } = useSidebar();
 
   return (
     <div
-      className={`flex flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out ${
-        isMobile ? "ml-0" : isCollapsed ? "ml-16" : "ml-64"
-      }`}
+      className={`flex flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out 
+        ml-0 md:ml-16 ${!isCollapsed ? "md:ml-64" : ""}`}
     >
       {children}
     </div>

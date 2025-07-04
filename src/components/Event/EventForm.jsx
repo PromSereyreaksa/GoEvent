@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ArrowLeft,
   Save,
@@ -11,6 +11,10 @@ import {
   MapPin,
   Calendar,
   Clock,
+  MoreVertical,
+  Edit3,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 
 export function EventForm({
@@ -22,6 +26,42 @@ export function EventForm({
   isEdit = false,
 }) {
   const eventTypes = [{ value: "wedding", label: "Wedding", hostCount: 2 }];
+
+  // Confirmation modal state
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: null,
+    isAnimating: false,
+  });
+
+  // Show confirmation modal
+  const showConfirmation = (title, message, onConfirm) => {
+    setConfirmationModal({
+      isOpen: true,
+      title,
+      message,
+      onConfirm,
+      isAnimating: true,
+    });
+  };
+
+  // Close confirmation modal
+  const closeConfirmation = () => {
+    setConfirmationModal((prev) => ({ ...prev, isAnimating: false }));
+    setTimeout(() => {
+      setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
+    }, 200);
+  };
+
+  // Handle confirmation
+  const handleConfirm = () => {
+    if (confirmationModal.onConfirm) {
+      confirmationModal.onConfirm();
+    }
+    closeConfirmation();
+  };
   const getYouTubeVideoId = (url) => {
     const regExp =
       /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -93,22 +133,28 @@ export function EventForm({
   };
 
   const removeParentName = (hostId, parentIndex) => {
-    const updatedHosts = formData.hosts.map((host) =>
-      host.id === hostId
-        ? {
-            ...host,
-            parentNames: host.parentNames.filter(
-              (_, index) => index !== parentIndex
-            ),
-          }
-        : host
+    showConfirmation(
+      "Remove Parent Name",
+      "Are you sure you want to remove this parent name?",
+      () => {
+        const updatedHosts = formData.hosts.map((host) =>
+          host.id === hostId
+            ? {
+                ...host,
+                parentNames: host.parentNames.filter(
+                  (_, index) => index !== parentIndex
+                ),
+              }
+            : host
+        );
+        onInputChange({
+          target: {
+            name: "hosts",
+            value: updatedHosts,
+          },
+        });
+      }
     );
-    onInputChange({
-      target: {
-        name: "hosts",
-        value: updatedHosts,
-      },
-    });
   };
 
   const updateParentName = (hostId, parentIndex, value) => {
@@ -148,13 +194,19 @@ export function EventForm({
   };
 
   const removeAgendaDay = (dayId) => {
-    const updatedAgenda = formData.agenda.filter((day) => day.id !== dayId);
-    onInputChange({
-      target: {
-        name: "agenda",
-        value: updatedAgenda,
-      },
-    });
+    showConfirmation(
+      "Delete Agenda Day",
+      "Are you sure you want to delete this agenda day? This action cannot be undone.",
+      () => {
+        const updatedAgenda = formData.agenda.filter((day) => day.id !== dayId);
+        onInputChange({
+          target: {
+            name: "agenda",
+            value: updatedAgenda,
+          },
+        });
+      }
+    );
   };
 
   const updateAgendaDay = (dayId, field, value) => {
@@ -190,22 +242,28 @@ export function EventForm({
   };
 
   const removeActivity = (dayId, activityId) => {
-    const updatedAgenda = formData.agenda.map((day) =>
-      day.id === dayId
-        ? {
-            ...day,
-            activities: day.activities.filter(
-              (activity) => activity.id !== activityId
-            ),
-          }
-        : day
+    showConfirmation(
+      "Delete Activity",
+      "Are you sure you want to delete this activity? This action cannot be undone.",
+      () => {
+        const updatedAgenda = formData.agenda.map((day) =>
+          day.id === dayId
+            ? {
+                ...day,
+                activities: day.activities.filter(
+                  (activity) => activity.id !== activityId
+                ),
+              }
+            : day
+        );
+        onInputChange({
+          target: {
+            name: "agenda",
+            value: updatedAgenda,
+          },
+        });
+      }
     );
-    onInputChange({
-      target: {
-        name: "agenda",
-        value: updatedAgenda,
-      },
-    });
   };
 
   const updateActivity = (dayId, activityId, field, value) => {
@@ -232,7 +290,7 @@ export function EventForm({
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header with Back Button */}
-      <div className="flex items-center gap-4 mb-12 animate-on-scroll">
+      <div className="flex items-center gap-4 mb-12">
         <button
           onClick={onCancel}
           className="p-3 text-gray-600 hover:bg-gray-100 rounded-2xl transition-colors"
@@ -257,7 +315,7 @@ export function EventForm({
           e.preventDefault();
           onSave();
         }}
-        className="bg-white rounded-3xl p-8 md:p-12 animate-on-scroll delay-200 border border-gray-200 shadow-2xl"
+        className="bg-white rounded-3xl p-8 md:p-12 border border-gray-200 shadow-2xl"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Event Type */}
@@ -443,14 +501,15 @@ export function EventForm({
 
                     {/* Activities */}
                     <div>
-                      <div className="flex items-center justify-between mb-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
                         <label className="block text-blue-700 font-medium">
                           Activities & Schedule
                         </label>
+                        {/* Desktop Add Activity Button */}
                         <button
                           type="button"
                           onClick={() => addActivity(day.id)}
-                          className="text-blue-600 hover:text-blue-800 transition-colors text-sm inline-flex items-center gap-1"
+                          className="hidden sm:inline-flex text-blue-600 hover:text-blue-800 transition-colors text-sm items-center gap-1"
                         >
                           <Plus className="w-4 h-4" />
                           Add Activity
@@ -463,22 +522,24 @@ export function EventForm({
                             key={activity.id}
                             className="bg-white rounded-xl p-4 border border-blue-100"
                           >
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center gap-2 min-w-0 flex-1">
-                                <Clock className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                                <input
-                                  type="time"
-                                  value={activity.time || ""}
-                                  onChange={(e) =>
-                                    updateActivity(
-                                      day.id,
-                                      activity.id,
-                                      "time",
-                                      e.target.value
-                                    )
-                                  }
-                                  className="px-3 py-2 rounded-lg border border-blue-200 focus:border-blue-500 focus:outline-none transition-colors bg-gray-50 font-medium text-sm"
-                                />
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <Clock className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                                  <input
+                                    type="time"
+                                    value={activity.time || ""}
+                                    onChange={(e) =>
+                                      updateActivity(
+                                        day.id,
+                                        activity.id,
+                                        "time",
+                                        e.target.value
+                                      )
+                                    }
+                                    className="w-full sm:w-auto px-3 py-2 rounded-lg border border-blue-200 focus:border-blue-500 focus:outline-none transition-colors bg-gray-50 font-medium text-sm"
+                                  />
+                                </div>
                                 <input
                                   type="text"
                                   value={activity.activity || ""}
@@ -491,7 +552,7 @@ export function EventForm({
                                     )
                                   }
                                   placeholder="Describe the activity..."
-                                  className="flex-1 px-3 py-2 rounded-lg border border-blue-200 focus:border-blue-500 focus:outline-none transition-colors bg-gray-50 font-medium text-sm"
+                                  className="flex-1 w-full px-3 py-2 rounded-lg border border-blue-200 focus:border-blue-500 focus:outline-none transition-colors bg-gray-50 font-medium text-sm"
                                 />
                               </div>
                               {day.activities.length > 1 && (
@@ -500,7 +561,7 @@ export function EventForm({
                                   onClick={() =>
                                     removeActivity(day.id, activity.id)
                                   }
-                                  className="text-red-500 hover:text-red-700 transition-colors flex-shrink-0"
+                                  className="text-red-500 hover:text-red-700 transition-colors flex-shrink-0 self-start sm:self-center"
                                 >
                                   <Minus className="w-4 h-4" />
                                 </button>
@@ -508,6 +569,18 @@ export function EventForm({
                             </div>
                           </div>
                         ))}
+                      </div>
+
+                      {/* Mobile Add Activity Button - Bottom */}
+                      <div className="sm:hidden mt-3">
+                        <button
+                          type="button"
+                          onClick={() => addActivity(day.id)}
+                          className="w-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors py-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Add Activity
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -756,7 +829,7 @@ export function EventForm({
 
         {/* YouTube Preview */}
         {formData.youtubeUrl && getYouTubeVideoId(formData.youtubeUrl) && (
-          <div className="mt-12 animate-on-scroll delay-400">
+          <div className="mt-12">
             <h3 className="text-xl font-bold text-black mb-6 flex items-center gap-3">
               <div className="w-8 h-8 bg-gradient-to-br from-red-100 to-red-200 rounded-xl flex items-center justify-center">
                 <Youtube className="w-5 h-5 text-red-600" />
@@ -808,6 +881,152 @@ export function EventForm({
           </button>
         </div>
       </form>
+
+      {/* Confirmation Modal */}
+      {confirmationModal.isOpen && (
+        <>
+          <style jsx>{`
+            @keyframes modalSlideIn {
+              from {
+                opacity: 0;
+                transform: scale(0.9) translateY(20px);
+              }
+              to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+              }
+            }
+
+            @keyframes modalSlideOut {
+              from {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+              }
+              to {
+                opacity: 0;
+                transform: scale(0.9) translateY(20px);
+              }
+            }
+
+            @keyframes backdropFadeIn {
+              from {
+                opacity: 0;
+                backdrop-filter: blur(0px);
+              }
+              to {
+                opacity: 1;
+                backdrop-filter: blur(8px);
+              }
+            }
+
+            @keyframes backdropFadeOut {
+              from {
+                opacity: 1;
+                backdrop-filter: blur(8px);
+              }
+              to {
+                opacity: 0;
+                backdrop-filter: blur(0px);
+              }
+            }
+
+            @keyframes iconPulse {
+              0%,
+              100% {
+                transform: scale(1);
+              }
+              50% {
+                transform: scale(1.05);
+              }
+            }
+
+            .modal-enter {
+              animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            }
+
+            .modal-exit {
+              animation: modalSlideOut 0.2s
+                cubic-bezier(0.55, 0.055, 0.675, 0.19);
+            }
+
+            .backdrop-enter {
+              animation: backdropFadeIn 0.3s ease-out;
+            }
+
+            .backdrop-exit {
+              animation: backdropFadeOut 0.2s ease-in;
+            }
+
+            .icon-animate {
+              animation: iconPulse 2s infinite ease-in-out;
+            }
+          `}</style>
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            {/* Backdrop */}
+            <div
+              className={`fixed inset-0 bg-black/50 transition-all duration-300 ${
+                confirmationModal.isAnimating
+                  ? "backdrop-enter"
+                  : "backdrop-exit"
+              }`}
+              onClick={closeConfirmation}
+            />
+
+            {/* Modal */}
+            <div className="flex min-h-full items-center justify-center p-4">
+              <div
+                className={`relative bg-white rounded-3xl shadow-2xl max-w-md w-full mx-auto transition-all duration-300 ${
+                  confirmationModal.isAnimating ? "modal-enter" : "modal-exit"
+                }`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Close button */}
+                <button
+                  onClick={closeConfirmation}
+                  className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-200 ease-in-out hover:scale-110 active:scale-95 hover:rotate-90"
+                  aria-label="Close modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                {/* Content */}
+                <div className="p-8">
+                  {/* Icon */}
+                  <div className="w-16 h-16 bg-amber-100 rounded-3xl flex items-center justify-center mx-auto mb-6 icon-animate">
+                    <AlertTriangle className="w-8 h-8 text-amber-600" />
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-2xl font-bold text-gray-900 text-center mb-4">
+                    {confirmationModal.title}
+                  </h3>
+
+                  {/* Message */}
+                  <p className="text-gray-600 text-center mb-8 leading-relaxed">
+                    {confirmationModal.message}
+                  </p>
+
+                  {/* Actions */}
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      onClick={closeConfirmation}
+                      className="flex-1 px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-2xl font-semibold transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 hover:shadow-md"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleConfirm}
+                      className="flex-1 px-6 py-3 text-white bg-red-600 hover:bg-red-700 rounded-2xl font-semibold transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

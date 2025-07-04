@@ -8,9 +8,69 @@ import {
   Play,
   Users,
   Heart,
+  MoreVertical,
+  X,
+  AlertTriangle,
 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 
 export function EventInformation({ event, onEdit, onDelete, onBack }) {
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Confirmation modal state
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: null,
+    isAnimating: false,
+  });
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleDeleteClick = () => {
+    setConfirmationModal({
+      isOpen: true,
+      title: "Delete Event",
+      message: `Are you sure you want to delete "${event.name}"? This action cannot be undone.`,
+      isAnimating: true,
+      onConfirm: () => {
+        onDelete(event.id);
+      },
+    });
+    setShowDropdown(false);
+  };
+
+  const closeConfirmation = () => {
+    setConfirmationModal((prev) => ({ ...prev, isAnimating: false }));
+    setTimeout(() => {
+      setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
+    }, 200);
+  };
+
+  const handleConfirm = () => {
+    if (confirmationModal.onConfirm) {
+      confirmationModal.onConfirm();
+    }
+    closeConfirmation();
+  };
+
+  const handleEditClick = () => {
+    onEdit(event);
+    setShowDropdown(false);
+  };
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -69,23 +129,45 @@ export function EventInformation({ event, onEdit, onDelete, onBack }) {
               >
                 <ArrowLeft className="w-6 h-6" />
               </button>
-              <h1 className="text-2xl font-bold text-gray-900">{event.name}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 text-center">
+                {event.name}
+              </h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="relative" ref={dropdownRef}>
               <button
-                onClick={() => onEdit(event)}
-                className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl transition-colors"
-                aria-label="Edit event"
+                onClick={() => setShowDropdown(!showDropdown)}
+                className={`p-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-200 ease-in-out transform hover:scale-110 active:scale-95 ${
+                  showDropdown ? "bg-gray-100 scale-110" : ""
+                }`}
+                aria-label="More options"
               >
-                <Edit3 className="w-5 h-5" />
+                <MoreVertical
+                  className={`w-5 h-5 transition-transform duration-200 ${
+                    showDropdown ? "rotate-90" : ""
+                  }`}
+                />
               </button>
-              <button
-                onClick={() => onDelete(event.id)}
-                className="p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl transition-colors"
-                aria-label="Delete event"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
+
+              {showDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 z-20 transform transition-all duration-200 ease-out animate-in fade-in slide-in-from-top-2">
+                  <div className="py-1">
+                    <button
+                      onClick={handleEditClick}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-all duration-150 ease-in-out hover:translate-x-1 group"
+                    >
+                      <Edit3 className="w-4 h-4 transition-transform duration-150 group-hover:scale-110" />
+                      Edit Event
+                    </button>
+                    <button
+                      onClick={handleDeleteClick}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-all duration-150 ease-in-out hover:translate-x-1 group"
+                    >
+                      <Trash2 className="w-4 h-4 transition-transform duration-150 group-hover:scale-110" />
+                      Delete Event
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -107,9 +189,7 @@ export function EventInformation({ event, onEdit, onDelete, onBack }) {
 
           {/* Decorative wavy lines below image */}
           <div className="mt-4 space-y-2">
-            <div className="h-1 bg-gradient-to-r from-blue-200 via-blue-300 to-blue-200 rounded-full opacity-60"></div>
-            <div className="h-1 bg-gradient-to-r from-blue-100 via-blue-200 to-blue-100 rounded-full opacity-40"></div>
-            <div className="h-1 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded-full opacity-30"></div>
+            <div className="h-0.5 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded-full opacity-50"></div>
           </div>
         </div>
 
@@ -366,6 +446,152 @@ export function EventInformation({ event, onEdit, onDelete, onBack }) {
           </div>
         )}
       </div>
+
+      {/* Confirmation Modal */}
+      {confirmationModal.isOpen && (
+        <>
+          <style jsx>{`
+            @keyframes modalSlideIn {
+              from {
+                opacity: 0;
+                transform: scale(0.9) translateY(20px);
+              }
+              to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+              }
+            }
+
+            @keyframes modalSlideOut {
+              from {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+              }
+              to {
+                opacity: 0;
+                transform: scale(0.9) translateY(20px);
+              }
+            }
+
+            @keyframes backdropFadeIn {
+              from {
+                opacity: 0;
+                backdrop-filter: blur(0px);
+              }
+              to {
+                opacity: 1;
+                backdrop-filter: blur(8px);
+              }
+            }
+
+            @keyframes backdropFadeOut {
+              from {
+                opacity: 1;
+                backdrop-filter: blur(8px);
+              }
+              to {
+                opacity: 0;
+                backdrop-filter: blur(0px);
+              }
+            }
+
+            @keyframes iconPulse {
+              0%,
+              100% {
+                transform: scale(1);
+              }
+              50% {
+                transform: scale(1.05);
+              }
+            }
+
+            .modal-enter {
+              animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            }
+
+            .modal-exit {
+              animation: modalSlideOut 0.2s
+                cubic-bezier(0.55, 0.055, 0.675, 0.19);
+            }
+
+            .backdrop-enter {
+              animation: backdropFadeIn 0.3s ease-out;
+            }
+
+            .backdrop-exit {
+              animation: backdropFadeOut 0.2s ease-in;
+            }
+
+            .icon-animate {
+              animation: iconPulse 2s infinite ease-in-out;
+            }
+          `}</style>
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            {/* Backdrop */}
+            <div
+              className={`fixed inset-0 bg-black/50 transition-all duration-300 ${
+                confirmationModal.isAnimating
+                  ? "backdrop-enter"
+                  : "backdrop-exit"
+              }`}
+              onClick={closeConfirmation}
+            />
+
+            {/* Modal */}
+            <div className="flex min-h-full items-center justify-center p-4">
+              <div
+                className={`relative bg-white rounded-3xl shadow-2xl max-w-md w-full mx-auto transition-all duration-300 ${
+                  confirmationModal.isAnimating ? "modal-enter" : "modal-exit"
+                }`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Close button */}
+                <button
+                  onClick={closeConfirmation}
+                  className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-200 ease-in-out hover:scale-110 active:scale-95 hover:rotate-90"
+                  aria-label="Close modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                {/* Content */}
+                <div className="p-8">
+                  {/* Icon */}
+                  <div className="w-16 h-16 bg-red-100 rounded-3xl flex items-center justify-center mx-auto mb-6 icon-animate">
+                    <AlertTriangle className="w-8 h-8 text-red-600" />
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-2xl font-bold text-gray-900 text-center mb-4">
+                    {confirmationModal.title}
+                  </h3>
+
+                  {/* Message */}
+                  <p className="text-gray-600 text-center mb-8 leading-relaxed">
+                    {confirmationModal.message}
+                  </p>
+
+                  {/* Actions */}
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      onClick={closeConfirmation}
+                      className="flex-1 px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-2xl font-semibold transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 hover:shadow-md"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleConfirm}
+                      className="flex-1 px-6 py-3 text-white bg-red-600 hover:bg-red-700 rounded-2xl font-semibold transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

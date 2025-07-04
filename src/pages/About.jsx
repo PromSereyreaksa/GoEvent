@@ -9,8 +9,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-const baseUrl = import.meta.env.REACT_APP_API_BASE_URL;
-
+const baseUrl = import.meta.env.REACT_APP_API_BASE_URL || "http://192.168.226.155:9000";
 export default function About() {
   const [teamMembers, setTeamMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,7 +21,7 @@ export default function About() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch(`${baseUrl}/team-members/`);
+        const response = await fetch(`${baseUrl}/site_setting/team-members/`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
