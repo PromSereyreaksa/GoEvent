@@ -2,10 +2,9 @@
 
 import { useState } from "react"
 import { Eye, EyeOff, Mail, Lock } from "lucide-react"
-// Check if user is authenticated
-import { isAuthenticated, authenticatedFetch } from '@/utils/auth'
+
 // const baseUrl = 'http://192.168.226.155:9000'
-const baseUrl = import.meta.env.REACT_APP_API_BASE_URL || "http://192.168.31.249:9000";
+const baseUrl = import.meta.env.REACT_APP_API_BASE_URL || "http://192.168.31.249:9000"
 
 // Make authenticated API calls
 // const response = await authenticatedFetch('/api/user/profile/')
@@ -20,26 +19,29 @@ const SignIn = () => {
     rememberMe: false,
   })
 
+  // Mock credentials for testing
+  const mockCredentials = [
+    { email: "admin@goevent.com", password: "admin123", name: "Admin User", role: "admin" },
+    { email: "user@goevent.com", password: "user123", name: "John Doe", role: "user" },
+    { email: "demo@goevent.com", password: "demo123", name: "Demo User", role: "demo" },
+  ]
+
   const validateForm = () => {
     const newErrors = {}
-
     if (!formData.email.trim()) {
       newErrors.email = "Email is required"
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = "Email is invalid"
     }
-
     if (!formData.password) {
       newErrors.password = "Password is required"
     }
-
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-
     if (!validateForm()) {
       return
     }
@@ -48,6 +50,42 @@ const SignIn = () => {
     setErrors({})
 
     try {
+      // Check if credentials match any mock user first
+      const mockUser = mockCredentials.find(
+        (user) => user.email === formData.email && user.password === formData.password,
+      )
+
+      if (mockUser) {
+        // Mock successful login with mock user
+        console.log("Mock login successful:", mockUser)
+
+        // Generate mock tokens
+        const mockTokens = {
+          access: `mock_access_token_${Date.now()}`,
+          refresh: `mock_refresh_token_${Date.now()}`,
+          user: {
+            id: Date.now(),
+            name: mockUser.name,
+            email: mockUser.email,
+            role: mockUser.role,
+          },
+        }
+
+        // Store tokens based on remember me preference
+        const storage = formData.rememberMe ? localStorage : sessionStorage
+        storage.setItem("access_token", mockTokens.access)
+        storage.setItem("refresh_token", mockTokens.refresh)
+        storage.setItem("user", JSON.stringify(mockTokens.user))
+
+        // Redirect to dashboard or homepage
+        setTimeout(() => {
+          window.location.href = "/homepage"
+        }, 500)
+
+        return
+      }
+
+      // If no mock match, proceed with real API call
       // Prepare data for Django REST Framework JWT authentication
       const apiData = {
         email: formData.email,
@@ -65,7 +103,6 @@ const SignIn = () => {
 
       if (!response.ok) {
         const errorData = await response.json()
-
         // Handle different types of errors from Django
         if (response.status === 401) {
           setErrors({ general: "Invalid email or password" })
@@ -129,6 +166,15 @@ const SignIn = () => {
     }
   }
 
+  const fillDemoCredentials = (credentials) => {
+    setFormData((prev) => ({
+      ...prev,
+      email: credentials.email,
+      password: credentials.password,
+    }))
+    setErrors({})
+  }
+
   const handleGoogleSignIn = async () => {
     try {
       // Replace with your Google OAuth endpoint
@@ -158,6 +204,26 @@ const SignIn = () => {
                 create a new account
               </a>
             </p>
+          </div>
+
+          {/* Demo Credentials */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm font-medium text-blue-800 mb-3">Demo Credentials (Click to fill):</p>
+            <div className="space-y-2">
+              {mockCredentials.map((cred, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => fillDemoCredentials(cred)}
+                  className="w-full text-left p-2 bg-white rounded border hover:bg-blue-50 transition-colors text-sm"
+                >
+                  <div className="font-medium text-blue-700">{cred.name}</div>
+                  <div className="text-blue-600">
+                    {cred.email} / {cred.password}
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
 
           {errors.general && (
@@ -275,6 +341,7 @@ const SignIn = () => {
                   <span className="px-2 bg-white text-gray-500">Or continue with</span>
                 </div>
               </div>
+
               <div className="mt-6">
                 <button
                   type="button"

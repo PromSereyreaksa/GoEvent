@@ -2,12 +2,19 @@
 
 import { useState, useEffect } from "react"
 import { Menu, X, ExternalLink } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { useSelector, useDispatch } from "react-redux"
+import { logout } from "../redux/slices/authSlice"
 
 export default function Header() {
+  const navigate = useNavigate()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
   const [isDarkBg, setIsDarkBg] = useState(true)
+
+  const dispatch = useDispatch()
+  const { isAuthenticated } = useSelector((state) => state.auth)
 
   useEffect(() => {
     const controlNavbar = () => {
@@ -37,16 +44,22 @@ export default function Header() {
     return () => window.removeEventListener("scroll", controlNavbar)
   }, [lastScrollY])
 
+  const handleLogout = () => {
+    dispatch(logout())
+    setIsMenuOpen(false)
+    navigate("/")
+  }
+
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 py-4 px-4 sm:px-8 font-['Plus_Jakarta_Sans'] transition-all duration-500${
+      className={`fixed top-0 left-0 right-0 z-50 py-4 px-4 sm:px-8 font-['Plus_Jakarta_Sans'] transition-all duration-500 ${
         isVisible ? "translate-y-0" : "-translate-y-full"
       } ${isDarkBg ? "bg-transparent" : "bg-white/95 backdrop-blur-md shadow-sm"}`}
     >
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-3 group">
+          <a href={isAuthenticated ? "/homepage" : "/"} className="flex items-center gap-3 group">
             <div className="relative">
               <div className="absolute inset-0 bg-blue-400 rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-sm"></div>
             </div>
@@ -59,8 +72,9 @@ export default function Header() {
             </span>
           </a>
 
-          {/* Desktop Navigation - Only About and Sign up */}
+          {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-4">
+            {/* About Link - Always visible */}
             <a
               href="/about"
               className={`px-4 py-2 rounded-full font-medium transition-all duration-300 inline-flex items-center gap-2 group ${
@@ -73,13 +87,42 @@ export default function Header() {
               <ExternalLink className="w-3 h-3 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
             </a>
 
-            <a
-              href="/sign-up"
-              className="bg-white text-blue-600 px-6 py-3 rounded-full font-semibold hover:bg-gray-50 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2 group"
-            >
-              <span>Sign up</span>
-              <ExternalLink className="w-4 h-4 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
-            </a>
+            {/* Authentication-based navigation */}
+            {isAuthenticated ? (
+              // Show only Logout when authenticated
+              <button
+                onClick={handleLogout}
+                className={`px-4 py-2 rounded-full font-medium transition-all duration-300 ${
+                  isDarkBg
+                    ? "text-white/90 hover:text-white hover:bg-white/10"
+                    : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                }`}
+              >
+                Logout
+              </button>
+            ) : (
+              // Show Sign In and Sign Up when not authenticated
+              <>
+                <a
+                  href="/sign-in"
+                  className={`px-4 py-2 rounded-full font-medium transition-all duration-300 ${
+                    isDarkBg
+                      ? "text-white/90 hover:text-white hover:bg-white/10"
+                      : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                >
+                  Sign In
+                </a>
+
+                <a
+                  href="/sign-up"
+                  className="bg-white text-blue-600 px-6 py-3 rounded-full font-semibold hover:bg-gray-50 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2 group"
+                >
+                  <span>Sign up</span>
+                  <ExternalLink className="w-4 h-4 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
+                </a>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -95,7 +138,7 @@ export default function Header() {
           </button>
         </div>
 
-        {/* Mobile Navigation - Only About and Sign up */}
+        {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="lg:hidden mt-4 animate-in slide-in-from-top-2 duration-300">
             <div
@@ -124,15 +167,44 @@ export default function Header() {
                   <ExternalLink className="w-3 h-3 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
                 </a>
 
-                {/* Sign up Button */}
-                <a
-                  href="/sign-up"
-                  className="bg-white text-blue-600 px-6 py-3 rounded-full font-semibold hover:bg-gray-50 transition-all duration-300 inline-flex items-center justify-center gap-2 text-center shadow-lg w-full group"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <span>Sign up</span>
-                  <ExternalLink className="w-4 h-4 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
-                </a>
+                {/* Authentication-based mobile navigation */}
+                {isAuthenticated ? (
+                  // Show only Logout when authenticated
+                  <button
+                    onClick={handleLogout}
+                    className={`px-4 py-3 rounded-xl font-medium transition-all duration-300 text-left ${
+                      isDarkBg
+                        ? "text-white/90 hover:text-white hover:bg-white/10"
+                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                  >
+                    Logout
+                  </button>
+                ) : (
+                  // Show Sign In and Sign Up when not authenticated
+                  <>
+                    <a
+                      href="/sign-in"
+                      className={`px-4 py-3 rounded-xl font-medium transition-all duration-300 text-center ${
+                        isDarkBg
+                          ? "text-white/90 hover:text-white hover:bg-white/10"
+                          : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Sign In
+                    </a>
+
+                    <a
+                      href="/sign-up"
+                      className="bg-white text-blue-600 px-6 py-3 rounded-full font-semibold hover:bg-gray-50 transition-all duration-300 inline-flex items-center justify-center gap-2 text-center shadow-lg w-full group"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <span>Sign up</span>
+                      <ExternalLink className="w-4 h-4 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
+                    </a>
+                  </>
+                )}
               </div>
             </div>
           </div>
