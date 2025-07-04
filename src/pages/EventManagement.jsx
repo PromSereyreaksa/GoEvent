@@ -1,5 +1,5 @@
 "use client";
-
+// Todo: add event type, agenda, hosts, gallery, change map to embedded
 import { useState, useEffect, createContext, useContext } from "react";
 import {
   Calendar,

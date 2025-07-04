@@ -268,15 +268,13 @@ export default function PricingSection({
                 key={index}
                 className={`card-animate card-hover relative ${
                   plan.popular
-                    ? "bg-white border-2 border-blue-500 shadow-xl"
+                    ? "bg-white border-2 border-blue-100 shadow-xl"
                     : "bg-gray-50 bg-right-top bg-no-repeat border border-gray-200"
                 } rounded-3xl p-8 flex flex-col gap-8 overflow-hidden ${visibleCards.includes(index) ? "visible" : ""}`}
               >
                 {plan.popular && (
                   <div className="absolute -top-0.8 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-bold uppercase">
-                      Most Popular
-                    </span>
+                   
                   </div>
                 )}
                 <div className="flex flex-col gap-6">
