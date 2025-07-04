@@ -1,6 +1,28 @@
 "use client";
 
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect } from "react";
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+} from "../components/Event/SidebarProvider";
+import { AppSidebar } from "../components/Event/AppSidebar";
+import { NotificationsDropdown } from "../components/Event/NotificationsDropdown";
+import { EventList } from "../components/Event/EventList";
+import { EventForm } from "../components/Event/EventForm";
+import { EventInformation } from "../components/Event/EventInformation";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbPage,
+  Separator,
+} from "../components/Event/BreadcrumbComponents";
+import {
+  analyticsData,
+  notifications,
+  sampleEvents,
+} from "../components/Event/data";
 import {
   animationStyles,
   useScrollAnimation,
