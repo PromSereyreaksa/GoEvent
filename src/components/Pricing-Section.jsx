@@ -2,8 +2,12 @@
 
 import { Check, X } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
+import {process} from "process";
+const baseUrl = import.meta.env.REACT_APP_API_BASE_URL;
+
 
 export default function PricingSection({
+  
   title = "Simple, Transparent Pricing",
   description = "Choose the plan that's right for your needs. All plans include our core features with no hidden fees.",
   plans = [],
@@ -113,7 +117,7 @@ export default function PricingSection({
         setLoading(true)
         setError(null)
         
-        const response = await fetch('https://snwv9cpm-8000.asse.devtunnels.ms/api/pricing-plans/')
+        const response = await fetch(`${baseUrl}/pricing-plans/`)
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }

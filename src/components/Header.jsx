@@ -39,7 +39,7 @@ export default function Header() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 py-4 px-4 sm:px-8 font-['Plus_Jakarta_Sans'] transition-all duration-500 ${
+      className={`fixed top-0 left-0 right-0 z-50 py-4 px-4 sm:px-8 font-['Plus_Jakarta_Sans'] transition-all duration-500${
         isVisible ? "translate-y-0" : "-translate-y-full"
       } ${isDarkBg ? "bg-transparent" : "bg-white/95 backdrop-blur-md shadow-sm"}`}
     >

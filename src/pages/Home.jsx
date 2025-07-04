@@ -171,7 +171,7 @@ export default function Home() {
 <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-8 rounded-3xl overflow-hidden">
 <div className="text-center">
 <div className="mx-auto px-2 sm:px-5 mb-8 sm:mb-16 animate-on-scroll">
-<h1 className="text-3xs sm:text-6xl md:text-8xl lg:text-[160px] font-bold leading-[100%] tracking-[-2px] text-white uppercase mb-4 sm:mb-8 mt-12">
+<h1 className="text-4xl sm:text-4xl md:text-8xl lg:text-[160px] font-bold leading-[100%] tracking-[-2px] text-white uppercase mb-4 sm:mb-8 mt-12">
 Plan with
 <span className="block text-right">Ease</span>
 </h1>
@@ -217,7 +217,7 @@ Get started with effortless event management.
 </p>
 <div className="flex flex-col sm:flex-row gap-4 px-2 sm:px-0">
 <a
-href="/sign-up"
+href="#features"
 className="bg-white text-black sm:ml-10 px-4 py-3 sm:py-5 rounded-full font-medium hover:bg-gray-100 hover:scale-105 duration-300 transition-all inline-flex items-center justify-center gap-2"
 >
 <span>Start Planning</span>
