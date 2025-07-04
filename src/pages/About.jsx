@@ -9,7 +9,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-const baseUrl = import.meta.env.REACT_APP_API_BASE_URL || "http://192.168.226.155:9000";
+const baseUrl = import.meta.env.REACT_APP_API_BASE_URL || "http://192.168.31.249:9000";
+
 export default function About() {
   const [teamMembers, setTeamMembers] = useState([]);
   const [loading, setLoading] = useState(true);

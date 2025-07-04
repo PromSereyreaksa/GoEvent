@@ -2,9 +2,10 @@
 
 import { Check, X } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
-const baseUrl = import.meta.env.REACT_APP_API_BASE_URL || "http://192.168.226.155:9000";
+const baseUrl = import.meta.env.REACT_APP_API_BASE_URL || "http://192.168.31.249:9000";
+// const baseUrl = import.meta.env.REACT_APP_API_BASE_URL || "http://192.168.226.155:9000";
 
-
+// Pa$$w0rd!
 export default function PricingSection({
   
   title = "Simple, Transparent Pricing",
