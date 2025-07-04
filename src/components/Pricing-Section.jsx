@@ -2,8 +2,11 @@
 
 import { Check, X } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
+const baseUrl = import.meta.env.REACT_APP_API_BASE_URL;
+
 
 export default function PricingSection({
+  
   title = "Simple, Transparent Pricing",
   description = "Choose the plan that's right for your needs. All plans include our core features with no hidden fees.",
   plans = [],
@@ -113,7 +116,7 @@ export default function PricingSection({
         setLoading(true)
         setError(null)
         
-        const response = await fetch('https://snwv9cpm-8000.asse.devtunnels.ms/api/pricing-plans/')
+        const response = await fetch(`${baseUrl}/pricing-plans/`)
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
@@ -268,15 +271,13 @@ export default function PricingSection({
                 key={index}
                 className={`card-animate card-hover relative ${
                   plan.popular
-                    ? "bg-white border-2 border-blue-500 shadow-xl"
+                    ? "bg-white border-2 border-blue-100 shadow-xl"
                     : "bg-gray-50 bg-right-top bg-no-repeat border border-gray-200"
                 } rounded-3xl p-8 flex flex-col gap-8 overflow-hidden ${visibleCards.includes(index) ? "visible" : ""}`}
               >
                 {plan.popular && (
                   <div className="absolute -top-0.8 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-bold uppercase">
-                      Most Popular
-                    </span>
+                   
                   </div>
                 )}
                 <div className="flex flex-col gap-6">

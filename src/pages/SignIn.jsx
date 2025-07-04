@@ -1,55 +1,175 @@
-import { useState } from "react";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+"use client"
+
+import { useState } from "react"
+import { Eye, EyeOff, Mail, Lock } from "lucide-react"
+// Check if user is authenticated
+import { isAuthenticated, authenticatedFetch } from '@/utils/auth'
+const baseUrl = 'http://192.168.226.155:9000'
+
+// Make authenticated API calls
+// const response = await authenticatedFetch('/api/user/profile/')
 
 const SignIn = () => {
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [errors, setErrors] = useState({})
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     rememberMe: false,
-  });
+  })
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Sign in attempt:", formData);
-  };
+  const validateForm = () => {
+    const newErrors = {}
+
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required"
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Email is invalid"
+    }
+
+    if (!formData.password) {
+      newErrors.password = "Password is required"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    if (!validateForm()) {
+      return
+    }
+
+    setIsLoading(true)
+    setErrors({})
+
+    try {
+      // Prepare data for Django REST Framework JWT authentication
+      const apiData = {
+        email: formData.email,
+        password: formData.password,
+      }
+
+      // Replace with your actual API endpoint
+      const response = await fetch(`${baseUrl}/auth/login/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(apiData),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+
+        // Handle different types of errors from Django
+        if (response.status === 401) {
+          setErrors({ general: "Invalid email or password" })
+        } else if (errorData.email) {
+          setErrors({ email: errorData.email[0] })
+        } else if (errorData.password) {
+          setErrors({ password: errorData.password[0] })
+        } else {
+          setErrors({ general: "Login failed. Please try again." })
+        }
+        return
+      }
+
+      const result = await response.json()
+
+      // Handle JWT tokens
+      if (result.access && result.refresh) {
+        // Store tokens based on remember me preference
+        if (formData.rememberMe) {
+          // Store in localStorage for persistent login
+          localStorage.setItem("access_token", result.access)
+          localStorage.setItem("refresh_token", result.refresh)
+        } else {
+          // Store in sessionStorage for session-only login
+          sessionStorage.setItem("access_token", result.access)
+          sessionStorage.setItem("refresh_token", result.refresh)
+        }
+
+        // Store user info if provided
+        if (result.user) {
+          const storage = formData.rememberMe ? localStorage : sessionStorage
+          storage.setItem("user", JSON.stringify(result.user))
+        }
+
+        console.log("Login successful:", result)
+
+        // Redirect to dashboard or home page
+        window.location.href = "/dashboard"
+      }
+    } catch (error) {
+      console.error("Login error:", error)
+      setErrors({ general: "Network error. Please check your connection and try again." })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type, checked } = e.target
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
-    }));
-  };
+    }))
+
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }))
+    }
+  }
+
+  const handleGoogleSignIn = async () => {
+    try {
+      // Replace with your Google OAuth endpoint
+      window.location.href = "/api/auth/google/"
+    } catch (error) {
+      console.error("Google sign-in error:", error)
+      setErrors({ general: "Google sign-in failed. Please try again." })
+    }
+  }
+
+  const handleForgotPassword = (e) => {
+    e.preventDefault()
+    // Redirect to forgot password page or open modal
+    window.location.href = "/forgot-password"
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 via-blue-600 to-white font-['Plus_Jakarta_Sans'] pt-20 pb-56 overflow-hidden">
-      <div className="absolute inset-0 bg-[url('/grid-1.svg?height=800&width=1200')] bg-center bg-no-repeat bg-cover opacity-20"></div>
-
+    <div className="min-h-screen bg-gradient-to-b from-blue-700 via-blue-400 to-white font-['Plus_Jakarta_Sans'] pt-20 pb-56 overflow-hidden">
+      <div className="absolute inset-0 bg-[url('/cta-grid.svg')] bg-center bg-no-repeat bg-cover opacity-20"></div>
       <div className="relative z-10 max-w-md mx-auto px-4">
         <div className="bg-white rounded-3xl p-10 flex flex-col gap-6 shadow-xl">
           <div className="text-center flex flex-col gap-1.5">
-            <h2 className="text-3xl font-bold text-black">
-              Sign in to your account
-            </h2>
+            <h2 className="text-3xl font-bold text-black">Sign in to your account</h2>
             <p className="text-sm text-neutral-600">
               Or{" "}
-              <a
-                href="/sign-up"
-                className="font-medium text-blue-500 hover:text-blue-600"
-              >
+              <a href="/sign-up" className="font-medium text-blue-500 hover:text-blue-600">
                 create a new account
               </a>
             </p>
           </div>
 
+          {errors.general && (
+            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+              {errors.general}
+            </div>
+          )}
+
           <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-4">
+              {/* Email Field */}
               <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="email"
-                  className="text-base font-semibold text-black"
-                >
+                <label htmlFor="email" className="text-base font-semibold text-black">
                   Email address
                 </label>
                 <div className="relative">
@@ -64,17 +184,18 @@ const SignIn = () => {
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-3 bg-gray-50 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                    className={`block w-full pl-10 pr-3 py-3 bg-gray-50 border rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black ${
+                      errors.email ? "border-red-300" : "border-gray-300"
+                    }`}
                     placeholder="Enter your email"
                   />
                 </div>
+                {errors.email && <p className="text-red-600 text-sm">{errors.email}</p>}
               </div>
 
+              {/* Password Field */}
               <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="password"
-                  className="text-base font-semibold text-black"
-                >
+                <label htmlFor="password" className="text-base font-semibold text-black">
                   Password
                 </label>
                 <div className="relative">
@@ -89,7 +210,9 @@ const SignIn = () => {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                    className={`block w-full pl-10 pr-10 py-3 bg-gray-50 border rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black ${
+                      errors.password ? "border-red-300" : "border-gray-300"
+                    }`}
                     placeholder="Enter your password"
                   />
                   <button
@@ -104,9 +227,11 @@ const SignIn = () => {
                     )}
                   </button>
                 </div>
+                {errors.password && <p className="text-red-600 text-sm">{errors.password}</p>}
               </div>
             </div>
 
+            {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <input
@@ -121,41 +246,38 @@ const SignIn = () => {
                   Remember me
                 </label>
               </div>
-
               <div className="text-sm">
-                <a
-                  href="#"
-                  className="font-medium text-blue-600 hover:text-blue-500"
-                >
+                <a href="#" onClick={handleForgotPassword} className="font-medium text-blue-600 hover:text-blue-500">
                   Forgot your password?
                 </a>
               </div>
             </div>
 
+            {/* Submit Button */}
             <div>
               <button
                 type="submit"
-                className="w-full flex justify-center py-4 px-4 text-base font-medium rounded-full text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                disabled={isLoading}
+                className="w-full flex justify-center py-4 px-4 text-base font-medium rounded-full text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Sign in
+                {isLoading ? "Signing in..." : "Sign in"}
               </button>
             </div>
 
+            {/* Social Login */}
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-300" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">
-                    Or continue with
-                  </span>
+                  <span className="px-2 bg-white text-gray-500">Or continue with</span>
                 </div>
               </div>
-
-              <div className="mt-6 grid grid-cols-2 gap-3">
+              <div className="mt-6">
                 <button
                   type="button"
+                  onClick={handleGoogleSignIn}
                   className="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors"
                 >
                   <span className="sr-only">Sign in with Google</span>
@@ -178,27 +300,13 @@ const SignIn = () => {
                     />
                   </svg>
                 </button>
-
-                <button
-                  type="button"
-                  className="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors"
-                >
-                  <span className="sr-only">Sign in with Facebook</span>
-                  <svg
-                    className="w-5 h-5"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                  </svg>
-                </button>
               </div>
             </div>
           </form>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default SignIn;
+export default SignIn
