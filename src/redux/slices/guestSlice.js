@@ -46,6 +46,22 @@ const guestSlice = createSlice({
     clearError: (state) => {
       state.error = null
     },
+    addGuest: (state, action) => {
+      state.guests.push(action.payload)
+    },
+    updateGuest: (state, action) => {
+      const index = state.guests.findIndex((guest) => guest.id === action.payload.id)
+      if (index !== -1) {
+        state.guests[index] = action.payload
+      }
+    },
+    removeGuest: (state, action) => {
+      state.guests = state.guests.filter((guest) => guest.id !== action.payload)
+    },
+    bulkUpdateGuests: (state, action) => {
+      const { guestIds, updates } = action.payload
+      state.guests = state.guests.map((guest) => (guestIds.includes(guest.id) ? { ...guest, ...updates } : guest))
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -76,5 +92,5 @@ const guestSlice = createSlice({
   },
 })
 
-export const { clearError } = guestSlice.actions
+export const { clearError, addGuest, updateGuest, removeGuest, bulkUpdateGuests } = guestSlice.actions
 export default guestSlice.reducer
