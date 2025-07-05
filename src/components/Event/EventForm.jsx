@@ -16,6 +16,7 @@ import {
   Trash2,
   AlertTriangle,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export function EventForm({
   formData,
@@ -25,6 +26,7 @@ export function EventForm({
   onCancel,
   isEdit = false,
 }) {
+  const navigate = useNavigate();
   const eventTypes = [{ value: "wedding", label: "Wedding", hostCount: 2 }];
 
   // Confirmation modal state
@@ -291,9 +293,9 @@ export function EventForm({
       {/* Header with Back Button */}
       <div className="flex items-center gap-4 mb-12">
         <button
-          onClick={onCancel}
+          onClick={() => navigate("/homepage")}
           className="p-3 text-gray-600 hover:bg-gray-100 rounded-2xl transition-colors"
-          aria-label="Go back to events list"
+          aria-label="Go back to homepage"
         >
           <ArrowLeft className="w-6 h-6" />
         </button>
@@ -580,7 +582,7 @@ export function EventForm({
                           <button
                             type="button"
                             onClick={() => addActivity(day.id)}
-                            className="w-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors py-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2"
+                            className="w-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors py-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 sticky bottom-0 z-10"
                           >
                             <Plus className="w-4 h-4" />
                             Add Activity
@@ -892,7 +894,7 @@ export function EventForm({
           </button>
           <button
             type="button"
-            onClick={onCancel}
+            onClick={() => navigate("/homepage")}
             className="bg-gradient-to-r from-gray-200 to-gray-300 text-gray-700 px-8 py-4 rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 inline-flex items-center justify-center gap-2"
           >
             <X className="w-5 h-5" />
