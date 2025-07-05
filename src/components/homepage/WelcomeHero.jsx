@@ -63,7 +63,7 @@ export default function WelcomeHero({ user }) {
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         <div className="flex-1">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {getGreeting()}, {user?.name || "User"}!
+            {getGreeting()}, {user?.first_name || "User"}!
           </h1>
           <p className="text-gray-700 mb-4">
             Welcome back to your event management dashboard. Here's what's

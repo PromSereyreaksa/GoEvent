@@ -70,10 +70,15 @@ export default function UserProfileDropdown({ user }) {
         className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
       >
         <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-          <span className="text-white font-semibold text-sm">{user?.name?.charAt(0) || "U"}</span>
+          <span className="text-white font-semibold text-sm">
+            {user?.first_name?.charAt(0) || "U"}
+          </span>
         </div>
         <div className="hidden sm:block text-left">
-          <p className="text-sm font-semibold text-gray-900">{user?.name || "User"}</p>
+          <p className="text-sm font-semibold text-gray-900">
+            {user ? `${user.first_name} ${user.last_name}` : "User"}
+          </p>
+
           <p className="text-xs text-gray-500 capitalize">{user?.role || "Member"}</p>
         </div>
         <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isOpen ? "rotate-180" : ""}`} />
@@ -85,10 +90,14 @@ export default function UserProfileDropdown({ user }) {
           <div className="px-4 py-3 border-b border-gray-100">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-semibold">{user?.name?.charAt(0) || "U"}</span>
+                <span className="text-white font-semibold text-sm">
+                  {user?.first_name?.charAt(0) || "U"}
+                </span>
               </div>
               <div>
-                <p className="font-semibold text-gray-900">{user?.name || "User"}</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {user ? `${user.first_name} ${user.last_name}` : "User"}
+                </p>
                 <p className="text-sm text-gray-500">{user?.email}</p>
                 <div className="flex items-center gap-1 mt-1">
                   <Crown className="w-3 h-3 text-yellow-500" />
@@ -109,13 +118,12 @@ export default function UserProfileDropdown({ user }) {
                     item.onClick()
                     setIsOpen(false)
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors ${
-                    item.danger
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors ${item.danger
                       ? "text-red-600 hover:bg-red-50"
                       : item.highlight
                         ? "text-blue-700 hover:bg-purple-50"
                         : "text-gray-700"
-                  }`}
+                    }`}
                 >
                   <Icon className="w-4 h-4" />
                   <span className="text-sm font-medium">{item.label}</span>

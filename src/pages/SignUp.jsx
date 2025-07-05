@@ -2,11 +2,14 @@
 
 import { useState } from "react"
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react"
-// const baseUrl = import.meta.env.REACT_APP_API_BASE_URL;
-
-const baseUrl = import.meta.env.REACT_APP_API_BASE_URL || "http://192.168.31.249:9000";
+import {authAPI} from "../utils/api";
+import { loginSuccess } from "../redux/slices/authSlice"
+import { useDispatch } from "react-redux"
+import { useNavigate } from "react-router-dom";
 
 const SignUp = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -92,98 +95,56 @@ const SignUp = () => {
 }
 
  const handleSubmit = async (e) => {
-  e.preventDefault()
-
-  if (!validateForm()) {
-    return
-  }
-
-  setIsLoading(true)
-  setErrors({})
+  e.preventDefault();
+  if (!validateForm()) return;
+  setIsLoading(true);
+  setErrors({});
 
   try {
-    // Use dj-rest-auth registration endpoint
-    const apiData = {
+    // 1. Signup
+    const registerResult = await authAPI.register({
       first_name: formData.firstName,
       last_name: formData.lastName,
       email: formData.email,
-      password: formData.password,        // Note: password1, not password
-      password2: formData.confirmPassword, // Note: password2, not password_confirm
+      password: formData.password,
+      password2: formData.confirmPassword,
+    });
+
+    if (registerResult.error) {
+      setErrors(registerResult.error);
+      setIsLoading(false);
+      return;
     }
 
-    const response = await fetch(`${baseUrl}/auth/signup/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(apiData),
-    })
+    // 2. Login immediately after signup
+    const loginResult = await authAPI.login({
+      email: formData.email,
+      password: formData.password,
+    });
 
-    // Check if response has content before parsing JSON
-    const contentType = response.headers.get("content-type")
-    let result = {}
-    
-    if (contentType && contentType.includes("application/json")) {
-      const text = await response.text()
-      if (text) {
-        try {
-          result = JSON.parse(text)
-        } catch (parseError) {
-          console.error("JSON parse error:", parseError)
-          setErrors({ general: "Invalid response from server" })
-          return
-        }
-      }
+    if (loginResult.error) {
+      setErrors(loginResult.error);
+      setIsLoading(false);
+      return;
     }
 
-    if (!response.ok) {
-      // Handle validation errors from dj-rest-auth
-      if (result.non_field_errors) {
-        setErrors({ general: result.non_field_errors.join(', ') })
-      } else if (Object.keys(result).length > 0) {
-        setErrors(result)
-      } else {
-        setErrors({ general: `Registration failed with status ${response.status}` })
-      }
-      return
-    }
+    const { access, refresh, user } = loginResult;
 
-    console.log("Registration successful:", result)
+    if (access) localStorage.setItem("access_token", access);
+    if (refresh) localStorage.setItem("refresh_token", refresh);
+    if (user) localStorage.setItem("user", JSON.stringify(user));
 
-    // Store JWT tokens if they're returned
-    if (result.access_token) {
-      localStorage.setItem('access_token', result.access_token)
-    }
-    if (result.refresh_token) {
-      localStorage.setItem('refresh_token', result.refresh_token)
-    }
-    
-    // Alternative: some configurations return tokens in 'access' and 'refresh' keys
-    if (result.access) {
-      localStorage.setItem('access_token', result.access)
-    }
-    if (result.refresh) {
-      localStorage.setItem('refresh_token', result.refresh)
-    }
+    dispatch(loginSuccess({ user, access_token: access, refresh_token: refresh }));
 
-    // Handle successful registration
-    // Option 1: Redirect to dashboard/home
-    // window.location.href = '/dashboard'
-    
-    // Option 2: Show success message and redirect after delay
-    // setSuccessMessage("Registration successful! Redirecting...")
-    // setTimeout(() => window.location.href = '/dashboard', 2000)
-    
-    // Option 3: Call parent component handler
-    // onRegistrationSuccess(result)
-
+    navigate("/dashboard");
   } catch (error) {
-    console.error("Registration error:", error)
-    setErrors({ general: "Network error. Please check your connection and try again." })
+    setErrors(error);
   } finally {
-    setIsLoading(false)
+    setIsLoading(false);
   }
-}
+};
+
+
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target

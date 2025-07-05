@@ -203,7 +203,7 @@ export const authAPI = {
   // Register
   register: async (userData) => {
     try {
-      const response = await api.post("/auth/register/", userData);
+      const response = await api.post("/auth/signup/", userData);
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.message || "Registration failed");

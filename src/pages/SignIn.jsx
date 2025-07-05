@@ -2,15 +2,18 @@
 
 import { useState } from "react";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
-
-// const baseUrl = 'http://192.168.226.155:9000'
-const baseUrl =
-  import.meta.env.REACT_APP_API_BASE_URL || "http://192.168.31.249:9000";
+import { authAPI } from "../utils/api"; // Import your API utility
+import { useDispatch } from "react-redux";
+import { loginStart, loginSuccess, loginFailure } from "../redux/slices/authSlice";
+const baseUrl = import.meta.env.VITE_API_URL;
+import { useNavigate } from "react-router-dom";
 
 // Make authenticated API calls
 // const response = await authenticatedFetch('/api/user/profile/')
 
 const SignIn = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -20,27 +23,7 @@ const SignIn = () => {
     rememberMe: false,
   });
 
-  // Mock credentials for testing
-  const mockCredentials = [
-    {
-      email: "admin@goevent.com",
-      password: "admin123",
-      name: "Admin User",
-      role: "vendor",
-    },
-    {
-      email: "user@goevent.com",
-      password: "user123",
-      name: "John Doe",
-      role: "user",
-    },
-    {
-      email: "demo@goevent.com",
-      password: "demo123",
-      name: "Demo User",
-      role: "demo",
-    },
-  ];
+  
 
   const validateForm = () => {
     const newErrors = {};
@@ -56,118 +39,52 @@ const SignIn = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) {
-      return;
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (!validateForm()) return;
+
+  dispatch(loginStart());
+  setErrors({});
+  setIsLoading(true);
+
+  try {
+    const data = await authAPI.login({
+      email: formData.email,
+      password: formData.password,
+    });
+
+    // Save tokens and user info in storage
+    if (formData.rememberMe) {
+      localStorage.setItem("access_token", data.access);
+      localStorage.setItem("refresh_token", data.refresh);
+      localStorage.setItem("user", JSON.stringify(data.user));
+    } else {
+      sessionStorage.setItem("access_token", data.access);
+      sessionStorage.setItem("refresh_token", data.refresh);
+      sessionStorage.setItem("user", JSON.stringify(data.user));
     }
 
-    setIsLoading(true);
-    setErrors({});
+    // Dispatch loginSuccess with expected payload shape
+    dispatch(
+      loginSuccess({
+        user: data.user,
+        access_token: data.access,
+        refresh_token: data.refresh,
+      })
+    );
 
-    try {
-      // Check if credentials match any mock user first
-      const mockUser = mockCredentials.find(
-        (user) =>
-          user.email === formData.email && user.password === formData.password
-      );
+    setIsLoading(false);
 
-      if (mockUser) {
-        // Mock successful login with mock user
-        console.log("Mock login successful:", mockUser);
+    navigate("/dashboard"); // Use React Router's Navigate component to redirect
 
-        // Generate mock tokens
-        const mockTokens = {
-          access: `mock_access_token_${Date.now()}`,
-          refresh: `mock_refresh_token_${Date.now()}`,
-          user: {
-            id: Date.now(),
-            name: mockUser.name,
-            email: mockUser.email,
-            role: mockUser.role,
-          },
-        };
+  } catch (error) {
+    dispatch(loginFailure(error.message));
+    setErrors({ general: error.message || "Login failed. Please try again." });
+    setIsLoading(false);
+  }
+};
 
-        // Store tokens based on remember me preference
-        const storage = formData.rememberMe ? localStorage : sessionStorage;
-        storage.setItem("access_token", mockTokens.access);
-        storage.setItem("refresh_token", mockTokens.refresh);
-        storage.setItem("user", JSON.stringify(mockTokens.user));
-
-        // Redirect to dashboard or homepage
-        setTimeout(() => {
-          window.location.href = "/homepage";
-        }, 500);
-
-        return;
-      }
-
-      // If no mock match, proceed with real API call
-      // Prepare data for Django REST Framework JWT authentication
-      const apiData = {
-        email: formData.email,
-        password: formData.password,
-      };
-
-      // Replace with your actual API endpoint
-      const response = await fetch(`${baseUrl}/auth/login/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(apiData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        // Handle different types of errors from Django
-        if (response.status === 401) {
-          setErrors({ general: "Invalid email or password" });
-        } else if (errorData.email) {
-          setErrors({ email: errorData.email[0] });
-        } else if (errorData.password) {
-          setErrors({ password: errorData.password[0] });
-        } else {
-          setErrors({ general: "Login failed. Please try again." });
-        }
-        return;
-      }
-
-      const result = await response.json();
-
-      // Handle JWT tokens
-      if (result.access && result.refresh) {
-        // Store tokens based on remember me preference
-        if (formData.rememberMe) {
-          // Store in localStorage for persistent login
-          localStorage.setItem("access_token", result.access);
-          localStorage.setItem("refresh_token", result.refresh);
-        } else {
-          // Store in sessionStorage for session-only login
-          sessionStorage.setItem("access_token", result.access);
-          sessionStorage.setItem("refresh_token", result.refresh);
-        }
-
-        // Store user info if provided
-        if (result.user) {
-          const storage = formData.rememberMe ? localStorage : sessionStorage;
-          storage.setItem("user", JSON.stringify(result.user));
-        }
-
-        console.log("Login successful:", result);
-
-        // Redirect to dashboard or home page
-        window.location.href = "/dashboard";
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      setErrors({
-        general: "Network error. Please check your connection and try again.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -185,14 +102,6 @@ const SignIn = () => {
     }
   };
 
-  const fillDemoCredentials = (credentials) => {
-    setFormData((prev) => ({
-      ...prev,
-      email: credentials.email,
-      password: credentials.password,
-    }));
-    setErrors({});
-  };
 
   const handleGoogleSignIn = async () => {
     try {
@@ -230,27 +139,7 @@ const SignIn = () => {
             </p>
           </div>
 
-          {/* Demo Credentials */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm font-medium text-blue-800 mb-3">
-              Demo Credentials (Click to fill):
-            </p>
-            <div className="space-y-2">
-              {mockCredentials.map((cred, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => fillDemoCredentials(cred)}
-                  className="w-full text-left p-2 bg-white rounded border hover:bg-blue-50 transition-colors text-sm"
-                >
-                  <div className="font-medium text-blue-700">{cred.name}</div>
-                  <div className="text-blue-600">
-                    {cred.email} / {cred.password}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
+          
 
           {errors.general && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">

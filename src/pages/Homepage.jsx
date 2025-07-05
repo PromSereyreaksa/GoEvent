@@ -29,9 +29,30 @@ import RecentActivityCard from "../components/homepage/RecentActivityCard";
 import WelcomeHero from "../components/homepage/WelcomeHero";
 import { useVendorCheck } from "../components/SecurityMonitor";
 
+
+
+
+
 export default function Homepage() {
+
+  const reduxUser = useSelector((state) => state.auth.user);
+const [user, setUser] = useState(null);
+
+  useEffect(() => {
+  if (reduxUser) {
+    setUser(reduxUser);
+  } else {
+    const storedUser =
+      JSON.parse(localStorage.getItem("user")) ||
+      JSON.parse(sessionStorage.getItem("user"));
+    if (storedUser) {
+      setUser(storedUser);
+    }
+  }
+}, [reduxUser]);
+
   const navigate = useNavigate();
-  const { user } = useSelector((state) => state.auth);
+
   const { isVendor, requireVendor } = useVendorCheck();
   const [searchQuery, setSearchQuery] = useState("");
   const [isVisible, setIsVisible] = useState({});

@@ -8,6 +8,10 @@ import EventManagementWrapper from "./components/EventManagementWrapper"
 import CreateEventProtection from "./components/CreateEventProtection"
 import SecurityMonitor from "./components/SecurityMonitor"
 
+// redux
+import { useDispatch } from "react-redux";
+import { initializeAuth } from "./redux/slices/authSlice";
+
 // Pages
 import Home from "./pages/Home"
 import Homepage from "./pages/Homepage"
@@ -18,7 +22,16 @@ import PricingSection from "./pages/Pricing"
 import EventManagement from "./pages/EventManagement"
 import Guests from "./components/Guests"
 
+// effect
+import { useEffect } from "react"
+
 function App() {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(initializeAuth());
+  }, [dispatch]);
+
   return (
     <Provider store={store}>
       <Router>
