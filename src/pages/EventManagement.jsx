@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Menu, Lock, AlertTriangle } from "lucide-react";
@@ -152,15 +152,15 @@ export default function EventManagement() {
     });
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-  };
+  }, []);
 
-  const handleFileUpload = (e, fieldName) => {
+  const handleFileUpload = useCallback((e, fieldName) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
@@ -172,7 +172,7 @@ export default function EventManagement() {
       };
       reader.readAsDataURL(file);
     }
-  };
+  }, []);
 
   const handleCreateEvent = () => {
     // Only allow vendors to create events
@@ -249,7 +249,7 @@ export default function EventManagement() {
     }
   };
 
-  const handleSaveEvent = async () => {
+  const handleSaveEvent = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -321,9 +321,17 @@ export default function EventManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    currentView,
+    user?.role,
+    formData,
+    events,
+    editingEvent,
+    isCreateMode,
+    navigate,
+  ]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setCurrentView("list");
     resetForm();
     setEditingEvent(null);
@@ -333,7 +341,7 @@ export default function EventManagement() {
     if (isCreateMode) {
       navigate("/events", { replace: true });
     }
-  };
+  }, [isCreateMode, navigate]);
 
   const handleNavigation = (view) => {
     if (view === "create") {
@@ -437,71 +445,6 @@ export default function EventManagement() {
     );
   }
 
-  // Create/Edit Event Form Content Component
-  const EventFormContent = () => {
-    return (
-      <div
-        className={`transition-all duration-300 ${
-          sidebarCollapsed ? "lg:ml-16" : "lg:ml-64"
-        }`}
-      >
-        {/* Top Navigation Bar */}
-        <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200/60 px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                onClick={() => setSidebarOpen(true)}
-              >
-                <Menu className="w-5 h-5" />
-              </button>
-
-              <div className="relative max-w-md">
-                <h1 className="text-xl font-bold text-gray-900">
-                  {currentView === "create" ? "Create Event" : "Edit Event"}
-                </h1>
-                <p className="text-sm text-gray-600">
-                  {currentView === "create"
-                    ? "Fill in the details to create a new event"
-                    : "Update your event information"}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <NotificationsDropdown notifications={notifications} />
-            </div>
-          </div>
-        </div>
-
-        {/* Page Content */}
-        <div className="px-4 sm:px-6 lg:px-8 py-8">
-          {/* Error Display */}
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl">
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center">
-                  <span className="text-red-600 text-xs">!</span>
-                </div>
-                <p className="text-red-800 font-medium">Error</p>
-              </div>
-              <p className="text-red-600 text-sm mt-1">{error}</p>
-            </div>
-          )}
-
-          <EventForm
-            formData={formData}
-            onInputChange={handleInputChange}
-            onFileUpload={handleFileUpload}
-            onSave={handleSaveEvent}
-            onCancel={handleCancel}
-            isEdit={currentView === "edit"}
-          />
-        </div>
-      </div>
-    );
-  };
-
   // Create/Edit Event Form View
   if (currentView === "create" || currentView === "edit") {
     // Additional check for create mode - non-vendors shouldn't reach here, but just in case
@@ -544,7 +487,65 @@ export default function EventManagement() {
           setIsCollapsed={setSidebarCollapsed}
         />
 
-        <EventFormContent />
+        <div
+          className={`transition-all duration-300 ${
+            sidebarCollapsed ? "lg:ml-16" : "lg:ml-64"
+          }`}
+        >
+          {/* Top Navigation Bar */}
+          <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200/60 px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <button
+                  className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  onClick={() => setSidebarOpen(true)}
+                >
+                  <Menu className="w-5 h-5" />
+                </button>
+
+                <div className="relative max-w-md">
+                  <h1 className="text-xl font-bold text-gray-900">
+                    {currentView === "create" ? "Create Event" : "Edit Event"}
+                  </h1>
+                  <p className="text-sm text-gray-600">
+                    {currentView === "create"
+                      ? "Fill in the details to create a new event"
+                      : "Update your event information"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <NotificationsDropdown notifications={notifications} />
+              </div>
+            </div>
+          </div>
+
+          {/* Page Content */}
+          <div className="px-4 sm:px-6 lg:px-8 py-8">
+            {/* Error Display */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center">
+                    <span className="text-red-600 text-xs">!</span>
+                  </div>
+                  <p className="text-red-800 font-medium">Error</p>
+                </div>
+                <p className="text-red-600 text-sm mt-1">{error}</p>
+              </div>
+            )}
+
+            <EventForm
+              formData={formData}
+              onInputChange={handleInputChange}
+              onFileUpload={handleFileUpload}
+              onSave={handleSaveEvent}
+              onCancel={handleCancel}
+              isEdit={currentView === "edit"}
+            />
+          </div>
+        </div>
       </div>
     );
   }

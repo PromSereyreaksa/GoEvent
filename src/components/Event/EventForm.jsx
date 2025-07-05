@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   ArrowLeft,
   Save,
@@ -77,7 +77,6 @@ export function EventForm({
   };
 
   const handleEventTypeChange = (e) => {
-    const value = e.target.value;
     onInputChange(e);
   };
 
@@ -404,7 +403,7 @@ export function EventForm({
               type="text"
               id="name"
               name="name"
-              value={formData.name}
+              value={formData.name || ""}
               onChange={onInputChange}
               placeholder="Enter event name"
               className="w-full px-6 py-4 rounded-2xl border border-gray-200 focus:border-blue-500 focus:outline-none transition-colors bg-gray-50 font-medium"
@@ -747,7 +746,7 @@ export function EventForm({
               type="date"
               id="date"
               name="date"
-              value={formData.date}
+              value={formData.date || ""}
               onChange={onInputChange}
               className="w-full px-6 py-4 rounded-2xl border border-gray-200 focus:border-blue-500 focus:outline-none transition-colors bg-gray-50 font-medium"
               required
@@ -766,7 +765,7 @@ export function EventForm({
               type="time"
               id="startTime"
               name="startTime"
-              value={formData.startTime}
+              value={formData.startTime || ""}
               onChange={onInputChange}
               className="w-full px-6 py-4 rounded-2xl border border-gray-200 focus:border-blue-500 focus:outline-none transition-colors bg-gray-50 font-medium"
               required
