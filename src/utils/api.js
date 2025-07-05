@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "https://snwv9cpm-8000.asse.devtunnels.ms";
+  import.meta.env.VITE_API_URL || "http://192.168.226.237:8000";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -14,8 +14,11 @@ const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    // Get token from localStorage
-    const token = localStorage.getItem("token");
+    // Check both token storage methods for compatibility
+    const token =
+      localStorage.getItem("access_token") ||
+      sessionStorage.getItem("access_token") ||
+      localStorage.getItem("token");
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -35,9 +38,16 @@ api.interceptors.response.use(
     const { response } = error;
 
     if (response?.status === 401) {
-      // Token expired or invalid
+      // Token expired or invalid - clear all auth data
       localStorage.removeItem("token");
-      // Redirect to sign-in page if it exists
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      localStorage.removeItem("user");
+      sessionStorage.removeItem("access_token");
+      sessionStorage.removeItem("refresh_token");
+      sessionStorage.removeItem("user");
+
+      // Redirect to sign-in page if not already there
       if (window.location.pathname !== "/sign-in") {
         window.location.href = "/sign-in";
       }
@@ -177,13 +187,34 @@ export const eventAPI = {
 
 export const authAPI = {
   // Login
-  login: async (credentials) => {
+  login: async (credentials, rememberMe = false) => {
     try {
       const response = await api.post("/auth/login/", credentials);
-      if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
+      const data = response.data;
+
+      // Choose storage based on remember me preference
+      const storage = rememberMe ? localStorage : sessionStorage;
+
+      // Handle JWT tokens (access/refresh) or single token
+      if (data.access && data.refresh) {
+        storage.setItem("access_token", data.access);
+        storage.setItem("refresh_token", data.refresh);
+
+        // Also store in localStorage for API compatibility
+        if (data.access) {
+          localStorage.setItem("token", data.access);
+        }
+      } else if (data.token) {
+        storage.setItem("access_token", data.token);
+        localStorage.setItem("token", data.token);
       }
-      return response.data;
+
+      // Store user info if provided
+      if (data.user) {
+        storage.setItem("user", JSON.stringify(data.user));
+      }
+
+      return data;
     } catch (error) {
       throw new Error(error.response?.data?.message || "Login failed");
     }
@@ -193,18 +224,25 @@ export const authAPI = {
   logout: async () => {
     try {
       await api.post("/auth/logout/");
-      localStorage.removeItem("token");
     } catch (error) {
-      // Even if logout fails, remove token
+      // Continue with cleanup even if API call fails
+      console.warn("Logout API call failed:", error);
+    } finally {
+      // Clear all auth data
       localStorage.removeItem("token");
-      throw new Error(error.response?.data?.message || "Logout failed");
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      localStorage.removeItem("user");
+      sessionStorage.removeItem("access_token");
+      sessionStorage.removeItem("refresh_token");
+      sessionStorage.removeItem("user");
     }
   },
 
   // Register
   register: async (userData) => {
     try {
-      const response = await api.post("/auth/register/", userData);
+      const response = await api.post("/auth/signup/", userData);
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.message || "Registration failed");

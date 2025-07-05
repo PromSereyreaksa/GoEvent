@@ -97,29 +97,29 @@ export const PROTECTION_TEST_CASES = [
 ];
 
 // Mock users for testing
-export const TEST_USERS = [
-  {
-    id: 1,
-    email: "vendor@test.com",
-    role: "vendor",
-    name: "Vendor User",
-    expectedAccess: "Full access to create events",
-  },
-  {
-    id: 2,
-    email: "user@test.com",
-    role: "user",
-    name: "Regular User",
-    expectedAccess: "Blocked from creating events",
-  },
-  {
-    id: 3,
-    email: "demo@test.com",
-    role: "demo",
-    name: "Demo User",
-    expectedAccess: "Blocked from creating events",
-  },
-];
+// export const TEST_USERS = [
+//   {
+//     id: 1,
+//     email: "vendor@test.com",
+//     role: "vendor",
+//     name: "Vendor User",
+//     expectedAccess: "Full access to create events",
+//   },
+//   {
+//     id: 2,
+//     email: "user@test.com",
+//     role: "user",
+//     name: "Regular User",
+//     expectedAccess: "Blocked from creating events",
+//   },
+//   {
+//     id: 3,
+//     email: "demo@test.com",
+//     role: "demo",
+//     name: "Demo User",
+//     expectedAccess: "Blocked from creating events",
+//   },
+// ];
 
 console.log("Security layers implemented:", SECURITY_LAYERS);
 console.log("Test cases to verify:", PROTECTION_TEST_CASES);

@@ -1,7 +1,19 @@
 import { EventCard, EmptyEventCard } from "./EventCard";
 import { AnalyticsWidget } from "./AnalyticsWidget";
+import { useSelector } from "react-redux";
+import { useVendorCheck } from "../SecurityMonitor";
+import { useNavigate } from "react-router-dom";
+import { Plus } from "lucide-react";
 
 export function EventList({ events, onViewEvent, analyticsData }) {
+  const { user } = useSelector((state) => state.auth);
+  const { isVendor } = useVendorCheck();
+  const navigate = useNavigate();
+
+  const handleCreateEvent = () => {
+    navigate("/events?create=true");
+  };
+
   return (
     <section className="py-8 sm:py-12 lg:py-16 xl:py-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -15,11 +27,48 @@ export function EventList({ events, onViewEvent, analyticsData }) {
               Manage all your events in one place
             </p>
           </div>
+
+          {/* Create Event Button - Only for Vendors */}
+          {isVendor && (
+            <button
+              onClick={handleCreateEvent}
+              className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-2xl font-semibold hover:shadow-lg transition-all duration-200 hover:scale-105"
+            >
+              <Plus className="w-5 h-5" />
+              Create Event
+            </button>
+          )}
         </div>
 
         {/* Analytics Widget */}
         <div className="mb-8 sm:mb-12">
           <AnalyticsWidget data={analyticsData} />
+        </div>
+
+        {/* Debug Info */}
+        <div className="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-2xl">
+          <h3 className="font-semibold text-gray-800 mb-2">EventList Debug:</h3>
+          <p className="text-sm text-gray-600">
+            Events received: {events.length}
+          </p>
+          <p className="text-sm text-gray-600">
+            Events array:{" "}
+            {JSON.stringify(
+              events.map((e) => ({
+                id: e.id,
+                name: e.name,
+                title: e.title,
+                date: e.date,
+                venue: e.venue,
+                eventType: e.eventType,
+              })),
+              null,
+              2
+            )}
+          </p>
+          <p className="text-sm text-gray-600">
+            Map function will render: {events.map((e) => e.id).join(", ")}
+          </p>
         </div>
 
         {/* Events Grid - Mobile Responsive */}

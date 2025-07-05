@@ -2,13 +2,7 @@
 
 import { useState } from "react";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
-
-// const baseUrl = 'http://192.168.226.155:9000'
-const baseUrl =
-  import.meta.env.REACT_APP_API_BASE_URL || "http://192.168.31.249:9000";
-
-// Make authenticated API calls
-// const response = await authenticatedFetch('/api/user/profile/')
+import { authAPI } from "../utils/api";
 
 const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -94,6 +88,9 @@ const SignIn = () => {
         storage.setItem("refresh_token", mockTokens.refresh);
         storage.setItem("user", JSON.stringify(mockTokens.user));
 
+        // Also store in localStorage for API compatibility
+        localStorage.setItem("token", mockTokens.access);
+
         // Redirect to dashboard or homepage
         setTimeout(() => {
           window.location.href = "/homepage";
@@ -103,67 +100,34 @@ const SignIn = () => {
       }
 
       // If no mock match, proceed with real API call
-      // Prepare data for Django REST Framework JWT authentication
-      const apiData = {
+      const loginData = {
         email: formData.email,
         password: formData.password,
       };
 
-      // Replace with your actual API endpoint
-      const response = await fetch(`${baseUrl}/auth/login/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(apiData),
-      });
+      const result = await authAPI.login(loginData, formData.rememberMe);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        // Handle different types of errors from Django
-        if (response.status === 401) {
-          setErrors({ general: "Invalid email or password" });
-        } else if (errorData.email) {
-          setErrors({ email: errorData.email[0] });
-        } else if (errorData.password) {
-          setErrors({ password: errorData.password[0] });
-        } else {
-          setErrors({ general: "Login failed. Please try again." });
-        }
-        return;
-      }
+      console.log("Login successful:", result);
 
-      const result = await response.json();
-
-      // Handle JWT tokens
-      if (result.access && result.refresh) {
-        // Store tokens based on remember me preference
-        if (formData.rememberMe) {
-          // Store in localStorage for persistent login
-          localStorage.setItem("access_token", result.access);
-          localStorage.setItem("refresh_token", result.refresh);
-        } else {
-          // Store in sessionStorage for session-only login
-          sessionStorage.setItem("access_token", result.access);
-          sessionStorage.setItem("refresh_token", result.refresh);
-        }
-
-        // Store user info if provided
-        if (result.user) {
-          const storage = formData.rememberMe ? localStorage : sessionStorage;
-          storage.setItem("user", JSON.stringify(result.user));
-        }
-
-        console.log("Login successful:", result);
-
-        // Redirect to dashboard or home page
-        window.location.href = "/dashboard";
-      }
+      // Redirect to dashboard or home page
+      setTimeout(() => {
+        window.location.href = "/homepage";
+      }, 500);
     } catch (error) {
       console.error("Login error:", error);
-      setErrors({
-        general: "Network error. Please check your connection and try again.",
-      });
+
+      // Handle specific error types
+      if (error.message.includes("Invalid credentials")) {
+        setErrors({ general: "Invalid email or password" });
+      } else if (error.message.includes("Network error")) {
+        setErrors({
+          general: "Network error. Please check your connection and try again.",
+        });
+      } else {
+        setErrors({
+          general: error.message || "Login failed. Please try again.",
+        });
+      }
     } finally {
       setIsLoading(false);
     }

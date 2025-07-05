@@ -15,5 +15,5 @@ export {
   BreadcrumbPage,
   Separator,
 } from "./BreadcrumbComponents";
-export { analyticsData, notifications, sampleEvents } from "./data";
+export { sampleEvents } from "./data";
 export { animationStyles, useScrollAnimation } from "./animations";

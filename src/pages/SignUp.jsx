@@ -1,16 +1,14 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Eye, EyeOff, Mail, Lock, User } from "lucide-react"
-// const baseUrl = import.meta.env.REACT_APP_API_BASE_URL;
-
-const baseUrl = import.meta.env.REACT_APP_API_BASE_URL || "http://192.168.31.249:9000";
+import { useState } from "react";
+import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
+import { authAPI } from "../utils/api";
 
 const SignUp = () => {
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors] = useState({})
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -18,188 +16,125 @@ const SignUp = () => {
     password: "",
     confirmPassword: "",
     agreeToTerms: false,
-  })
+  });
 
   const validateForm = () => {
-  const newErrors = {}
+    const newErrors = {};
 
-  console.log('Validating form data:', formData); // Add this for debugging
+    console.log("Validating form data:", formData); // Add this for debugging
 
-  if (!formData.firstName.trim()) {
-    newErrors.firstName = "First name is required"
-  }
-
-  if (!formData.lastName.trim()) {
-    newErrors.lastName = "Last name is required"
-  }
-
-  if (!formData.email.trim()) {
-    newErrors.email = "Email is required"
-  } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-    newErrors.email = "Email is invalid"
-  }
-
-  // More explicit password validation
-  <div className="flex flex-col gap-2">
-  <label htmlFor="password" className="text-base font-semibold text-black">
-    Password
-  </label>
-  <div className="relative">
-    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-      <Lock className="h-5 w-5 text-gray-400" />
-    </div>
-    <input
-      id="password"
-      name="password"
-      type={showPassword ? "text" : "password"}
-      autoComplete="new-password"
-      required
-      value={formData.password}
-      onChange={handleChange}
-      onBlur={(e) => {
-        // Force validation on blur to catch any issues
-        console.log('Password field value on blur:', e.target.value);
-        console.log('FormData password:', formData.password);
-      }}
-      className={`block w-full pl-10 pr-10 py-3 bg-gray-50 border rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black ${
-        errors.password ? "border-red-300" : "border-gray-300"
-      }`}
-      placeholder="Create a password"
-    />
-    <button
-      type="button"
-      className="absolute inset-y-0 right-0 pr-3 flex items-center"
-      onClick={() => setShowPassword(!showPassword)}
-    >
-      {showPassword ? (
-        <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-      ) : (
-        <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-      )}
-    </button>
-  </div>
-  {errors.password && <p className="text-red-600 text-sm">{errors.password}</p>}
-</div>
-
-
-  if (!formData.agreeToTerms) {
-    newErrors.agreeToTerms = "You must agree to the terms and conditions"
-  }
-
-  console.log('Validation errors:', newErrors); // Debug log
-  setErrors(newErrors)
-  return Object.keys(newErrors).length === 0
-}
-
- const handleSubmit = async (e) => {
-  e.preventDefault()
-
-  if (!validateForm()) {
-    return
-  }
-
-  setIsLoading(true)
-  setErrors({})
-
-  try {
-    // Use dj-rest-auth registration endpoint
-    const apiData = {
-      first_name: formData.firstName,
-      last_name: formData.lastName,
-      email: formData.email,
-      password: formData.password,        // Note: password1, not password
-      password2: formData.confirmPassword, // Note: password2, not password_confirm
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = "First name is required";
     }
 
-    const response = await fetch(`${baseUrl}/auth/signup/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(apiData),
-    })
-
-    // Check if response has content before parsing JSON
-    const contentType = response.headers.get("content-type")
-    let result = {}
-    
-    if (contentType && contentType.includes("application/json")) {
-      const text = await response.text()
-      if (text) {
-        try {
-          result = JSON.parse(text)
-        } catch (parseError) {
-          console.error("JSON parse error:", parseError)
-          setErrors({ general: "Invalid response from server" })
-          return
-        }
-      }
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = "Last name is required";
     }
 
-    if (!response.ok) {
-      // Handle validation errors from dj-rest-auth
-      if (result.non_field_errors) {
-        setErrors({ general: result.non_field_errors.join(', ') })
-      } else if (Object.keys(result).length > 0) {
-        setErrors(result)
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Email is invalid";
+    }
+
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters long";
+    }
+
+    // Confirm password validation
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your password";
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
+    if (!formData.agreeToTerms) {
+      newErrors.agreeToTerms = "You must agree to the terms and conditions";
+    }
+
+    console.log("Validation errors:", newErrors); // Debug log
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+    setErrors({});
+
+    try {
+      // Prepare data for registration API
+      const registerData = {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        email: formData.email,
+        password1: formData.password,
+        password2: formData.confirmPassword,
+      };
+
+      const result = await authAPI.register(registerData);
+
+      console.log("Registration successful:", result);
+
+      // Handle successful registration
+      // Option 1: Redirect to sign-in page
+      setTimeout(() => {
+        window.location.href =
+          "/sign-in?message=Registration successful! Please sign in.";
+      }, 1000);
+
+      // Option 2: Auto-login after registration (if API returns tokens)
+      // if (result.access && result.refresh) {
+      //   localStorage.setItem('access_token', result.access)
+      //   localStorage.setItem('refresh_token', result.refresh)
+      //   if (result.user) {
+      //     localStorage.setItem('user', JSON.stringify(result.user))
+      //   }
+      //   setTimeout(() => {
+      //     window.location.href = '/homepage'
+      //   }, 1000)
+      // }
+    } catch (error) {
+      console.error("Registration error:", error);
+
+      // Handle specific error types
+      if (error.message.includes("User with this email already exists")) {
+        setErrors({ email: "An account with this email already exists" });
+      } else if (error.message.includes("password")) {
+        setErrors({ password: "Password requirements not met" });
       } else {
-        setErrors({ general: `Registration failed with status ${response.status}` })
+        setErrors({
+          general: error.message || "Registration failed. Please try again.",
+        });
       }
-      return
+    } finally {
+      setIsLoading(false);
     }
-
-    console.log("Registration successful:", result)
-
-    // Store JWT tokens if they're returned
-    if (result.access_token) {
-      localStorage.setItem('access_token', result.access_token)
-    }
-    if (result.refresh_token) {
-      localStorage.setItem('refresh_token', result.refresh_token)
-    }
-    
-    // Alternative: some configurations return tokens in 'access' and 'refresh' keys
-    if (result.access) {
-      localStorage.setItem('access_token', result.access)
-    }
-    if (result.refresh) {
-      localStorage.setItem('refresh_token', result.refresh)
-    }
-
-    // Handle successful registration
-    // Option 1: Redirect to dashboard/home
-    // window.location.href = '/dashboard'
-    
-    // Option 2: Show success message and redirect after delay
-    // setSuccessMessage("Registration successful! Redirecting...")
-    // setTimeout(() => window.location.href = '/dashboard', 2000)
-    
-    // Option 3: Call parent component handler
-    // onRegistrationSuccess(result)
-
-  } catch (error) {
-    console.error("Registration error:", error)
-    setErrors({ general: "Network error. Please check your connection and try again." })
-  } finally {
-    setIsLoading(false)
-  }
-}
+  };
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
-    }))
+    }));
 
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
         [name]: "",
-      }))
+      }));
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-700 via-blue-400 to-white font-['Plus_Jakarta_Sans'] pt-20 pb-56 overflow-hidden">
@@ -207,10 +142,15 @@ const SignUp = () => {
       <div className="relative z-10 max-w-md mx-auto px-4">
         <div className="bg-white rounded-3xl p-10 flex flex-col gap-6 shadow-xl">
           <div className="text-center flex flex-col gap-1.5">
-            <h2 className="text-3xl font-bold text-black">Create your account</h2>
+            <h2 className="text-3xl font-bold text-black">
+              Create your account
+            </h2>
             <p className="text-sm text-neutral-600">
               Or{" "}
-              <a href="/sign-in" className="font-medium text-blue-500 hover:text-blue-600">
+              <a
+                href="/sign-in"
+                className="font-medium text-blue-500 hover:text-blue-600"
+              >
                 sign in to your existing account
               </a>
             </p>
@@ -227,7 +167,10 @@ const SignUp = () => {
               {/* Name Fields */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="firstName" className="text-base font-semibold text-black">
+                  <label
+                    htmlFor="firstName"
+                    className="text-base font-semibold text-black"
+                  >
                     First name
                   </label>
                   <div className="relative">
@@ -247,11 +190,16 @@ const SignUp = () => {
                       placeholder="First name"
                     />
                   </div>
-                  {errors.firstName && <p className="text-red-600 text-sm">{errors.firstName}</p>}
+                  {errors.firstName && (
+                    <p className="text-red-600 text-sm">{errors.firstName}</p>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="lastName" className="text-base font-semibold text-black">
+                  <label
+                    htmlFor="lastName"
+                    className="text-base font-semibold text-black"
+                  >
                     Last name
                   </label>
                   <div className="relative">
@@ -271,13 +219,18 @@ const SignUp = () => {
                       placeholder="Last name"
                     />
                   </div>
-                  {errors.lastName && <p className="text-red-600 text-sm">{errors.lastName}</p>}
+                  {errors.lastName && (
+                    <p className="text-red-600 text-sm">{errors.lastName}</p>
+                  )}
                 </div>
               </div>
 
               {/* Email Field */}
               <div className="flex flex-col gap-2">
-                <label htmlFor="email" className="text-base font-semibold text-black">
+                <label
+                  htmlFor="email"
+                  className="text-base font-semibold text-black"
+                >
                   Email address
                 </label>
                 <div className="relative">
@@ -298,12 +251,17 @@ const SignUp = () => {
                     placeholder="Enter your email"
                   />
                 </div>
-                {errors.email && <p className="text-red-600 text-sm">{errors.email}</p>}
+                {errors.email && (
+                  <p className="text-red-600 text-sm">{errors.email}</p>
+                )}
               </div>
 
               {/* Password Field */}
               <div className="flex flex-col gap-2">
-                <label htmlFor="password" className="text-base font-semibold text-black">
+                <label
+                  htmlFor="password"
+                  className="text-base font-semibold text-black"
+                >
                   Password
                 </label>
                 <div className="relative">
@@ -335,12 +293,17 @@ const SignUp = () => {
                     )}
                   </button>
                 </div>
-                {errors.password && <p className="text-red-600 text-sm">{errors.password}</p>}
+                {errors.password && (
+                  <p className="text-red-600 text-sm">{errors.password}</p>
+                )}
               </div>
 
               {/* Confirm Password Field */}
               <div className="flex flex-col gap-2">
-                <label htmlFor="confirmPassword" className="text-base font-semibold text-black">
+                <label
+                  htmlFor="confirmPassword"
+                  className="text-base font-semibold text-black"
+                >
                   Confirm password
                 </label>
                 <div className="relative">
@@ -356,7 +319,9 @@ const SignUp = () => {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     className={`block w-full pl-10 pr-10 py-3 bg-gray-50 border rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black ${
-                      errors.confirmPassword ? "border-red-300" : "border-gray-300"
+                      errors.confirmPassword
+                        ? "border-red-300"
+                        : "border-gray-300"
                     }`}
                     placeholder="Confirm your password"
                   />
@@ -372,7 +337,11 @@ const SignUp = () => {
                     )}
                   </button>
                 </div>
-                {errors.confirmPassword && <p className="text-red-600 text-sm">{errors.confirmPassword}</p>}
+                {errors.confirmPassword && (
+                  <p className="text-red-600 text-sm">
+                    {errors.confirmPassword}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -390,16 +359,24 @@ const SignUp = () => {
                 />
                 <label htmlFor="agreeToTerms" className="text-sm text-black">
                   I agree to the{" "}
-                  <a href="/terms-and-conditions" className="text-blue-600 hover:text-blue-500">
+                  <a
+                    href="/terms-and-conditions"
+                    className="text-blue-600 hover:text-blue-500"
+                  >
                     Terms and Conditions
                   </a>{" "}
                   and{" "}
-                  <a href="/privacy-policy" className="text-blue-600 hover:text-blue-500">
+                  <a
+                    href="/privacy-policy"
+                    className="text-blue-600 hover:text-blue-500"
+                  >
                     Privacy Policy
                   </a>
                 </label>
               </div>
-              {errors.agreeToTerms && <p className="text-red-600 text-sm">{errors.agreeToTerms}</p>}
+              {errors.agreeToTerms && (
+                <p className="text-red-600 text-sm">{errors.agreeToTerms}</p>
+              )}
             </div>
 
             {/* Submit Button */}
@@ -420,7 +397,9 @@ const SignUp = () => {
                   <div className="w-full border-t border-gray-300" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                  <span className="px-2 bg-white text-gray-500">
+                    Or continue with
+                  </span>
                 </div>
               </div>
               <div className="mt-6">
@@ -454,7 +433,7 @@ const SignUp = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default SignUp
+export default SignUp;

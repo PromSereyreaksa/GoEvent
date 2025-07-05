@@ -1,25 +1,66 @@
 import { Calendar, MapPin, Clock, Plus } from "lucide-react";
 
 export function EventCard({ event, onView }) {
+  console.log("EventCard rendering with event:", event);
+
+  // Safety checks for required fields
+  if (!event) {
+    console.warn("EventCard: No event data provided");
+    return null;
+  }
+
+  if (!event.id) {
+    console.warn("EventCard: Event missing ID field", event);
+  }
+
+  if (!event.name) {
+    console.warn("EventCard: Event missing name field", event);
+  }
+
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    if (!dateString) {
+      console.warn("EventCard: Missing date string", dateString);
+      return "Date TBD";
+    }
+
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        console.warn("EventCard: Invalid date string", dateString);
+        return "Invalid Date";
+      }
+
+      return date.toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch (error) {
+      console.error("EventCard: Error formatting date", error);
+      return "Date Error";
+    }
   };
 
   const formatTime = (timeString) => {
-    const [hours, minutes] = timeString.split(":");
-    const date = new Date();
-    date.setHours(Number.parseInt(hours), Number.parseInt(minutes));
-    return date.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
+    if (!timeString) {
+      console.warn("EventCard: Missing time string", timeString);
+      return "Time TBD";
+    }
+
+    try {
+      const [hours, minutes] = timeString.split(":");
+      const date = new Date();
+      date.setHours(Number.parseInt(hours), Number.parseInt(minutes));
+      return date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+    } catch (error) {
+      console.error("EventCard: Error formatting time", error);
+      return "Time Error";
+    }
   };
 
   const getEventTypeLabel = (eventType) => {
@@ -31,7 +72,10 @@ export function EventCard({ event, onView }) {
 
   return (
     <div
-      onClick={() => onView(event)}
+      onClick={() => {
+        console.log("EventCard clicked with event:", event);
+        onView(event);
+      }}
       className="bg-white rounded-2xl sm:rounded-3xl border border-gray-200 overflow-hidden hover:shadow-2xl hover:scale-105 transition-all duration-300 animate-on-scroll cursor-pointer active:scale-95"
     >
       {/* Event Image */}
@@ -47,7 +91,7 @@ export function EventCard({ event, onView }) {
       <div className="p-4 sm:p-6">
         <div className="flex items-start justify-between mb-3 gap-2">
           <h3 className="text-lg sm:text-xl font-bold text-black line-clamp-2 leading-tight">
-            {event.name}
+            {event.name || event.title || "Untitled Event"}
           </h3>
           <span className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-xs font-semibold flex-shrink-0">
             {getEventTypeLabel(event.eventType)}
@@ -59,7 +103,9 @@ export function EventCard({ event, onView }) {
             <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
               <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600" />
             </div>
-            <span className="text-sm font-medium truncate">{event.venue}</span>
+            <span className="text-sm font-medium truncate">
+              {event.venue || event.location || "Venue TBD"}
+            </span>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 text-gray-600">
@@ -76,7 +122,8 @@ export function EventCard({ event, onView }) {
               <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600" />
             </div>
             <span className="text-sm font-medium">
-              {formatTime(event.startTime)} - {formatTime(event.endTime)}
+              {formatTime(event.startTime || event.start_Time)} -{" "}
+              {formatTime(event.endTime || event.end_Time)}
             </span>
           </div>
         </div>

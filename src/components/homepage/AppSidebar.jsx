@@ -68,6 +68,18 @@ export default function AppSidebar({
       href: "/events",
       active: location.pathname.startsWith("/events"),
     },
+    // Only show Create Event button for vendors
+    ...(isVendor
+      ? [
+          {
+            icon: Plus,
+            label: "Create Event",
+            href: "/events?create=true",
+            active: false,
+            isCreateButton: true,
+          },
+        ]
+      : []),
     {
       icon: Users,
       label: "Guests",

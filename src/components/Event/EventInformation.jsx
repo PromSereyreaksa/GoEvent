@@ -15,8 +15,33 @@ import {
 import { useState, useEffect, useRef } from "react";
 
 export function EventInformation({ event, onEdit, onDelete, onBack }) {
+  console.log("EventInformation rendered with event:", event);
+
+  // Safety check - if no event, show error state
+  if (!event) {
+    return (
+      <div className="min-h-screen bg-white font-['Plus_Jakarta_Sans'] flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Event Not Found
+          </h2>
+          <p className="text-gray-600 mb-4">
+            The event you're looking for could not be loaded.
+          </p>
+          <button
+            onClick={onBack}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Back to Events
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef(null); 
+  const dropdownRef = useRef(null);
 
   // Confirmation modal state
   const [confirmationModal, setConfirmationModal] = useState({
@@ -320,7 +345,9 @@ export function EventInformation({ event, onEdit, onDelete, onBack }) {
         {/* Agenda Section */}
         {event.agenda && event.agenda.length > 0 && (
           <div className="mb-12 animate-on-scroll delay-300">
-            <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">Agenda</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">
+              Agenda
+            </h2>
 
             <div className="space-y-6">
               {event.agenda.map((day, dayIndex) => {
@@ -400,7 +427,9 @@ export function EventInformation({ event, onEdit, onDelete, onBack }) {
 
         {/* Photo Album Section */}
         <div className="mb-12 animate-on-scroll delay-400">
-          <h2 className="text-3xl font-bold text-gray-900 mb-6">Photo Gallary</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-6">
+            Photo Gallary
+          </h2>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {photoAlbum.map((photo, index) => (

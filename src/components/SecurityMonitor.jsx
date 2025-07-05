@@ -37,11 +37,12 @@ export default function SecurityMonitor() {
       pattern.test(currentUrl)
     );
 
-    if (isRestrictedUrl && user.role !== "vendor") {
+    if (isRestrictedUrl && user.role !== "vendor" && user.is_vendor !== true) {
       console.error(
         "Security violation detected: Non-vendor attempting to access restricted URL",
         {
           userRole: user.role,
+          userIsVendor: user.is_vendor,
           userId: user.id,
           email: user.email,
           restrictedUrl: currentUrl,
@@ -63,12 +64,14 @@ export default function SecurityMonitor() {
 export const useVendorCheck = () => {
   const { user } = useSelector((state) => state.auth);
 
-  const isVendor = user?.role === "vendor";
+  // Check both role-based and is_vendor flag for compatibility
+  const isVendor = user?.role === "vendor" || user?.is_vendor === true;
 
   const requireVendor = (action = "perform this action") => {
     if (!isVendor) {
       console.warn(`Non-vendor user attempted to ${action}`, {
         userRole: user?.role,
+        userIsVendor: user?.is_vendor,
         userId: user?.id,
         timestamp: new Date().toISOString(),
       });
