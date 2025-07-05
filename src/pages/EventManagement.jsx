@@ -10,6 +10,7 @@ import { EventList } from "../components/Event/EventList";
 import { EventForm } from "../components/Event/EventForm";
 import { useVendorCheck } from "../components/SecurityMonitor";
 import { EventInformation } from "../components/Event/EventInformation";
+import MakeVendorButton from "./test";
 import {
   analyticsData,
   notifications,
@@ -355,10 +356,11 @@ export default function EventManagement() {
   const EventListContent = () => {
     return (
       <div
-        className={`transition-all duration-300 ${
-          sidebarCollapsed ? "lg:ml-16" : "lg:ml-64"
-        }`}
+      className={`transition-all duration-300 ${
+        sidebarCollapsed ? "lg:ml-16" : "lg:ml-64"
+      }`}
       >
+        <MakeVendorButton/>
         {/* Top Navigation Bar */}
         <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200/60 px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">

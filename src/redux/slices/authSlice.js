@@ -84,9 +84,14 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.error = null
     },
+    /**
+     * Reducer to update specific properties of the user object.
+     * This can be used to change the user's role.
+     * @param {object} action.payload - An object containing the properties to update (e.g., { role: 'vendor' }).
+     */
     updateUser: (state, action) => {
       state.user = { ...state.user, ...action.payload }
-      // Update storage
+      // Update storage to persist the changes
       const storage = localStorage.getItem("access_token") ? localStorage : sessionStorage
       storage.setItem("user", JSON.stringify(state.user))
     },
