@@ -16,16 +16,29 @@ export default function About() {
   const [error, setError] = useState(null);
 
   // Fetch team members from API
+  // Fetch team members from API
   useEffect(() => {
     const fetchTeamMembers = async () => {
       try {
         setLoading(true);
         setError(null);
         const data = await teamAPI.getMembers();
-        setTeamMembers([]);
+        
+        // Handle different API response formats
+        if (Array.isArray(data)) {
+          setTeamMembers(data);
+        } else if (data && Array.isArray(data.results)) {
+          setTeamMembers(data.results);
+        } else if (data && Array.isArray(data.data)) {
+          setTeamMembers(data.data);
+        } else {
+          console.warn('Unexpected API response format:', data);
+          setTeamMembers([]);
+        }
       } catch (err) {
         console.error('Error fetching team members:', err);
         setError(err.message);
+        setTeamMembers([]); // Ensure it's always an array
       } finally {
         setLoading(false);
       }
