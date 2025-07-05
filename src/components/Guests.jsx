@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import {
   Users,
@@ -26,6 +27,34 @@ import AppSidebar from "../components/homepage/AppSidebar"
 
 const Guests = () => {
   const dispatch = useDispatch()
+
+  // Hide header when component mounts
+    useEffect(() => {
+      const header = document.querySelector("header");
+      if (header) {
+        header.style.display = "none";
+      }
+  
+      return () => {
+        if (header) {
+          header.style.display = "block";
+        }
+      };
+    }, []);
+  
+    // Hide footer
+    useEffect(() => {
+      const footer = document.querySelector("footer");
+      if (footer) {
+        footer.style.display = "none";
+      }
+  
+      return () => {
+        if (footer) {
+          footer.style.display = "block";
+        }
+      };
+    }, []);
 
   // Fix Redux selector to match your store structure
   const { guests = [] } = useSelector((state) => state.guests || {})
