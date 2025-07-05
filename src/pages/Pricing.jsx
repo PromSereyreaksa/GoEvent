@@ -1,83 +1,33 @@
+import { useEffect, useState } from "react";
 import { Check, X } from "lucide-react";
+import { pricingAPI } from "../utils/api";
 
 export default function Pricing() {
-  const plans = [
-    {
-      name: "Basic",
-      price: "$9",
-      period: "/month",
-      description: "Perfect for personal projects and small websites",
-      features: [
-        "5 websites",
-        "10GB storage",
-        "Basic templates",
-        "SSL certificate",
-        "Email support",
-        "Mobile responsive",
-      ],
-      notIncluded: [
-        "Advanced analytics",
-        "Priority support",
-        "Custom domain",
-        "E-commerce features",
-      ],
-      popular: false,
-      buttonText: "Get Started",
-    },
-    {
-      name: "Pro",
-      price: "$29",
-      period: "/month",
-      description: "Ideal for growing businesses and professionals",
-      features: [
-        "25 websites",
-        "100GB storage",
-        "Premium templates",
-        "SSL certificate",
-        "Priority support",
-        "Mobile responsive",
-        "Advanced analytics",
-        "Custom domain",
-        "SEO tools",
-        "Social media integration",
-      ],
-      notIncluded: ["White label", "API access"],
-      popular: true,
-      buttonText: "Start Free Trial",
-    },
-    {
-      name: "Enterprise",
-      price: "$99",
-      period: "/month",
-      description: "For large organizations with advanced needs",
-      features: [
-        "Unlimited websites",
-        "Unlimited storage",
-        "All templates",
-        "SSL certificate",
-        "24/7 phone support",
-        "Mobile responsive",
-        "Advanced analytics",
-        "Custom domain",
-        "SEO tools",
-        "Social media integration",
-        "White label",
-        "API access",
-        "Custom integrations",
-        "Dedicated account manager",
-      ],
-      notIncluded: [],
-      popular: false,
-      buttonText: "Contact Sales",
-    },
-  ];
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await pricingAPI.getPlans();
+        setPlans(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPlans();
+  }, []);
 
   return (
     <div className="min-h-screen bg-white font-['Plus_Jakarta_Sans']">
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-blue-500 via-blue-600 to-white pt-20 pb-96 overflow-hidden">
         <div className="absolute inset-0 bg-[url('/grid-1.svg?height=800&width=1200')] bg-center bg-no-repeat bg-cover opacity-20"></div>
-
         <div className="relative z-10 max-w-7xl mx-auto px-8">
           <div className="text-center">
             <h1 className="text-6xl md:text-8xl font-bold leading-[115%] tracking-[-2px] text-white mb-6">
@@ -89,116 +39,87 @@ export default function Pricing() {
             </p>
           </div>
         </div>
-
         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white via-white/90 to-transparent z-20"></div>
       </section>
 
-      {/* Pricing Toggle */}
-      <section className="py-16 px-8 -mt-80">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-center mb-16">
-            <div className="bg-gray-50 backdrop-blur-lg rounded-full p-2 flex items-center gap-8">
-              <div className="bg-white rounded-full px-3 py-2 flex items-center gap-2 cursor-pointer">
-                <span className="text-black text-base font-semibold">
-                  Monthly
-                </span>
-              </div>
-              <div className="rounded-full px-3 py-2 flex items-center gap-2 cursor-pointer">
-                <span className="text-black text-base font-semibold">
-                  Yearly
-                </span>
-                <span className="bg-orange-500 text-white rounded-full px-2 py-1 text-xs font-semibold">
-                  Save 20%
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Pricing Cards */}
-      <section className="py-20 px-8">
+      <section className="py-20 px-8 -mt-80">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {plans.map((plan, index) => (
-              <div
-                key={index}
-                className={`relative bg-gray-50 bg-[url('/placeholder.svg?height=200&width=400')] bg-right-top bg-no-repeat rounded-3xl p-10 pb-13 flex flex-col gap-12 overflow-hidden ${
-                  plan.popular ? "bg-none" : ""
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-bold uppercase">
-                      Most Popular
-                    </span>
-                  </div>
-                )}
-
-                <div className="flex flex-col gap-8">
-                  <div className="flex items-center gap-10">
-                    <div className="flex flex-col gap-2">
-                      <h3 className="text-xl font-semibold text-black">
-                        {plan.name}
-                      </h3>
-                      <p className="text-sm text-neutral-600">
-                        {plan.description}
-                      </p>
-                    </div>
-                    {plan.popular && (
-                      <span className="bg-blue-500 text-white rounded-full px-2 py-1 text-xs font-bold uppercase">
-                        Popular
+          {loading ? (
+            <div className="text-center py-20 text-lg text-gray-500">
+              Loading pricing plans...
+            </div>
+          ) : error ? (
+            <div className="text-center py-20 text-lg text-red-500">
+              {error}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {plans.map((plan, index) => (
+                <div
+                  key={plan.id || index}
+                  className={`relative bg-white shadow-xl rounded-3xl p-10 flex flex-col gap-10 border border-gray-200 ${
+                    plan.popular ? "ring-2 ring-blue-500" : ""
+                  }`}
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                      <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-bold uppercase shadow-lg">
+                        Most Popular
                       </span>
-                    )}
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-4 items-center">
+                    <h3 className="text-2xl font-bold text-black mb-1">
+                      {plan.name}
+                    </h3>
+                    <p className="text-base text-neutral-600 text-center mb-2">
+                      {plan.description}
+                    </p>
+                    <div className="flex items-end gap-1">
+                      <span className="text-5xl font-bold text-black">
+                        {plan.price}
+                      </span>
+                      <span className="text-neutral-600 mb-1">
+                        {plan.period || "/month"}
+                      </span>
+                    </div>
                   </div>
-
-                  <div className="flex items-end">
-                    <span className="text-6xl font-bold text-black">
-                      {plan.price}
-                    </span>
-                    <span className="text-neutral-600 ml-1 mb-1.5">
-                      {plan.period}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-10">
-                  <ul className="space-y-4">
-                    {plan.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center">
-                        <div className="w-6 h-6 flex items-center justify-center mr-2">
-                          <Check className="w-4 h-4 text-green-500" />
-                        </div>
-                        <span className="text-neutral-600 text-base">
+                  <ul className="space-y-3 mb-6">
+                    {plan.features &&
+                      plan.features.map((feature, i) => (
+                        <li
+                          key={i}
+                          className="flex items-center text-base text-gray-700"
+                        >
+                          <Check className="w-5 h-5 text-green-500 mr-2" />
                           {feature}
-                        </span>
-                      </li>
-                    ))}
-                    {plan.notIncluded.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center">
-                        <div className="w-6 h-6 flex items-center justify-center mr-2">
-                          <X className="w-4 h-4 text-gray-400" />
-                        </div>
-                        <span className="text-gray-400 text-base">
+                        </li>
+                      ))}
+                    {plan.notIncluded &&
+                      plan.notIncluded.map((feature, i) => (
+                        <li
+                          key={i}
+                          className="flex items-center text-base text-gray-400"
+                        >
+                          <X className="w-5 h-5 text-gray-300 mr-2" />
                           {feature}
-                        </span>
-                      </li>
-                    ))}
+                        </li>
+                      ))}
                   </ul>
-
                   <button
-                    className={`w-full py-4 px-6 rounded-full font-semibold transition-colors ${
+                    className={`w-full py-4 px-6 rounded-full font-semibold transition-colors text-lg ${
                       plan.popular
-                        ? "bg-black text-white hover:bg-gray-800"
-                        : "bg-white text-black border border-gray-200 hover:bg-gray-50"
+                        ? "bg-blue-600 text-white hover:bg-blue-700 shadow-lg"
+                        : "bg-white text-blue-600 border border-blue-200 hover:bg-blue-50"
                     }`}
                   >
-                    {plan.buttonText}
+                    {plan.buttonText || "Get Started"}
                   </button>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -213,7 +134,6 @@ export default function Pricing() {
               Common questions about our pricing
             </p>
           </div>
-
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-3xl">
               <h3 className="text-lg font-semibold text-black mb-2">
@@ -225,7 +145,6 @@ export default function Pricing() {
                 differences.
               </p>
             </div>
-
             <div className="bg-white p-6 rounded-3xl">
               <h3 className="text-lg font-semibold text-black mb-2">
                 Is there a free trial?
@@ -235,7 +154,6 @@ export default function Pricing() {
                 required to start your trial.
               </p>
             </div>
-
             <div className="bg-white p-6 rounded-3xl">
               <h3 className="text-lg font-semibold text-black mb-2">
                 What payment methods do you accept?
