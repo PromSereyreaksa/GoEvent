@@ -85,7 +85,7 @@ export function EventCard({ event, onView }) {
   );
 }
 
-export function EmptyEventCard({ onCreate }) {
+export function EmptyEventCard() {
   return (
     <div className="col-span-full text-center py-16 sm:py-20 animate-on-scroll">
       <div className="bg-white rounded-2xl sm:rounded-3xl p-8 sm:p-12 max-w-md mx-auto border border-gray-200 shadow-2xl">
@@ -96,14 +96,9 @@ export function EmptyEventCard({ onCreate }) {
           No Events Yet
         </h3>
         <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">
-          Get started by creating your first event
+          You haven't created any events yet. Events will appear here once you
+          create them.
         </p>
-        <button
-          onClick={onCreate}
-          className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-full font-semibold hover:shadow-xl hover:scale-105 transition-all duration-300 w-full sm:w-auto active:scale-95"
-        >
-          Create Your First Event
-        </button>
       </div>
     </div>
   );

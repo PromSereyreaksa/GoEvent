@@ -1,63 +1,80 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Eye, EyeOff, Mail, Lock } from "lucide-react"
+import { useState } from "react";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 
 // const baseUrl = 'http://192.168.226.155:9000'
-const baseUrl = import.meta.env.REACT_APP_API_BASE_URL || "http://192.168.31.249:9000"
+const baseUrl =
+  import.meta.env.REACT_APP_API_BASE_URL || "http://192.168.31.249:9000";
 
 // Make authenticated API calls
 // const response = await authenticatedFetch('/api/user/profile/')
 
 const SignIn = () => {
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors] = useState({})
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     rememberMe: false,
-  })
+  });
 
   // Mock credentials for testing
   const mockCredentials = [
-    { email: "admin@goevent.com", password: "admin123", name: "Admin User", role: "admin" },
-    { email: "user@goevent.com", password: "user123", name: "John Doe", role: "user" },
-    { email: "demo@goevent.com", password: "demo123", name: "Demo User", role: "demo" },
-  ]
+    {
+      email: "admin@goevent.com",
+      password: "admin123",
+      name: "Admin User",
+      role: "vendor",
+    },
+    {
+      email: "user@goevent.com",
+      password: "user123",
+      name: "John Doe",
+      role: "user",
+    },
+    {
+      email: "demo@goevent.com",
+      password: "demo123",
+      name: "Demo User",
+      role: "demo",
+    },
+  ];
 
   const validateForm = () => {
-    const newErrors = {}
+    const newErrors = {};
     if (!formData.email.trim()) {
-      newErrors.email = "Email is required"
+      newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email is invalid"
+      newErrors.email = "Email is invalid";
     }
     if (!formData.password) {
-      newErrors.password = "Password is required"
+      newErrors.password = "Password is required";
     }
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!validateForm()) {
-      return
+      return;
     }
 
-    setIsLoading(true)
-    setErrors({})
+    setIsLoading(true);
+    setErrors({});
 
     try {
       // Check if credentials match any mock user first
       const mockUser = mockCredentials.find(
-        (user) => user.email === formData.email && user.password === formData.password,
-      )
+        (user) =>
+          user.email === formData.email && user.password === formData.password
+      );
 
       if (mockUser) {
         // Mock successful login with mock user
-        console.log("Mock login successful:", mockUser)
+        console.log("Mock login successful:", mockUser);
 
         // Generate mock tokens
         const mockTokens = {
@@ -69,20 +86,20 @@ const SignIn = () => {
             email: mockUser.email,
             role: mockUser.role,
           },
-        }
+        };
 
         // Store tokens based on remember me preference
-        const storage = formData.rememberMe ? localStorage : sessionStorage
-        storage.setItem("access_token", mockTokens.access)
-        storage.setItem("refresh_token", mockTokens.refresh)
-        storage.setItem("user", JSON.stringify(mockTokens.user))
+        const storage = formData.rememberMe ? localStorage : sessionStorage;
+        storage.setItem("access_token", mockTokens.access);
+        storage.setItem("refresh_token", mockTokens.refresh);
+        storage.setItem("user", JSON.stringify(mockTokens.user));
 
         // Redirect to dashboard or homepage
         setTimeout(() => {
-          window.location.href = "/homepage"
-        }, 500)
+          window.location.href = "/homepage";
+        }, 500);
 
-        return
+        return;
       }
 
       // If no mock match, proceed with real API call
@@ -90,7 +107,7 @@ const SignIn = () => {
       const apiData = {
         email: formData.email,
         password: formData.password,
-      }
+      };
 
       // Replace with your actual API endpoint
       const response = await fetch(`${baseUrl}/auth/login/`, {
@@ -99,97 +116,99 @@ const SignIn = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(apiData),
-      })
+      });
 
       if (!response.ok) {
-        const errorData = await response.json()
+        const errorData = await response.json();
         // Handle different types of errors from Django
         if (response.status === 401) {
-          setErrors({ general: "Invalid email or password" })
+          setErrors({ general: "Invalid email or password" });
         } else if (errorData.email) {
-          setErrors({ email: errorData.email[0] })
+          setErrors({ email: errorData.email[0] });
         } else if (errorData.password) {
-          setErrors({ password: errorData.password[0] })
+          setErrors({ password: errorData.password[0] });
         } else {
-          setErrors({ general: "Login failed. Please try again." })
+          setErrors({ general: "Login failed. Please try again." });
         }
-        return
+        return;
       }
 
-      const result = await response.json()
+      const result = await response.json();
 
       // Handle JWT tokens
       if (result.access && result.refresh) {
         // Store tokens based on remember me preference
         if (formData.rememberMe) {
           // Store in localStorage for persistent login
-          localStorage.setItem("access_token", result.access)
-          localStorage.setItem("refresh_token", result.refresh)
+          localStorage.setItem("access_token", result.access);
+          localStorage.setItem("refresh_token", result.refresh);
         } else {
           // Store in sessionStorage for session-only login
-          sessionStorage.setItem("access_token", result.access)
-          sessionStorage.setItem("refresh_token", result.refresh)
+          sessionStorage.setItem("access_token", result.access);
+          sessionStorage.setItem("refresh_token", result.refresh);
         }
 
         // Store user info if provided
         if (result.user) {
-          const storage = formData.rememberMe ? localStorage : sessionStorage
-          storage.setItem("user", JSON.stringify(result.user))
+          const storage = formData.rememberMe ? localStorage : sessionStorage;
+          storage.setItem("user", JSON.stringify(result.user));
         }
 
-        console.log("Login successful:", result)
+        console.log("Login successful:", result);
 
         // Redirect to dashboard or home page
-        window.location.href = "/dashboard"
+        window.location.href = "/dashboard";
       }
     } catch (error) {
-      console.error("Login error:", error)
-      setErrors({ general: "Network error. Please check your connection and try again." })
+      console.error("Login error:", error);
+      setErrors({
+        general: "Network error. Please check your connection and try again.",
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
-    }))
+    }));
 
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
         [name]: "",
-      }))
+      }));
     }
-  }
+  };
 
   const fillDemoCredentials = (credentials) => {
     setFormData((prev) => ({
       ...prev,
       email: credentials.email,
       password: credentials.password,
-    }))
-    setErrors({})
-  }
+    }));
+    setErrors({});
+  };
 
   const handleGoogleSignIn = async () => {
     try {
       // Replace with your Google OAuth endpoint
-      window.location.href = "/api/auth/google/"
+      window.location.href = "/api/auth/google/";
     } catch (error) {
-      console.error("Google sign-in error:", error)
-      setErrors({ general: "Google sign-in failed. Please try again." })
+      console.error("Google sign-in error:", error);
+      setErrors({ general: "Google sign-in failed. Please try again." });
     }
-  }
+  };
 
   const handleForgotPassword = (e) => {
-    e.preventDefault()
+    e.preventDefault();
     // Redirect to forgot password page or open modal
-    window.location.href = "/forgot-password"
-  }
+    window.location.href = "/forgot-password";
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-700 via-blue-400 to-white font-['Plus_Jakarta_Sans'] pt-20 pb-56 overflow-hidden">
@@ -197,10 +216,15 @@ const SignIn = () => {
       <div className="relative z-10 max-w-md mx-auto px-4">
         <div className="bg-white rounded-3xl p-10 flex flex-col gap-6 shadow-xl">
           <div className="text-center flex flex-col gap-1.5">
-            <h2 className="text-3xl font-bold text-black">Sign in to your account</h2>
+            <h2 className="text-3xl font-bold text-black">
+              Sign in to your account
+            </h2>
             <p className="text-sm text-neutral-600">
               Or{" "}
-              <a href="/sign-up" className="font-medium text-blue-500 hover:text-blue-600">
+              <a
+                href="/sign-up"
+                className="font-medium text-blue-500 hover:text-blue-600"
+              >
                 create a new account
               </a>
             </p>
@@ -208,7 +232,9 @@ const SignIn = () => {
 
           {/* Demo Credentials */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm font-medium text-blue-800 mb-3">Demo Credentials (Click to fill):</p>
+            <p className="text-sm font-medium text-blue-800 mb-3">
+              Demo Credentials (Click to fill):
+            </p>
             <div className="space-y-2">
               {mockCredentials.map((cred, index) => (
                 <button
@@ -236,7 +262,10 @@ const SignIn = () => {
             <div className="flex flex-col gap-4">
               {/* Email Field */}
               <div className="flex flex-col gap-2">
-                <label htmlFor="email" className="text-base font-semibold text-black">
+                <label
+                  htmlFor="email"
+                  className="text-base font-semibold text-black"
+                >
                   Email address
                 </label>
                 <div className="relative">
@@ -257,12 +286,17 @@ const SignIn = () => {
                     placeholder="Enter your email"
                   />
                 </div>
-                {errors.email && <p className="text-red-600 text-sm">{errors.email}</p>}
+                {errors.email && (
+                  <p className="text-red-600 text-sm">{errors.email}</p>
+                )}
               </div>
 
               {/* Password Field */}
               <div className="flex flex-col gap-2">
-                <label htmlFor="password" className="text-base font-semibold text-black">
+                <label
+                  htmlFor="password"
+                  className="text-base font-semibold text-black"
+                >
                   Password
                 </label>
                 <div className="relative">
@@ -294,7 +328,9 @@ const SignIn = () => {
                     )}
                   </button>
                 </div>
-                {errors.password && <p className="text-red-600 text-sm">{errors.password}</p>}
+                {errors.password && (
+                  <p className="text-red-600 text-sm">{errors.password}</p>
+                )}
               </div>
             </div>
 
@@ -314,7 +350,11 @@ const SignIn = () => {
                 </label>
               </div>
               <div className="text-sm">
-                <a href="#" onClick={handleForgotPassword} className="font-medium text-blue-600 hover:text-blue-500">
+                <a
+                  href="#"
+                  onClick={handleForgotPassword}
+                  className="font-medium text-blue-600 hover:text-blue-500"
+                >
                   Forgot your password?
                 </a>
               </div>
@@ -338,7 +378,9 @@ const SignIn = () => {
                   <div className="w-full border-t border-gray-300" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                  <span className="px-2 bg-white text-gray-500">
+                    Or continue with
+                  </span>
                 </div>
               </div>
 
@@ -374,7 +416,7 @@ const SignIn = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default SignIn
+export default SignIn;

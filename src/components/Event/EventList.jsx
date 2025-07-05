@@ -1,12 +1,7 @@
 import { EventCard, EmptyEventCard } from "./EventCard";
 import { AnalyticsWidget } from "./AnalyticsWidget";
 
-export function EventList({
-  events,
-  onCreateEvent,
-  onViewEvent,
-  analyticsData,
-}) {
+export function EventList({ events, onViewEvent, analyticsData }) {
   return (
     <section className="py-8 sm:py-12 lg:py-16 xl:py-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -39,7 +34,7 @@ export function EventList({
           ))}
         </div>
 
-        {events.length === 0 && <EmptyEventCard onCreate={onCreateEvent} />}
+        {events.length === 0 && <EmptyEventCard />}
       </div>
     </section>
   );

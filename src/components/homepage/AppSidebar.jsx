@@ -1,9 +1,10 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
-import { useDispatch, useSelector } from "react-redux"
-import { logout } from "../../redux/slices/authSlice"
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../../redux/slices/authSlice";
+import { useVendorCheck } from "../SecurityMonitor";
 import {
   Calendar,
   Users,
@@ -17,34 +18,97 @@ import {
   ChevronRight,
   LogOut,
   X,
-} from "lucide-react"
+  Plus,
+} from "lucide-react";
 
-export default function AppSidebar({ isOpen, onClose }) {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const dispatch = useDispatch()
-  const { user } = useSelector((state) => state.auth)
-  const [isCollapsed, setIsCollapsed] = useState(false)
+export default function AppSidebar({
+  isOpen,
+  onClose,
+  isCollapsed: propIsCollapsed,
+  setIsCollapsed: propSetIsCollapsed,
+}) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+  const { isVendor, requireVendor } = useVendorCheck();
+
+  // Use prop-based collapsed state if provided (for EventManagement), otherwise use local state (for Homepage)
+  const [localIsCollapsed, setLocalIsCollapsed] = useState(false);
+  const isCollapsed =
+    propIsCollapsed !== undefined ? propIsCollapsed : localIsCollapsed;
+  const setIsCollapsed = propSetIsCollapsed || setLocalIsCollapsed;
 
   const handleLogout = () => {
-    dispatch(logout())
-    navigate("/sign-in")
-  }
+    dispatch(logout());
+    navigate("/sign-in");
+  };
+
+  const toggleSidebar = () => {
+    // On mobile, toggle the mobile overlay
+    // On desktop, toggle the collapsed state
+    if (window.innerWidth < 1024) {
+      // For mobile, this is handled by isOpen/onClose props
+      if (onClose) onClose();
+    } else {
+      setIsCollapsed(!isCollapsed);
+    }
+  };
 
   const menuItems = [
-    { icon: Home, label: "Dashboard", href: "/homepage", active: location.pathname === "/homepage" },
-    { icon: Calendar, label: "Events", href: "/events", active: location.pathname.startsWith("/events") },
-    { icon: Users, label: "Guests", href: "/guests", active: location.pathname === "/guests" },
-    { icon: Clock, label: "Calendar", href: "/calendar", active: location.pathname === "/calendar" },
-    { icon: Activity, label: "Team", href: "/team", active: location.pathname === "/team" },
-    { icon: Star, label: "Pricing", href: "/pricing", active: location.pathname === "/pricing" },
-    { icon: Settings, label: "Settings", href: "/settings", active: location.pathname === "/settings" },
-  ]
+    {
+      icon: Home,
+      label: "Dashboard",
+      href: "/homepage",
+      active: location.pathname === "/homepage",
+    },
+    {
+      icon: Calendar,
+      label: "Events",
+      href: "/events",
+      active: location.pathname.startsWith("/events"),
+    },
+    {
+      icon: Users,
+      label: "Guests",
+      href: "/guests",
+      active: location.pathname === "/guests",
+    },
+    {
+      icon: Clock,
+      label: "Calendar",
+      href: "/calendar",
+      active: location.pathname === "/calendar",
+    },
+    {
+      icon: Activity,
+      label: "Team",
+      href: "/team",
+      active: location.pathname === "/team",
+    },
+    {
+      icon: Star,
+      label: "Pricing",
+      href: "/pricing",
+      active: location.pathname === "/pricing",
+    },
+    {
+      icon: Settings,
+      label: "Settings",
+      href: "/settings",
+      active: location.pathname === "/settings",
+    },
+  ];
 
   return (
     <>
       {/* Mobile Overlay */}
-      {isOpen && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={onClose} />}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
 
       {/* Sidebar */}
       <div
@@ -57,7 +121,6 @@ export default function AppSidebar({ isOpen, onClose }) {
           <div className="flex items-center justify-between">
             {!isCollapsed && (
               <div className="flex items-center gap-3">
-                
                 <span className="font-bold text-xl text-white">GoEvent</span>
               </div>
             )}
@@ -79,7 +142,7 @@ export default function AppSidebar({ isOpen, onClose }) {
             {/* Desktop collapse button */}
             {!isCollapsed && (
               <button
-                onClick={() => setIsCollapsed(!isCollapsed)}
+                onClick={toggleSidebar}
                 className="hidden lg:flex p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -91,7 +154,7 @@ export default function AppSidebar({ isOpen, onClose }) {
           {isCollapsed && (
             <div className="flex justify-center mt-4">
               <button
-                onClick={() => setIsCollapsed(!isCollapsed)}
+                onClick={toggleSidebar}
                 className="hidden lg:flex p-1.5 rounded-lg hover:bg-white/20 transition-colors text-white"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -105,10 +168,14 @@ export default function AppSidebar({ isOpen, onClose }) {
           <div className="p-4 border-b border-blue-200/50">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-r from-white via-blue-100 to-blue-200 rounded-full flex items-center justify-center shadow-sm">
-                <span className="text-blue-700 font-medium text-sm">{user.name?.charAt(0) || "U"}</span>
+                <span className="text-blue-700 font-medium text-sm">
+                  {user.name?.charAt(0) || "U"}
+                </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">{user.name || "User"}</p>
+                <p className="text-sm font-medium text-white truncate">
+                  {user.name || "User"}
+                </p>
                 <p className="text-xs text-blue-100 truncate">{user.email}</p>
               </div>
             </div>
@@ -119,7 +186,9 @@ export default function AppSidebar({ isOpen, onClose }) {
         {isCollapsed && user && (
           <div className="p-4 border-b border-blue-200/50 flex justify-center">
             <div className="w-8 h-8 bg-gradient-to-r from-white via-blue-100 to-blue-200 rounded-full flex items-center justify-center shadow-sm">
-              <span className="text-blue-700 font-medium text-xs">{user.name?.charAt(0) || "U"}</span>
+              <span className="text-blue-700 font-medium text-xs">
+                {user.name?.charAt(0) || "U"}
+              </span>
             </div>
           </div>
         )}
@@ -127,28 +196,42 @@ export default function AppSidebar({ isOpen, onClose }) {
         {/* Navigation */}
         <nav className="p-4 space-y-2 flex-1">
           {menuItems.map((item) => {
-            const Icon = item.icon
+            const Icon = item.icon;
             return (
-              <div key={item.href} className="relative group">
+              <div key={item.href + item.label} className="relative group">
                 <button
                   onClick={() => {
-                    navigate(item.href)
-                    if (window.innerWidth < 1024) onClose()
+                    navigate(item.href);
+                    if (window.innerWidth < 1024) onClose();
                   }}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
                     isCollapsed ? "justify-center" : "justify-start"
                   } ${
-                    item.active
+                    item.isCreateButton
+                      ? "bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 shadow-lg hover:shadow-xl"
+                      : item.active
                       ? "bg-white/20 text-white border border-white/30 shadow-sm"
                       : "text-blue-100 hover:bg-white/10 hover:text-white"
                   }`}
                 >
                   <Icon
                     className={`w-5 h-5 flex-shrink-0 ${
-                      item.active ? "text-white" : "text-blue-200 group-hover:text-white"
+                      item.isCreateButton
+                        ? "text-white"
+                        : item.active
+                        ? "text-white"
+                        : "text-blue-200 group-hover:text-white"
                     }`}
                   />
-                  {!isCollapsed && <span className="font-medium text-sm">{item.label}</span>}
+                  {!isCollapsed && (
+                    <span
+                      className={`font-medium text-sm ${
+                        item.isCreateButton ? "text-white font-semibold" : ""
+                      }`}
+                    >
+                      {item.label}
+                    </span>
+                  )}
                 </button>
 
                 {/* Tooltip for collapsed state */}
@@ -159,7 +242,7 @@ export default function AppSidebar({ isOpen, onClose }) {
                   </div>
                 )}
               </div>
-            )
+            );
           })}
         </nav>
 
@@ -173,7 +256,9 @@ export default function AppSidebar({ isOpen, onClose }) {
               }`}
             >
               <LogOut className="w-5 h-5 flex-shrink-0" />
-              {!isCollapsed && <span className="font-medium text-sm">Sign Out</span>}
+              {!isCollapsed && (
+                <span className="font-medium text-sm">Sign Out</span>
+              )}
             </button>
 
             {/* Tooltip for collapsed logout */}
@@ -192,9 +277,13 @@ export default function AppSidebar({ isOpen, onClose }) {
             <div className="bg-gradient-to-r from-white/10 to-white/5 rounded-lg p-4 backdrop-blur-sm">
               <div className="flex items-center gap-3 mb-2">
                 <BarChart3 className="w-5 h-5 text-white" />
-                <span className="font-semibold text-sm text-white">Upgrade Plan</span>
+                <span className="font-semibold text-sm text-white">
+                  Upgrade Plan
+                </span>
               </div>
-              <p className="text-xs text-blue-100 mb-3">Get access to premium features and unlimited events.</p>
+              <p className="text-xs text-blue-100 mb-3">
+                Get access to premium features and unlimited events.
+              </p>
               <button
                 onClick={() => navigate("/pricing")}
                 className="w-full bg-gradient-to-r from-white via-blue-50 to-blue-100 text-blue-700 text-xs font-semibold py-2 px-3 rounded-lg hover:shadow-lg transition-all duration-200"
@@ -206,5 +295,5 @@ export default function AppSidebar({ isOpen, onClose }) {
         )}
       </div>
     </>
-  )
+  );
 }

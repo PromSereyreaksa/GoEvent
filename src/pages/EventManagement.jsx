@@ -1,15 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu } from "lucide-react";
-import {
-  SidebarProvider,
-  useSidebar,
-} from "../components/Event/SidebarProvider";
-import { AppSidebar } from "../components/Event/AppSidebar";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { Menu, Lock, AlertTriangle } from "lucide-react";
+import AppSidebar from "../components/homepage/AppSidebar";
 import { NotificationsDropdown } from "../components/Event/NotificationsDropdown";
 import { EventList } from "../components/Event/EventList";
 import { EventForm } from "../components/Event/EventForm";
+import { useVendorCheck } from "../components/SecurityMonitor";
 import { EventInformation } from "../components/Event/EventInformation";
 import {
   analyticsData,
@@ -25,7 +24,32 @@ import "../styles/mobile-enhancements.css";
 
 // Main Event Management Component
 export default function EventManagement() {
-  const [currentView, setCurrentView] = useState("list");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
+  const { isVendor, requireVendor } = useVendorCheck();
+  const searchParams = new URLSearchParams(location.search);
+  const isCreateMode = searchParams.get("create") === "true";
+
+  // Immediate redirect for non-vendors in create mode - no useEffect delay
+  if (isCreateMode && !isVendor) {
+    console.warn("EventManagement: Non-vendor user blocked from create mode", {
+      userRole: user?.role,
+      userId: user?.id,
+      timestamp: new Date().toISOString(),
+    });
+    // Immediate redirect to homepage
+    navigate("/homepage", { replace: true });
+    return null; // Don't render anything while redirecting
+  }
+
+  // Sidebar state
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const [currentView, setCurrentView] = useState(
+    isCreateMode ? "create" : "list"
+  );
   const [events, setEvents] = useState(sampleEvents);
   const [editingEvent, setEditingEvent] = useState(null);
   const [viewingEvent, setViewingEvent] = useState(null);
@@ -46,6 +70,13 @@ export default function EventManagement() {
     googleMapLink: "",
     image: "",
   });
+
+  // Handle create mode initialization
+  useEffect(() => {
+    if (isCreateMode && currentView === "create") {
+      handleCreateEvent();
+    }
+  }, [isCreateMode]);
 
   // Fetch events from API
   useEffect(() => {
@@ -144,6 +175,12 @@ export default function EventManagement() {
   };
 
   const handleCreateEvent = () => {
+    // Only allow vendors to create events
+    if (user?.role !== "vendor") {
+      console.warn("Non-vendor user attempted to create event");
+      return;
+    }
+
     setCurrentView("create");
     resetForm();
     // Initialize with exactly 2 hosts (bride and groom) and one agenda day
@@ -218,6 +255,14 @@ export default function EventManagement() {
       setError(null);
 
       if (currentView === "create") {
+        // Double-check vendor privileges for create operations
+        if (user?.role !== "vendor") {
+          setError(
+            "You don't have permission to create events. Vendor privileges required."
+          );
+          return;
+        }
+
         // Create new event via API
         const newEvent = await eventAPI.createEvent(formData);
         setEvents([...events, newEvent]);
@@ -238,6 +283,11 @@ export default function EventManagement() {
       resetForm();
       setEditingEvent(null);
       setViewingEvent(null);
+
+      // Update URL to remove create parameter
+      if (isCreateMode) {
+        navigate("/events", { replace: true });
+      }
     } catch (err) {
       console.error("Error saving event:", err);
       setError(err.message);
@@ -263,6 +313,11 @@ export default function EventManagement() {
       resetForm();
       setEditingEvent(null);
       setViewingEvent(null);
+
+      // Update URL to remove create parameter
+      if (isCreateMode) {
+        navigate("/events", { replace: true });
+      }
     } finally {
       setLoading(false);
     }
@@ -273,6 +328,11 @@ export default function EventManagement() {
     resetForm();
     setEditingEvent(null);
     setViewingEvent(null);
+
+    // Update URL to remove create parameter
+    if (isCreateMode) {
+      navigate("/events", { replace: true });
+    }
   };
 
   const handleNavigation = (view) => {
@@ -285,12 +345,10 @@ export default function EventManagement() {
 
   // Event List View Main Content Component
   const EventListContent = () => {
-    const { isCollapsed, toggleSidebar } = useSidebar();
-
     return (
       <div
         className={`transition-all duration-300 ${
-          isCollapsed ? "lg:ml-16" : "lg:ml-64"
+          sidebarCollapsed ? "lg:ml-16" : "lg:ml-64"
         }`}
       >
         {/* Top Navigation Bar */}
@@ -299,7 +357,7 @@ export default function EventManagement() {
             <div className="flex items-center gap-4">
               <button
                 className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                onClick={toggleSidebar}
+                onClick={() => setSidebarOpen(true)}
               >
                 <Menu className="w-5 h-5" />
               </button>
@@ -337,7 +395,6 @@ export default function EventManagement() {
 
           <EventList
             events={events}
-            onCreateEvent={handleCreateEvent}
             onViewEvent={handleViewEvent}
             analyticsData={analyticsData}
             loading={loading}
@@ -350,15 +407,18 @@ export default function EventManagement() {
   // Event List View
   if (currentView === "list") {
     return (
-      <SidebarProvider>
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 font-['Plus_Jakarta_Sans']">
-          <style jsx>{animationStyles}</style>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 font-['Plus_Jakarta_Sans']">
+        <style jsx>{animationStyles}</style>
 
-          <AppSidebar onNavigate={setCurrentView} currentView={currentView} />
+        <AppSidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          isCollapsed={sidebarCollapsed}
+          setIsCollapsed={setSidebarCollapsed}
+        />
 
-          <EventListContent />
-        </div>
-      </SidebarProvider>
+        <EventListContent />
+      </div>
     );
   }
 
@@ -379,12 +439,10 @@ export default function EventManagement() {
 
   // Create/Edit Event Form Content Component
   const EventFormContent = () => {
-    const { isCollapsed, toggleSidebar } = useSidebar();
-
     return (
       <div
         className={`transition-all duration-300 ${
-          isCollapsed ? "lg:ml-16" : "lg:ml-64"
+          sidebarCollapsed ? "lg:ml-16" : "lg:ml-64"
         }`}
       >
         {/* Top Navigation Bar */}
@@ -393,7 +451,7 @@ export default function EventManagement() {
             <div className="flex items-center gap-4">
               <button
                 className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                onClick={toggleSidebar}
+                onClick={() => setSidebarOpen(true)}
               >
                 <Menu className="w-5 h-5" />
               </button>
@@ -445,15 +503,65 @@ export default function EventManagement() {
   };
 
   // Create/Edit Event Form View
-  return (
-    <SidebarProvider>
+  if (currentView === "create" || currentView === "edit") {
+    // Additional check for create mode - non-vendors shouldn't reach here, but just in case
+    if (currentView === "create" && user?.role !== "vendor") {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 font-['Plus_Jakarta_Sans'] flex items-center justify-center">
+          <div className="max-w-md w-full mx-auto text-center p-8">
+            <div className="bg-white rounded-3xl shadow-lg p-8 border border-gray-200">
+              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Lock className="w-10 h-10 text-red-600" />
+              </div>
+
+              <h1 className="text-2xl font-bold text-gray-900 mb-4">
+                Access Denied
+              </h1>
+
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                You need vendor privileges to create events.
+              </p>
+
+              <button
+                onClick={() => navigate("/events")}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-2xl font-semibold hover:shadow-lg transition-all duration-200"
+              >
+                Back to Events
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 font-['Plus_Jakarta_Sans']">
         <style jsx>{animationStyles}</style>
 
-        <AppSidebar onNavigate={setCurrentView} currentView={currentView} />
+        <AppSidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          isCollapsed={sidebarCollapsed}
+          setIsCollapsed={setSidebarCollapsed}
+        />
 
         <EventFormContent />
       </div>
-    </SidebarProvider>
+    );
+  }
+
+  // Default fallback - redirect to list view
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 font-['Plus_Jakarta_Sans']">
+      <style jsx>{animationStyles}</style>
+
+      <AppSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        isCollapsed={sidebarCollapsed}
+        setIsCollapsed={setSidebarCollapsed}
+      />
+
+      <EventListContent />
+    </div>
   );
 }

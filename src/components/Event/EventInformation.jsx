@@ -16,7 +16,7 @@ import { useState, useEffect, useRef } from "react";
 
 export function EventInformation({ event, onEdit, onDelete, onBack }) {
   const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef(null); 
 
   // Confirmation modal state
   const [confirmationModal, setConfirmationModal] = useState({

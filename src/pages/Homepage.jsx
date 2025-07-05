@@ -1,14 +1,13 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from "react"
-import { useSelector } from "react-redux"
-import { useNavigate } from "react-router-dom"
+import { useState, useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import {
   Calendar,
   Users,
   Settings,
   Search,
-  Plus,
   BarChart3,
   Clock,
   MapPin,
@@ -16,27 +15,33 @@ import {
   TrendingUp,
   Activity,
   Menu,
-} from "lucide-react"
+  Plus,
+} from "lucide-react";
 
 // Import homepage components
-import { SidebarProvider } from "../components/homepage/SidebarProvider"
-import AppSidebar from "../components/homepage/AppSidebar"
-import UserProfileDropdown from "../components/homepage/UserProfileDropdown"
-import NotificationsDropdown from "../components/homepage/NotificationsDropdown"
-import QuickStatsCard from "../components/homepage/QuickStatsCard"
-import NavigationCard from "../components/homepage/NavigationCard"
-import RecentActivityCard from "../components/homepage/RecentActivityCard"
-import WelcomeHero from "../components/homepage/WelcomeHero"
+import { SidebarProvider } from "../components/homepage/SidebarProvider";
+import AppSidebar from "../components/homepage/AppSidebar";
+import UserProfileDropdown from "../components/homepage/UserProfileDropdown";
+import NotificationsDropdown from "../components/homepage/NotificationsDropdown";
+import QuickStatsCard from "../components/homepage/QuickStatsCard";
+import NavigationCard from "../components/homepage/NavigationCard";
+import RecentActivityCard from "../components/homepage/RecentActivityCard";
+import WelcomeHero from "../components/homepage/WelcomeHero";
+import { useVendorCheck } from "../components/SecurityMonitor";
 
 export default function Homepage() {
-  const navigate = useNavigate()
-  const { user } = useSelector((state) => state.auth)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [isVisible, setIsVisible] = useState({})
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const observerRef = useRef()
+  const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
+  const { isVendor, requireVendor } = useVendorCheck();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isVisible, setIsVisible] = useState({});
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showFloatingButton, setShowFloatingButton] = useState(false);
+  const observerRef = useRef();
+  const welcomeHeroRef = useRef();
+  const navigationSectionRef = useRef();
 
-    // Hide header when component mounts
+  // Hide header when component mounts
   useEffect(() => {
     const header = document.querySelector("header");
     if (header) {
@@ -50,7 +55,6 @@ export default function Homepage() {
     };
   }, []);
 
-
   // Intersection Observer for animations
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
@@ -60,18 +64,60 @@ export default function Homepage() {
             setIsVisible((prev) => ({
               ...prev,
               [entry.target.id]: true,
-            }))
+            }));
           }
-        })
+        });
       },
-      { threshold: 0.1, rootMargin: "50px" },
-    )
+      { threshold: 0.1, rootMargin: "50px" }
+    );
 
-    const elements = document.querySelectorAll("[data-animate]")
-    elements.forEach((el) => observerRef.current?.observe(el))
+    const elements = document.querySelectorAll("[data-animate]");
+    elements.forEach((el) => observerRef.current?.observe(el));
 
-    return () => observerRef.current?.disconnect()
-  }, [])
+    return () => observerRef.current?.disconnect();
+  }, []);
+
+  // Floating button visibility observer for vendors
+  useEffect(() => {
+    if (!isVendor) return;
+
+    const createButtonObserver = new IntersectionObserver(
+      (entries) => {
+        let anyCreateButtonVisible = false;
+
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio > 0.1) {
+            anyCreateButtonVisible = true;
+          }
+        });
+
+        // Show floating button only when create event buttons are not visible
+        setShowFloatingButton(!anyCreateButtonVisible);
+      },
+      {
+        threshold: [0, 0.1, 0.5, 1],
+        rootMargin: "-50px 0px -50px 0px", // Give some margin for better UX
+      }
+    );
+
+    // Observe create event elements when they're available
+    const observeCreateElements = () => {
+      if (welcomeHeroRef.current) {
+        createButtonObserver.observe(welcomeHeroRef.current);
+      }
+      if (navigationSectionRef.current) {
+        createButtonObserver.observe(navigationSectionRef.current);
+      }
+    };
+
+    // Delay observation to ensure elements are rendered
+    const timer = setTimeout(observeCreateElements, 100);
+
+    return () => {
+      clearTimeout(timer);
+      createButtonObserver.disconnect();
+    };
+  }, [isVendor]);
 
   // Mock data for dashboard
   const quickStats = [
@@ -107,9 +153,23 @@ export default function Homepage() {
       icon: BarChart3,
       color: "blue",
     },
-  ]
+  ];
 
   const navigationCards = [
+    // Add Create Event card for vendors as first priority
+    ...(isVendor
+      ? [
+          {
+            title: "Create New Event",
+            description: "Start planning your next amazing event",
+            icon: Plus,
+            href: "/events?create=true",
+            color: "green",
+            stats: "Quick & Easy Setup",
+            priority: true,
+          },
+        ]
+      : []),
     {
       title: "Event Management",
       description: "Create, edit, and manage your events",
@@ -158,7 +218,7 @@ export default function Homepage() {
       color: "blue",
       stats: "Last updated 2 days ago",
     },
-  ]
+  ];
 
   const recentActivities = [
     {
@@ -197,12 +257,15 @@ export default function Homepage() {
       icon: Activity,
       color: "blue",
     },
-  ]
+  ];
 
   return (
     <SidebarProvider>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 font-['Plus_Jakarta_Sans']">
-        <AppSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <AppSidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
 
         {/* Main Content - with proper margin for sidebar */}
         <div className="lg:ml-64 transition-all duration-300">
@@ -239,14 +302,18 @@ export default function Homepage() {
           {/* Page Content */}
           <div className="px-4 sm:px-6 lg:px-8 py-8 space-y-8">
             {/* Welcome Hero Section */}
-            <WelcomeHero user={user} />
+            <div ref={welcomeHeroRef}>
+              <WelcomeHero user={user} />
+            </div>
 
             {/* Quick Stats */}
             <div
               id="stats-section"
               data-animate
               className={`transition-all duration-700 ${
-                isVisible["stats-section"] ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+                isVisible["stats-section"]
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-8"
               }`}
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -258,15 +325,22 @@ export default function Homepage() {
 
             {/* Navigation Cards */}
             <div
+              ref={navigationSectionRef}
               id="navigation-section"
               data-animate
               className={`transition-all duration-700 delay-200 ${
-                isVisible["navigation-section"] ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+                isVisible["navigation-section"]
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-8"
               }`}
             >
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Quick Access</h2>
-                <p className="text-gray-600">Navigate to different sections of your dashboard</p>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Quick Access
+                </h2>
+                <p className="text-gray-600">
+                  Navigate to different sections of your dashboard
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -281,45 +355,35 @@ export default function Homepage() {
               id="activity-section"
               data-animate
               className={`transition-all duration-700 delay-400 ${
-                isVisible["activity-section"] ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+                isVisible["activity-section"]
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-8"
               }`}
             >
               <RecentActivityCard activities={recentActivities} />
             </div>
-
-            {/* Quick Actions Footer */}
-            <div
-              id="actions-section"
-              data-animate
-              className={`transition-all duration-700 delay-600 ${
-                isVisible["actions-section"] ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-              }`}
-            >
-              <div className=" rounded-2xl p-8 text-gray-900">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                  
-                  <div className="flex gap-4">
-                    <button
-                      onClick={() => navigate("/events")}
-                      className="bg-gradient-to-r from-blue-700 via-blue-500 to-blue-300 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Create Event
-                    </button>
-                    <button
-                      onClick={() => navigate("/guests")}
-                      className="border border-blue-300 text-blue-700 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center gap-2"
-                    >
-                      <Users className="w-4 h-4" />
-                      Manage Guests
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
+        </div>
+
+        {/* Smart Floating Action Button for Vendors */}
+        <div
+          className={`fixed bottom-6 right-6 z-50 transition-all duration-300 ${
+            isVendor && showFloatingButton
+              ? "opacity-100 translate-y-0 scale-100"
+              : "opacity-0 translate-y-8 scale-75 pointer-events-none"
+          }`}
+        >
+          <button
+            onClick={() =>
+              requireVendor("create events") && navigate("/events?create=true")
+            }
+            className="bg-gradient-to-r from-green-600 to-green-700 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110 group"
+            title="Create New Event"
+          >
+            <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-200" />
+          </button>
         </div>
       </div>
     </SidebarProvider>
-  )
+  );
 }
