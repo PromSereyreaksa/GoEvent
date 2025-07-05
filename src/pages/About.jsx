@@ -22,7 +22,7 @@ export default function About() {
         setLoading(true);
         setError(null);
         const data = await teamAPI.getMembers();
-        setTeamMembers(data);
+        setTeamMembers([]);
       } catch (err) {
         console.error('Error fetching team members:', err);
         setError(err.message);
