@@ -74,9 +74,11 @@ const authSlice = createSlice({
       // Clear storage
       localStorage.removeItem("access_token")
       localStorage.removeItem("refresh_token")
+      localStorage.removeItem("token")   
       localStorage.removeItem("user")
       sessionStorage.removeItem("access_token")
       sessionStorage.removeItem("refresh_token")
+      sessionStorage.removeItem("token")
       sessionStorage.removeItem("user")
     },
     clearError: (state) => {
