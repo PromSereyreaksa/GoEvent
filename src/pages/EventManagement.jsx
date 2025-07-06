@@ -32,6 +32,19 @@ export default function EventManagement() {
     }
   }
 
+  useEffect(() => {
+      const header = document.querySelector("header");
+      if (header) {
+        header.style.display = "none";
+      }
+  
+      return () => {
+        if (header) {
+          header.style.display = "block";
+        }
+      };
+    }, []);
+
   const handleEditEvent = (eventId) => {
     if (is_vendor) {
       navigate(`/events/${eventId}/edit`)
