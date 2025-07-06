@@ -59,12 +59,12 @@ api.interceptors.response.use(
 
 // Utility function to handle API errors consistently
 const handleAPIError = (error, defaultMessage) => {
-  console.error('API Error:', error);
-  
+  console.error("API Error:", error);
+
   if (error.response) {
     // Server responded with error status
     const { status, data } = error.response;
-    
+
     if (status === 400) {
       return new Error(data?.message || data?.error || "Bad request");
     } else if (status === 401) {
@@ -103,13 +103,13 @@ const getCachedData = (key) => {
 const setCachedData = (key, data) => {
   apiCache.set(key, {
     data,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   });
 };
 
 const clearCache = (pattern) => {
   if (pattern) {
-    Array.from(apiCache.keys()).forEach(key => {
+    Array.from(apiCache.keys()).forEach((key) => {
       if (key.includes(pattern)) {
         apiCache.delete(key);
       }
@@ -118,7 +118,6 @@ const clearCache = (pattern) => {
     apiCache.clear();
   }
 };
-
 
 // API service functions
 export const pricingAPI = {
@@ -178,31 +177,31 @@ export const eventAPI = {
   getEvents: async (filters = {}, useCache = true) => {
     try {
       const cacheKey = `events_${JSON.stringify(filters)}`;
-      
+
       // Check cache first
       if (useCache) {
         const cachedData = getCachedData(cacheKey);
         if (cachedData) {
-          console.log('📦 Using cached events data');
+          console.log("📦 Using cached events data");
           return cachedData;
         }
       }
 
       const params = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
+        if (value !== undefined && value !== null && value !== "") {
           params.append(key, value);
         }
       });
-      
-      const url = `/events/${params.toString() ? `?${params.toString()}` : ''}`;
+
+      const url = `/events/${params.toString() ? `?${params.toString()}` : ""}`;
       const response = await api.get(url);
-      
+
       // Cache the response
       if (useCache) {
         setCachedData(cacheKey, response.data);
       }
-      
+
       return response.data;
     } catch (error) {
       throw handleAPIError(error, "Failed to fetch events");
@@ -213,7 +212,7 @@ export const eventAPI = {
   getEvent: async (id, useCache = true) => {
     try {
       const cacheKey = `event_${id}`;
-      
+
       if (useCache) {
         const cachedData = getCachedData(cacheKey);
         if (cachedData) {
@@ -223,11 +222,11 @@ export const eventAPI = {
       }
 
       const response = await api.get(`/events/${id}/`);
-      
+
       if (useCache) {
         setCachedData(cacheKey, response.data);
       }
-      
+
       return response.data;
     } catch (error) {
       throw handleAPIError(error, "Failed to fetch event");
@@ -248,10 +247,10 @@ export const eventAPI = {
       }
 
       const response = await api.post("/events/", eventData);
-      
+
       // Clear events cache since we added a new event
       clearCache("events_");
-      
+
       return response.data;
     } catch (error) {
       throw handleAPIError(error, "Failed to create event");
@@ -262,11 +261,11 @@ export const eventAPI = {
   updateEvent: async (id, eventData) => {
     try {
       const response = await api.put(`/events/${id}/`, eventData);
-      
+
       // Clear relevant cache entries
       clearCache("events_");
       clearCache(`event_${id}`);
-      
+
       return response.data;
     } catch (error) {
       throw handleAPIError(error, "Failed to update event");
@@ -277,11 +276,11 @@ export const eventAPI = {
   deleteEvent: async (id) => {
     try {
       const response = await api.delete(`/events/${id}/`);
-      
+
       // Clear relevant cache entries
       clearCache("events_");
       clearCache(`event_${id}`);
-      
+
       return response.data;
     } catch (error) {
       throw handleAPIError(error, "Failed to delete event");
@@ -292,7 +291,7 @@ export const eventAPI = {
   getVendorEvents: async (vendorId, useCache = true) => {
     try {
       const cacheKey = `vendor_events_${vendorId}`;
-      
+
       if (useCache) {
         const cachedData = getCachedData(cacheKey);
         if (cachedData) {
@@ -302,11 +301,11 @@ export const eventAPI = {
       }
 
       const response = await api.get(`/events/vendor/${vendorId}/`);
-      
+
       if (useCache) {
         setCachedData(cacheKey, response.data);
       }
-      
+
       return response.data;
     } catch (error) {
       throw handleAPIError(error, "Failed to fetch vendor events");
@@ -317,7 +316,7 @@ export const eventAPI = {
   getEventStats: async (eventId, useCache = true) => {
     try {
       const cacheKey = `event_stats_${eventId}`;
-      
+
       if (useCache) {
         const cachedData = getCachedData(cacheKey);
         if (cachedData) {
@@ -327,11 +326,11 @@ export const eventAPI = {
       }
 
       const response = await api.get(`/events/${eventId}/stats/`);
-      
+
       if (useCache) {
         setCachedData(cacheKey, response.data);
       }
-      
+
       return response.data;
     } catch (error) {
       throw handleAPIError(error, "Failed to fetch event statistics");
@@ -344,7 +343,7 @@ export const eventAPI = {
     clearCache("event_");
     clearCache("vendor_events_");
     clearCache("event_stats_");
-  }
+  },
 };
 
 export const authAPI = {
@@ -385,3 +384,6 @@ export const authAPI = {
 };
 
 export default api;
+
+// Export utility functions for direct use
+export { handleAPIError, getCachedData, setCachedData, clearCache };

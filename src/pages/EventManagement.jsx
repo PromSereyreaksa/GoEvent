@@ -19,6 +19,7 @@ import {
   useScrollAnimation,
 } from "../components/Event/animations";
 import { eventAPI } from "../utils/api";
+import { normalizeEventsArray } from "../utils/eventHelpers";
 import "../styles/mobile-enhancements.css";
 
 // Main Event Management Component - ONLY for listing events
@@ -56,19 +57,22 @@ export default function EventManagement() {
         setLoading(true);
       }
       setError(null);
-      
+
       // Merge current filters with custom filters
       const apiFilters = { ...filters, ...customFilters };
-      
+
       // Add search term if provided
       if (searchTerm.trim()) {
         apiFilters.search = searchTerm.trim();
       }
-      
+
       // Don't use cache if refreshing
       const data = await eventAPI.getEvents(apiFilters, !isRefresh);
-      setEvents(data);
-      
+
+      // Normalize the events data to ensure consistency
+      const normalizedEvents = normalizeEventsArray(data);
+      setEvents(normalizedEvents);
+
       if (isRefresh) {
         console.log("✅ Events refreshed successfully");
       }
@@ -148,7 +152,7 @@ export default function EventManagement() {
       } catch (err) {
         console.error("🔴 Error deleting event:", err);
         setError(err.message);
-        
+
         // If API call fails, still try to remove from local state
         // This provides better UX while showing the error
         if (err.message.includes("Failed to delete")) {
@@ -168,9 +172,9 @@ export default function EventManagement() {
     try {
       setLoading(true);
       const updatedEvent = await eventAPI.updateEvent(eventId, updatedData);
-      setEvents(events.map(event => 
-        event.id === eventId ? updatedEvent : event
-      ));
+      setEvents(
+        events.map((event) => (event.id === eventId ? updatedEvent : event))
+      );
       console.log("✅ Event updated successfully");
     } catch (err) {
       console.error("🔴 Error updating event:", err);
@@ -186,7 +190,7 @@ export default function EventManagement() {
     const timeoutId = setTimeout(() => {
       fetchEvents(false, { search: term });
     }, 500);
-    
+
     return () => clearTimeout(timeoutId);
   };
 
@@ -247,10 +251,12 @@ export default function EventManagement() {
                 className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
                 title="Refresh events"
               >
-                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
+                />
                 <span className="hidden sm:inline">Refresh</span>
               </button>
-              
+
               <NotificationsDropdown notifications={notifications} />
               {is_vendor && (
                 <button
@@ -293,9 +299,15 @@ export default function EventManagement() {
             events={events}
             onViewEvent={handleViewEvent}
             onDeleteEvent={handleDeleteEvent}
+            onUpdateEvent={handleUpdateEvent}
+            onSearch={handleSearch}
+            onFilterChange={handleFilterChange}
+            onClearFilters={handleClearFilters}
             analyticsData={analyticsData}
             loading={loading}
             refreshing={refreshing}
+            searchTerm={searchTerm}
+            filters={filters}
           />
         </div>
       </div>
