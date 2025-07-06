@@ -1,43 +1,39 @@
-"use client";
+"use client"
 
-import { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { Menu, AlertCircle } from "lucide-react";
-import AppSidebar from "../components/homepage/AppSidebar";
-import { NotificationsDropdown } from "../components/Event/NotificationsDropdown";
-import { EventForm } from "../components/Event/EventForm";
-import { useVendorCheck } from "../components/SecurityMonitor";
-import { notifications, sampleEvents } from "../components/Event/data";
-import { animationStyles } from "../components/Event/animations";
-import { eventAPI } from "../utils/api";
+import { useState, useEffect } from "react"
+import { useParams, useNavigate } from "react-router-dom"
+import { useSelector, useDispatch } from "react-redux"
+import { Menu, AlertCircle } from "lucide-react"
+import AppSidebar from "../components/homepage/AppSidebar"
+import { NotificationsDropdown } from "../components/Event/NotificationsDropdown"
+import { EventForm } from "../components/Event/EventForm"
+import { fetchEventById, updateEvent, clearError, clearCurrentEvent } from "../redux/slices/eventSlice"
+import { notifications } from "../components/Event/data"
+import { animationStyles } from "../components/Event/animations"
 
 export default function EventEdit() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const { user } = useSelector((state) => state.auth);
-  const { is_vendor } = useVendorCheck();
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
 
-  // Redirect non-vendors immediately
-  if (!is_vendor) {
-    navigate("/events", { replace: true });
-    return null;
-  }
+  const { user } = useSelector((state) => state.auth)
+  const { currentEvent, loading, error } = useSelector((state) => state.events)
 
-  // Component state
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
-  const [originalEvent, setOriginalEvent] = useState(null);
-
-  // Form state
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [formData, setFormData] = useState({
-    eventType: "",
+    title: "",
+    description: "",
+    date: "",
+    startTime: "",
+    endTime: "",
+    venue: "",
+    eventType: "wedding",
     customEventType: "",
-    name: "",
-    details: "",
+    googleMapLink: "",
+    youtubeUrl: "",
+    videoMessageUrl: "",
+    image: "",
     agenda: [
       {
         id: Date.now(),
@@ -46,219 +42,178 @@ export default function EventEdit() {
         activities: [{ id: Date.now() + 1, time: "", activity: "" }],
       },
     ],
-    venue: "",
-    hosts: [
-      { id: Date.now(), name: "", parentNames: [""] },
-      { id: Date.now() + 1, name: "", parentNames: [""] },
-    ],
-    date: "",
-    startTime: "",
-    endTime: "",
-    youtubeUrl: "",
-    googleMapLink: "",
-    image: "",
-  });
+    hosts: [{ id: Date.now(), name: "", parentNames: ["", ""] }],
+    sponsors: [],
+  })
+
+  const isVendor = user?.is_vendor || user?.role === "vendor"
+
+  // Redirect non-vendors immediately
+  useEffect(() => {
+    if (!isVendor) {
+      navigate("/events", { replace: true })
+    }
+  }, [isVendor, navigate])
 
   console.log("EventEdit render:", {
     eventId: id,
     loading,
-    saving,
-    hasOriginalEvent: !!originalEvent,
-    formDataName: formData.name,
-  });
+    hasCurrentEvent: !!currentEvent,
+    formDataTitle: formData.title,
+  })
 
   // Fetch the event to edit
   useEffect(() => {
-    const fetchEvent = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Try to find in sample events first
-        const sampleEvent = sampleEvents.find((e) => e.id === parseInt(id));
-        if (sampleEvent) {
-          setOriginalEvent(sampleEvent);
-          populateFormData(sampleEvent);
-        } else {
-          // If not found in samples, try API
-          const eventData = await eventAPI.getEvent(id);
-          setOriginalEvent(eventData);
-          populateFormData(eventData);
-        }
-      } catch (err) {
-        console.error("Error fetching event:", err);
-        setError(`Failed to load event: ${err.message}`);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (id) {
-      fetchEvent();
-    } else {
-      setError("No event ID provided");
-      setLoading(false);
+      dispatch(fetchEventById(id))
     }
-  }, [id]);
+
+    return () => {
+      dispatch(clearCurrentEvent())
+    }
+  }, [id, dispatch])
+
+  // Populate form data when event is loaded
+  useEffect(() => {
+    if (currentEvent) {
+      setFormData({
+        title: currentEvent.title || currentEvent.name || "",
+        description: currentEvent.description || currentEvent.details || "",
+        date: currentEvent.date || "",
+        startTime: currentEvent.startTime || "",
+        endTime: currentEvent.endTime || "",
+        venue: currentEvent.venue || "",
+        eventType: currentEvent.eventType || "wedding",
+        customEventType: currentEvent.customEventType || "",
+        googleMapLink: currentEvent.googleMapLink || "",
+        youtubeUrl: currentEvent.youtubeUrl || "",
+        videoMessageUrl: currentEvent.videoMessageUrl || "",
+        image: currentEvent.image || "",
+        agenda:
+          currentEvent.agenda && currentEvent.agenda.length > 0
+            ? currentEvent.agenda
+            : [
+                {
+                  id: Date.now(),
+                  date: currentEvent.date || "",
+                  title: "",
+                  activities: [
+                    {
+                      id: Date.now() + 1,
+                      time: currentEvent.startTime || "",
+                      activity: "",
+                    },
+                  ],
+                },
+              ],
+        hosts:
+          currentEvent.hosts && currentEvent.hosts.length > 0
+            ? currentEvent.hosts
+            : [{ id: Date.now(), name: "", parentNames: ["", ""] }],
+        sponsors: currentEvent.sponsors || [],
+      })
+    }
+  }, [currentEvent])
 
   // Hide header and footer
   useEffect(() => {
-    const header = document.querySelector("header");
-    const footer = document.querySelector("footer");
+    const header = document.querySelector("header")
+    const footer = document.querySelector("footer")
 
-    if (header) header.style.display = "none";
-    if (footer) footer.style.display = "none";
+    if (header) header.style.display = "none"
+    if (footer) footer.style.display = "none"
 
     return () => {
-      if (header) header.style.display = "block";
-      if (footer) footer.style.display = "block";
-    };
-  }, []);
+      if (header) header.style.display = "block"
+      if (footer) footer.style.display = "block"
+    }
+  }, [])
 
-  // Populate form data from event
-  const populateFormData = (event) => {
-    setFormData({
-      eventType: event.eventType || "",
-      customEventType: event.customEventType || "",
-      name: event.name || "",
-      details: event.details || "",
-      agenda:
-        event.agenda && event.agenda.length > 0
-          ? event.agenda
-          : [
-              {
-                id: Date.now(),
-                date: event.date || "",
-                title: "",
-                activities: [
-                  {
-                    id: Date.now() + 1,
-                    time: event.startTime || "",
-                    activity: "",
-                  },
-                ],
-              },
-            ],
-      venue: event.venue || "",
-      hosts:
-        event.hosts && event.hosts.length > 0
-          ? event.hosts
-          : [
-              { id: Date.now(), name: "", parentNames: [""] },
-              { id: Date.now() + 1, name: "", parentNames: [""] },
-            ],
-      date: event.date || "",
-      startTime: event.startTime || "",
-      endTime: event.endTime || "",
-      youtubeUrl: event.youtubeUrl || "",
-      googleMapLink: event.googleMapLink || "",
-      image: event.image || "",
-    });
-  };
-
-  // Handle form input changes
-  const handleInputChange = useCallback((e) => {
-    const { name, value } = e.target;
+  const handleInputChange = (e) => {
+    const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-    }));
-  }, []);
+    }))
+  }
 
-  // Handle file uploads
-  const handleFileUpload = useCallback((e, fieldName) => {
-    const file = e.target.files[0];
+  const handleFileUpload = (e, fieldName) => {
+    const file = e.target.files[0]
     if (file) {
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        setError("Please select a valid image file");
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setError("Image file size should be less than 5MB");
-        return;
-      }
-
-      const reader = new FileReader();
+      const reader = new FileReader()
       reader.onload = (event) => {
         setFormData((prev) => ({
           ...prev,
           [fieldName]: event.target.result,
-        }));
-      };
-      reader.onerror = () => {
-        setError("Failed to read image file");
-      };
-      reader.readAsDataURL(file);
+        }))
+      }
+      reader.readAsDataURL(file)
     }
-  }, []);
+  }
 
-  // Handle agenda changes
-  const handleAgendaChange = useCallback((agendaIndex, field, value) => {
+  const handleSave = async () => {
+    try {
+      await dispatch(updateEvent({ id: Number.parseInt(id), eventData: formData })).unwrap()
+      navigate("/events", { replace: true })
+    } catch (err) {
+      console.error("Error updating event:", err)
+    }
+  }
+
+  const handleCancel = () => {
+    navigate("/events", { replace: true })
+  }
+
+  const handleClearError = () => {
+    dispatch(clearError())
+  }
+
+  // Form handlers for complex nested data
+  const handleAgendaChange = (agendaIndex, field, value) => {
     setFormData((prev) => ({
       ...prev,
-      agenda: prev.agenda.map((day, index) =>
-        index === agendaIndex ? { ...day, [field]: value } : day
-      ),
-    }));
-  }, []);
+      agenda: prev.agenda.map((day, index) => (index === agendaIndex ? { ...day, [field]: value } : day)),
+    }))
+  }
 
-  // Handle activity changes
-  const handleActivityChange = useCallback(
-    (agendaIndex, activityIndex, field, value) => {
-      setFormData((prev) => ({
-        ...prev,
-        agenda: prev.agenda.map((day, dayIndex) =>
-          dayIndex === agendaIndex
-            ? {
-                ...day,
-                activities: day.activities.map((activity, actIndex) =>
-                  actIndex === activityIndex
-                    ? { ...activity, [field]: value }
-                    : activity
-                ),
-              }
-            : day
-        ),
-      }));
-    },
-    []
-  );
-
-  // Handle host changes
-  const handleHostChange = useCallback((hostIndex, field, value) => {
+  const handleActivityChange = (agendaIndex, activityIndex, field, value) => {
     setFormData((prev) => ({
       ...prev,
-      hosts: prev.hosts.map((host, index) =>
-        index === hostIndex ? { ...host, [field]: value } : host
+      agenda: prev.agenda.map((day, dayIndex) =>
+        dayIndex === agendaIndex
+          ? {
+              ...day,
+              activities: day.activities.map((activity, actIndex) =>
+                actIndex === activityIndex ? { ...activity, [field]: value } : activity,
+              ),
+            }
+          : day,
       ),
-    }));
-  }, []);
+    }))
+  }
 
-  // Handle parent name changes
-  const handleParentNameChange = useCallback(
-    (hostIndex, parentIndex, value) => {
-      setFormData((prev) => ({
-        ...prev,
-        hosts: prev.hosts.map((host, hIndex) =>
-          hIndex === hostIndex
-            ? {
-                ...host,
-                parentNames: host.parentNames.map((name, pIndex) =>
-                  pIndex === parentIndex ? value : name
-                ),
-              }
-            : host
-        ),
-      }));
-    },
-    []
-  );
+  const handleHostChange = (hostIndex, field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      hosts: prev.hosts.map((host, index) => (index === hostIndex ? { ...host, [field]: value } : host)),
+    }))
+  }
 
-  // Add new agenda day
-  const addAgendaDay = useCallback(() => {
+  const handleParentNameChange = (hostIndex, parentIndex, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      hosts: prev.hosts.map((host, hIndex) =>
+        hIndex === hostIndex
+          ? {
+              ...host,
+              parentNames: host.parentNames.map((name, pIndex) => (pIndex === parentIndex ? value : name)),
+            }
+          : host,
+      ),
+    }))
+  }
+
+  const addAgendaDay = () => {
     setFormData((prev) => ({
       ...prev,
       agenda: [
@@ -270,171 +225,83 @@ export default function EventEdit() {
           activities: [{ id: Date.now() + 1, time: "", activity: "" }],
         },
       ],
-    }));
-  }, []);
+    }))
+  }
 
-  // Remove agenda day
-  const removeAgendaDay = useCallback((agendaIndex) => {
+  const removeAgendaDay = (agendaIndex) => {
     setFormData((prev) => ({
       ...prev,
       agenda: prev.agenda.filter((_, index) => index !== agendaIndex),
-    }));
-  }, []);
+    }))
+  }
 
-  // Add new activity
-  const addActivity = useCallback((agendaIndex) => {
+  const addActivity = (agendaIndex) => {
     setFormData((prev) => ({
       ...prev,
       agenda: prev.agenda.map((day, index) =>
         index === agendaIndex
           ? {
               ...day,
-              activities: [
-                ...day.activities,
-                { id: Date.now(), time: "", activity: "" },
-              ],
+              activities: [...day.activities, { id: Date.now(), time: "", activity: "" }],
             }
-          : day
+          : day,
       ),
-    }));
-  }, []);
+    }))
+  }
 
-  // Remove activity
-  const removeActivity = useCallback((agendaIndex, activityIndex) => {
+  const removeActivity = (agendaIndex, activityIndex) => {
     setFormData((prev) => ({
       ...prev,
       agenda: prev.agenda.map((day, dayIndex) =>
         dayIndex === agendaIndex
           ? {
               ...day,
-              activities: day.activities.filter(
-                (_, actIndex) => actIndex !== activityIndex
-              ),
+              activities: day.activities.filter((_, actIndex) => actIndex !== activityIndex),
             }
-          : day
+          : day,
       ),
-    }));
-  }, []);
+    }))
+  }
 
-  // Add new host
-  const addHost = useCallback(() => {
+  const addHost = () => {
     setFormData((prev) => ({
       ...prev,
-      hosts: [...prev.hosts, { id: Date.now(), name: "", parentNames: [""] }],
-    }));
-  }, []);
+      hosts: [...prev.hosts, { id: Date.now(), name: "", parentNames: ["", ""] }],
+    }))
+  }
 
-  // Remove host
-  const removeHost = useCallback((hostIndex) => {
+  const removeHost = (hostIndex) => {
     setFormData((prev) => ({
       ...prev,
       hosts: prev.hosts.filter((_, index) => index !== hostIndex),
-    }));
-  }, []);
+    }))
+  }
 
-  // Add parent name
-  const addParentName = useCallback((hostIndex) => {
+  const addParentName = (hostIndex) => {
     setFormData((prev) => ({
       ...prev,
       hosts: prev.hosts.map((host, index) =>
-        index === hostIndex
-          ? { ...host, parentNames: [...host.parentNames, ""] }
-          : host
+        index === hostIndex ? { ...host, parentNames: [...host.parentNames, ""] } : host,
       ),
-    }));
-  }, []);
+    }))
+  }
 
-  // Remove parent name
-  const removeParentName = useCallback((hostIndex, parentIndex) => {
+  const removeParentName = (hostIndex, parentIndex) => {
     setFormData((prev) => ({
       ...prev,
       hosts: prev.hosts.map((host, hIndex) =>
         hIndex === hostIndex
           ? {
               ...host,
-              parentNames: host.parentNames.filter(
-                (_, pIndex) => pIndex !== parentIndex
-              ),
+              parentNames: host.parentNames.filter((_, pIndex) => pIndex !== parentIndex),
             }
-          : host
+          : host,
       ),
-    }));
-  }, []);
-
-  // Validate form data
-  const validateForm = () => {
-    if (!formData.name.trim()) {
-      setError("Event name is required");
-      return false;
-    }
-    if (!formData.date) {
-      setError("Event date is required");
-      return false;
-    }
-    if (!formData.eventType) {
-      setError("Event type is required");
-      return false;
-    }
-    return true;
-  };
-
-  // Handle form submission
-  const handleSave = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    try {
-      setSaving(true);
-      setError(null);
-
-      // Prepare data for API
-      const updateData = {
-        ...formData,
-        id: parseInt(id),
-        // Filter out empty values
-        agenda: formData.agenda.filter(
-          (day) =>
-            day.date ||
-            day.title ||
-            day.activities.some((act) => act.time || act.activity)
-        ),
-        hosts: formData.hosts.filter(
-          (host) => host.name || host.parentNames.some((name) => name.trim())
-        ),
-      };
-
-      console.log("Updating event with data:", updateData);
-
-      await eventAPI.updateEvent(id, updateData);
-      navigate("/events", { replace: true });
-    } catch (err) {
-      console.error("Error updating event:", err);
-      setError(`Failed to update event: ${err.message}`);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Handle cancel
-  const handleCancel = () => {
-    const hasChanges =
-      JSON.stringify(formData) !== JSON.stringify(originalEvent);
-    if (hasChanges) {
-      if (
-        window.confirm(
-          "You have unsaved changes. Are you sure you want to cancel?"
-        )
-      ) {
-        navigate("/events", { replace: true });
-      }
-    } else {
-      navigate("/events", { replace: true });
-    }
-  };
+    }))
+  }
 
   // Loading state
-  if (loading) {
+  if (loading && !currentEvent) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 font-['Plus_Jakarta_Sans'] flex items-center justify-center">
         <div className="text-center">
@@ -442,20 +309,18 @@ export default function EventEdit() {
           <p className="text-gray-600">Loading event...</p>
         </div>
       </div>
-    );
+    )
   }
 
   // Error state
-  if (error && !originalEvent) {
+  if (error && !currentEvent) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 font-['Plus_Jakarta_Sans'] flex items-center justify-center">
         <div className="text-center max-w-md mx-auto">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 text-red-600 rounded-full mb-4">
             <AlertCircle className="w-8 h-8" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            Failed to Load Event
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Failed to Load Event</h1>
           <p className="text-gray-600 mb-6">{error}</p>
           <div className="flex gap-3 justify-center">
             <button
@@ -465,7 +330,7 @@ export default function EventEdit() {
               Back to Events
             </button>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => dispatch(fetchEventById(id))}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               Try Again
@@ -473,7 +338,7 @@ export default function EventEdit() {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -487,11 +352,7 @@ export default function EventEdit() {
         setIsCollapsed={setSidebarCollapsed}
       />
 
-      <div
-        className={`transition-all duration-300 ${
-          sidebarCollapsed ? "lg:ml-16" : "lg:ml-64"
-        }`}
-      >
+      <div className={`transition-all duration-300 ${sidebarCollapsed ? "lg:ml-16" : "lg:ml-64"}`}>
         {/* Top Navigation Bar */}
         <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200/60 px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
@@ -506,8 +367,8 @@ export default function EventEdit() {
               <div className="relative max-w-md">
                 <h1 className="text-xl font-bold text-gray-900">Edit Event</h1>
                 <p className="text-sm text-gray-600">
-                  {originalEvent?.name
-                    ? `Editing: ${originalEvent.name}`
+                  {currentEvent?.title || currentEvent?.name
+                    ? `Editing: ${currentEvent.title || currentEvent.name}`
                     : "Update event details"}
                 </p>
               </div>
@@ -515,29 +376,33 @@ export default function EventEdit() {
 
             <div className="flex items-center gap-3">
               <NotificationsDropdown notifications={notifications} />
-              <div className="text-sm text-gray-500">
-                {saving ? "Saving..." : ""}
-              </div>
+              <div className="text-sm text-gray-500">{loading ? "Saving..." : ""}</div>
             </div>
           </div>
         </div>
 
         {/* Page Content */}
         <div className="px-4 sm:px-6 lg:px-8 py-8">
-          {/* Error Display */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl">
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center">
-                  <span className="text-red-600 text-xs">!</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center">
+                    <span className="text-red-600 text-xs">!</span>
+                  </div>
+                  <p className="text-red-800 font-medium">Error</p>
                 </div>
-                <p className="text-red-800 font-medium">Error</p>
+                <button
+                  onClick={handleClearError}
+                  className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                >
+                  Dismiss
+                </button>
               </div>
               <p className="text-red-600 text-sm mt-1">{error}</p>
             </div>
           )}
 
-          {/* Enhanced EventForm for editing */}
           <EventForm
             formData={formData}
             onInputChange={handleInputChange}
@@ -545,7 +410,7 @@ export default function EventEdit() {
             onSave={handleSave}
             onCancel={handleCancel}
             isEdit={true}
-            loading={saving}
+            loading={loading}
             error={error}
             // Extended props for complex form handling
             onAgendaChange={handleAgendaChange}
@@ -564,5 +429,5 @@ export default function EventEdit() {
         </div>
       </div>
     </div>
-  );
+  )
 }

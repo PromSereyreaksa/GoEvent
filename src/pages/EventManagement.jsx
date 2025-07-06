@@ -1,316 +1,200 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { Menu, RefreshCw } from "lucide-react";
-import AppSidebar from "../components/homepage/AppSidebar";
-import { NotificationsDropdown } from "../components/Event/NotificationsDropdown";
-import { EventList } from "../components/Event/EventList";
-import { useVendorCheck } from "../components/SecurityMonitor";
-import MakeVendorButton from "./test";
-import {
-  analyticsData,
-  notifications,
-  sampleEvents,
-} from "../components/Event/data";
-import {
-  animationStyles,
-  useScrollAnimation,
-} from "../components/Event/animations";
-import { eventAPI } from "../utils/api";
-import { normalizeEventsArray } from "../utils/eventHelpers";
-import "../styles/mobile-enhancements.css";
+import { useEffect, useState } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import { useNavigate } from "react-router-dom"
+import { Plus, Search, Filter, Calendar } from "lucide-react"
+import { fetchEvents, deleteEvent } from "../redux/slices/eventSlice"
+import { useVendorCheck } from "../components/SecurityMonitor"
+import EventCard from "../components/Event/EventCard"
+import ConfirmationModal from "../components/Event/ConfirmationModal"
 
-// Main Event Management Component - ONLY for listing events
 export default function EventManagement() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { user } = useSelector((state) => state.auth);
-  const { is_vendor } = useVendorCheck();
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+  const { is_vendor } = useVendorCheck()
 
-  // Sidebar state
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { events, loading, error } = useSelector((state) => state.events)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filterCategory, setFilterCategory] = useState("all")
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [eventToDelete, setEventToDelete] = useState(null)
 
-  // Only list-related state
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [refreshing, setRefreshing] = useState(false);
-  const [filters, setFilters] = useState({});
-  const [searchTerm, setSearchTerm] = useState("");
-
-  console.log("EventManagement render:", {
-    pathname: location.pathname,
-    search: location.search,
-    userRole: user?.role,
-    is_vendor,
-    eventsCount: events.length,
-  });
-
-  const fetchEvents = async (isRefresh = false, customFilters = {}) => {
-    try {
-      if (isRefresh) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
-      setError(null);
-
-      // Merge current filters with custom filters
-      const apiFilters = { ...filters, ...customFilters };
-
-      // Add search term if provided
-      if (searchTerm.trim()) {
-        apiFilters.search = searchTerm.trim();
-      }
-
-      // Don't use cache if refreshing
-      const data = await eventAPI.getEvents(apiFilters, !isRefresh);
-
-      // Normalize the events data to ensure consistency
-      const normalizedEvents = normalizeEventsArray(data);
-      setEvents(normalizedEvents);
-
-      if (isRefresh) {
-        console.log("✅ Events refreshed successfully");
-      }
-    } catch (err) {
-      console.error("🔴 Error fetching events:", err);
-
-      // Check if it's unauthorized
-      if (err.message.includes("Unauthorized")) {
-        console.warn("👮 You were logged out due to unauthorized access");
-        // Optionally redirect to login
-        // navigate('/sign-in');
-      }
-
-      setError(err.message);
-      // Fallback to sample events only if no events were loaded previously
-      if (events.length === 0) {
-        setEvents(sampleEvents);
-      }
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  // Fetch events on component mount
   useEffect(() => {
-    fetchEvents();
-  }, []);
-
-  // Add scroll animation effect
-  useEffect(() => {
-    const cleanup = useScrollAnimation();
-    return cleanup;
-  }, []);
-
-  // Hide header and footer
-  useEffect(() => {
-    const header = document.querySelector("header");
-    const footer = document.querySelector("footer");
-
-    if (header) header.style.display = "none";
-    if (footer) footer.style.display = "none";
-
-    return () => {
-      if (header) header.style.display = "block";
-      if (footer) footer.style.display = "block";
-    };
-  }, []);
-
-  // Cleanup cache on unmount
-  useEffect(() => {
-    return () => {
-      // Clear event cache when component unmounts
-      eventAPI.clearEventCache();
-    };
-  }, []);
-
-  const handleViewEvent = (event) => {
-    navigate(`/events/${event.id}`);
-  };
+    dispatch(fetchEvents())
+  }, [dispatch])
 
   const handleCreateEvent = () => {
-    if (!is_vendor) {
-      console.warn("Non-vendor user attempted to create event");
-      return;
+    if (is_vendor) {
+      navigate("/events/create")
+    } else {
+      alert("Vendor access required to create events. Please upgrade your account to become a vendor.")
     }
-    navigate("/events/create");
-  };
+  }
 
-  const handleDeleteEvent = async (eventId) => {
-    if (window.confirm("Are you sure you want to delete this event?")) {
-      try {
-        setLoading(true);
-        await eventAPI.deleteEvent(eventId);
-        setEvents(events.filter((event) => event.id !== eventId));
-        console.log("✅ Event deleted successfully");
-      } catch (err) {
-        console.error("🔴 Error deleting event:", err);
-        setError(err.message);
-
-        // If API call fails, still try to remove from local state
-        // This provides better UX while showing the error
-        if (err.message.includes("Failed to delete")) {
-          setEvents(events.filter((event) => event.id !== eventId));
-        }
-      } finally {
-        setLoading(false);
-      }
+  const handleEditEvent = (eventId) => {
+    if (is_vendor) {
+      navigate(`/events/${eventId}/edit`)
+    } else {
+      alert("Vendor access required to edit events.")
     }
-  };
+  }
 
-  const handleRefresh = () => {
-    fetchEvents(true);
-  };
-
-  const handleUpdateEvent = async (eventId, updatedData) => {
-    try {
-      setLoading(true);
-      const updatedEvent = await eventAPI.updateEvent(eventId, updatedData);
-      setEvents(
-        events.map((event) => (event.id === eventId ? updatedEvent : event))
-      );
-      console.log("✅ Event updated successfully");
-    } catch (err) {
-      console.error("🔴 Error updating event:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
+  const handleDeleteEvent = (event) => {
+    if (is_vendor) {
+      setEventToDelete(event)
+      setShowDeleteModal(true)
+    } else {
+      alert("Vendor access required to delete events.")
     }
-  };
+  }
 
-  const handleSearch = (term) => {
-    setSearchTerm(term);
-    // Debounce the search to avoid too many API calls
-    const timeoutId = setTimeout(() => {
-      fetchEvents(false, { search: term });
-    }, 500);
+  const confirmDelete = async () => {
+    if (eventToDelete) {
+      await dispatch(deleteEvent(eventToDelete.id))
+      setShowDeleteModal(false)
+      setEventToDelete(null)
+    }
+  }
 
-    return () => clearTimeout(timeoutId);
-  };
+  const filteredEvents = events.filter((event) => {
+    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCategory = filterCategory === "all" || event.category === filterCategory
+    return matchesSearch && matchesCategory
+  })
 
-  const handleFilterChange = (newFilters) => {
-    setFilters(newFilters);
-    fetchEvents(false, newFilters);
-  };
-
-  const handleClearFilters = () => {
-    setFilters({});
-    setSearchTerm("");
-    fetchEvents(false, {});
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 font-['Plus_Jakarta_Sans']">
-      <style>{animationStyles}</style>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Event Management</h1>
+            <p className="text-gray-600">Manage and organize your events</p>
+          </div>
 
-      <AppSidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        isCollapsed={sidebarCollapsed}
-        setIsCollapsed={setSidebarCollapsed}
-      />
-
-      <div
-        className={`transition-all duration-300 ${
-          sidebarCollapsed ? "lg:ml-16" : "lg:ml-64"
-        }`}
-      >
-        <MakeVendorButton />
-
-        {/* Top Navigation Bar */}
-        <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200/60 px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                onClick={() => setSidebarOpen(true)}
-              >
-                <Menu className="w-5 h-5" />
-              </button>
-
-              <div className="relative max-w-md">
-                <h1 className="text-xl font-bold text-gray-900">
-                  Event Dashboard
-                </h1>
-                <p className="text-sm text-gray-600">
-                  Manage your events and analytics
-                </p>
+          {/* Create Event Button - Only show for vendors */}
+          {is_vendor ? (
+            <button
+              onClick={handleCreateEvent}
+              className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              Create Event
+            </button>
+          ) : (
+            <div className="bg-gray-100 text-gray-500 px-6 py-3 rounded-lg cursor-not-allowed">
+              <div className="flex items-center gap-2">
+                <Plus className="w-5 h-5" />
+                Create Event (Vendor Only)
               </div>
             </div>
+          )}
+        </div>
 
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleRefresh}
-                disabled={refreshing}
-                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
-                title="Refresh events"
-              >
-                <RefreshCw
-                  className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
-                />
-                <span className="hidden sm:inline">Refresh</span>
-              </button>
-
-              <NotificationsDropdown notifications={notifications} />
-              {is_vendor && (
-                <button
-                  onClick={handleCreateEvent}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium"
-                >
-                  Create Event
-                </button>
-              )}
-            </div>
+        {/* Search and Filter */}
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search events..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div className="relative">
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
+            >
+              <option value="all">All Categories</option>
+              <option value="wedding">Wedding</option>
+              <option value="corporate">Corporate</option>
+              <option value="birthday">Birthday</option>
+              <option value="conference">Conference</option>
+            </select>
           </div>
         </div>
 
-        {/* Page Content */}
-        <div className="px-4 sm:px-6 lg:px-8 py-8">
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center">
-                    <span className="text-red-600 text-xs">!</span>
-                  </div>
-                  <p className="text-red-800 font-medium">Error</p>
-                </div>
-                <button
-                  onClick={() => {
-                    setError(null);
-                    fetchEvents();
-                  }}
-                  className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
-                >
-                  Retry
-                </button>
-              </div>
-              <p className="text-red-600 text-sm mt-1">{error}</p>
-            </div>
-          )}
+        {/* Non-vendor message */}
+        {!is_vendor && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="font-semibold text-blue-900 mb-2">Upgrade to Vendor Account</h3>
+            <p className="text-blue-800 text-sm">
+              To create, edit, and manage events, you need a vendor account.
+              <button className="ml-2 text-blue-600 underline hover:text-blue-800">
+                Learn more about vendor benefits
+              </button>
+            </p>
+          </div>
+        )}
 
-          <EventList
-            events={events}
-            onViewEvent={handleViewEvent}
-            onDeleteEvent={handleDeleteEvent}
-            onUpdateEvent={handleUpdateEvent}
-            onSearch={handleSearch}
-            onFilterChange={handleFilterChange}
-            onClearFilters={handleClearFilters}
-            analyticsData={analyticsData}
-            loading={loading}
-            refreshing={refreshing}
-            searchTerm={searchTerm}
-            filters={filters}
-          />
-        </div>
+        {/* Events Grid */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-800">{error}</p>
+          </div>
+        )}
+
+        {filteredEvents.length === 0 ? (
+          <div className="text-center py-12">
+            <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No events found</h3>
+            <p className="text-gray-600 mb-6">
+              {searchTerm || filterCategory !== "all"
+                ? "Try adjusting your search or filter criteria"
+                : is_vendor
+                  ? "Get started by creating your first event"
+                  : "No events available at the moment"}
+            </p>
+            {is_vendor && !searchTerm && filterCategory === "all" && (
+              <button
+                onClick={handleCreateEvent}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Create Your First Event
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredEvents.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                onEdit={() => handleEditEvent(event.id)}
+                onDelete={() => handleDeleteEvent(event)}
+                onView={() => navigate(`/events/${event.id}`)}
+                canEdit={is_vendor}
+                canDelete={is_vendor}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={confirmDelete}
+          title="Delete Event"
+          message={`Are you sure you want to delete "${eventToDelete?.title}"? This action cannot be undone.`}
+          confirmText="Delete"
+          confirmButtonClass="bg-red-600 hover:bg-red-700"
+        />
       </div>
     </div>
-  );
+  )
 }

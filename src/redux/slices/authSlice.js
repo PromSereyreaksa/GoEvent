@@ -16,9 +16,17 @@ const authSlice = createSlice({
   reducers: {
     initializeAuth: (state) => {
       // Check for existing tokens in storage
-      const accessToken = localStorage.getItem("access_token") || sessionStorage.getItem("access_token")
+      const accessToken =
+        localStorage.getItem("access_token") || sessionStorage.getItem("access_token") || localStorage.getItem("token")
       const refreshToken = localStorage.getItem("refresh_token") || sessionStorage.getItem("refresh_token")
       const userStr = localStorage.getItem("user") || sessionStorage.getItem("user")
+
+      console.log("initializeAuth - Storage check:", {
+        accessToken: !!accessToken,
+        refreshToken: !!refreshToken,
+        userStr: !!userStr,
+        userData: userStr ? JSON.parse(userStr) : null,
+      })
 
       if (accessToken && userStr) {
         try {
@@ -27,11 +35,18 @@ const authSlice = createSlice({
           state.token = accessToken
           state.refreshToken = refreshToken
           state.isAuthenticated = true
+
+          console.log("initializeAuth - User loaded:", {
+            userId: user.id,
+            isVendor: user.is_vendor,
+            email: user.email,
+          })
         } catch (error) {
           console.error("Error parsing user data:", error)
           // Clear invalid data
           localStorage.removeItem("access_token")
           localStorage.removeItem("refresh_token")
+          localStorage.removeItem("token")
           localStorage.removeItem("user")
           sessionStorage.removeItem("access_token")
           sessionStorage.removeItem("refresh_token")
@@ -46,13 +61,34 @@ const authSlice = createSlice({
       state.error = null
     },
     loginSuccess: (state, action) => {
-      const { user, access_token, refresh_token } = action.payload
+      console.log("loginSuccess - Payload:", action.payload)
+
+      const { user, access, access_token, refresh, refresh_token } = action.payload
+
+      // Handle different token field names from backend
+      const token = access || access_token
+      const refreshTokenValue = refresh || refresh_token
+
       state.user = user
-      state.token = access_token
-      state.refreshToken = refresh_token
+      state.token = token
+      state.refreshToken = refreshTokenValue
       state.isAuthenticated = true
       state.loading = false
       state.error = null
+
+      // Store in localStorage with consistent naming
+      localStorage.setItem("token", token)
+      localStorage.setItem("access_token", token)
+      if (refreshTokenValue) {
+        localStorage.setItem("refresh_token", refreshTokenValue)
+      }
+      localStorage.setItem("user", JSON.stringify(user))
+
+      console.log("loginSuccess - User stored:", {
+        userId: user.id,
+        isVendor: user.is_vendor,
+        email: user.email,
+      })
     },
     loginFailure: (state, action) => {
       state.loading = false
@@ -74,7 +110,7 @@ const authSlice = createSlice({
       // Clear storage
       localStorage.removeItem("access_token")
       localStorage.removeItem("refresh_token")
-      localStorage.removeItem("token")   
+      localStorage.removeItem("token")
       localStorage.removeItem("user")
       sessionStorage.removeItem("access_token")
       sessionStorage.removeItem("refresh_token")
@@ -84,11 +120,6 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.error = null
     },
-    /**
-     * Reducer to update specific properties of the user object.
-     * This can be used to change the user's role.
-     * @param {object} action.payload - An object containing the properties to update (e.g., { role: 'vendor' }).
-     */
     updateUser: (state, action) => {
       state.user = { ...state.user, ...action.payload }
       // Update storage to persist the changes

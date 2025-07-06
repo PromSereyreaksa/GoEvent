@@ -1,44 +1,39 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-import { Provider } from "react-redux";
-import { store } from "./redux/store";
-import Header from "./components/Header";
-import ProtectedRoute from "./components/ProtectedRoute";
-import RoleProtectedRoute from "./components/RoleProtectedRoute";
-import EventManagementWrapper from "./components/EventManagementWrapper";
-import CreateEventProtection from "./components/CreateEventProtection";
-import SecurityMonitor from "./components/SecurityMonitor";
+"use client"
+
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
+import { Provider } from "react-redux"
+import { store } from "./redux/store"
+import Header from "./components/Header"
+import ProtectedRoute from "./components/ProtectedRoute"
+import EventManagementWrapper from "./components/EventManagementWrapper"
+import SecurityMonitor from "./components/SecurityMonitor"
 
 // redux
-import { useDispatch } from "react-redux";
-import { initializeAuth } from "./redux/slices/authSlice";
+import { useDispatch } from "react-redux"
+import { initializeAuth } from "./redux/slices/authSlice"
 
 // Pages
-import Home from "./pages/Home";
-import Homepage from "./pages/Homepage";
-import SignIn from "./pages/SignIn";
-import SignUp from "./pages/SignUp";
-import About from "./pages/About";
-import PricingSection from "./pages/Pricing";
-import EventManagement from "./pages/EventManagement";
-import EventCreate from "./pages/EventCreate";
-import EventView from "./pages/EventView";
-import EventEdit from "./pages/EventEdit";
-import Guests from "./components/Guests";
+import Home from "./pages/Home"
+import Homepage from "./pages/Homepage"
+import SignIn from "./pages/SignIn"
+import SignUp from "./pages/SignUp"
+import About from "./pages/About"
+import PricingSection from "./pages/Pricing"
+import EventManagement from "./pages/EventManagement"
+import EventCreate from "./pages/EventCreate"
+import EventView from "./pages/EventView"
+import EventEdit from "./pages/EventEdit"
+import Guests from "./components/Guests"
 
 // effect
-import { useEffect } from "react";
+import { useEffect } from "react"
 
 function App() {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch()
 
   useEffect(() => {
-    dispatch(initializeAuth());
-  }, [dispatch]);
+    dispatch(initializeAuth())
+  }, [dispatch])
 
   return (
     <Provider store={store}>
@@ -81,16 +76,14 @@ function App() {
               }
             />
 
-            {/* Use EventManagement for all event routes with comprehensive vendor protection */}
+            {/* Event Routes - Allow all authenticated users to view, but restrict creation/editing to vendors */}
             <Route
               path="/events"
               element={
                 <ProtectedRoute>
-                  <CreateEventProtection>
-                    <EventManagementWrapper>
-                      <EventManagement />
-                    </EventManagementWrapper>
-                  </CreateEventProtection>
+                  <EventManagementWrapper>
+                    <EventManagement />
+                  </EventManagementWrapper>
                 </ProtectedRoute>
               }
             />
@@ -98,11 +91,9 @@ function App() {
               path="/events/create"
               element={
                 <ProtectedRoute>
-                  <CreateEventProtection>
-                    <EventManagementWrapper>
-                      <EventCreate />
-                    </EventManagementWrapper>
-                  </CreateEventProtection>
+                  <EventManagementWrapper>
+                    <EventCreate />
+                  </EventManagementWrapper>
                 </ProtectedRoute>
               }
             />
@@ -110,15 +101,22 @@ function App() {
               path="/events/:id"
               element={
                 <ProtectedRoute>
-                  <CreateEventProtection>
-                    <EventManagementWrapper>
-                      <EventView />
-                    </EventManagementWrapper>
-                  </CreateEventProtection>
+                  <EventManagementWrapper>
+                    <EventView />
+                  </EventManagementWrapper>
                 </ProtectedRoute>
               }
             />
-            <Route path="/events/:id/edit" element={<EventEdit />} />
+            <Route
+              path="/events/:id/edit"
+              element={
+                <ProtectedRoute>
+                  <EventManagementWrapper>
+                    <EventEdit />
+                  </EventManagementWrapper>
+                </ProtectedRoute>
+              }
+            />
 
             {/* Guests Route - Dedicated guest management page */}
             <Route
@@ -130,40 +128,10 @@ function App() {
               }
             />
 
-            {/* Block any direct event creation routes - vendor only */}
-            <Route
-              path="/create-event"
-              element={
-                <RoleProtectedRoute
-                  requiredRole="vendor"
-                  fallbackRoute="/homepage"
-                >
-                  <Navigate to="/events?create=true" replace />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="/event/create"
-              element={
-                <RoleProtectedRoute
-                  requiredRole="vendor"
-                  fallbackRoute="/homepage"
-                >
-                  <Navigate to="/events?create=true" replace />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="/new-event"
-              element={
-                <RoleProtectedRoute
-                  requiredRole="vendor"
-                  fallbackRoute="/homepage"
-                >
-                  <Navigate to="/events?create=true" replace />
-                </RoleProtectedRoute>
-              }
-            />
+            {/* Legacy event creation routes */}
+            <Route path="/create-event" element={<Navigate to="/events/create" replace />} />
+            <Route path="/event/create" element={<Navigate to="/events/create" replace />} />
+            <Route path="/new-event" element={<Navigate to="/events/create" replace />} />
 
             {/* Catch all other routes and redirect to landing page */}
             <Route path="*" element={<Navigate to="/" replace />} />
@@ -171,7 +139,7 @@ function App() {
         </div>
       </Router>
     </Provider>
-  );
+  )
 }
 
-export default App;
+export default App

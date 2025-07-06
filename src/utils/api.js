@@ -1,389 +1,620 @@
-import axios from "axios";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api"
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+// Helper function to get auth token
+const getAuthToken = () => {
+  return (
+    localStorage.getItem("token") ||
+    sessionStorage.getItem("token") ||
+    localStorage.getItem("access_token") ||
+    sessionStorage.getItem("access_token")
+  )
+}
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
+// Helper function to get auth headers
+const getAuthHeaders = () => {
+  const token = getAuthToken()
+  return {
     "Content-Type": "application/json",
-  },
-  timeout: 10000,
-});
+    ...(token && { Authorization: `Bearer ${token}` }),
+  }
+}
 
-// Request interceptor to attach token
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+// Helper function to handle API responses
+const handleResponse = async (response) => {
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    const errorMessage = errorData.message || errorData.detail || `HTTP error! status: ${response.status}`
+    throw new Error(errorMessage)
+  }
+  return response.json()
+}
 
-// Response interceptor to handle auth errors more gracefully
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const { response } = error;
+// Helper function to make authenticated requests
+const authenticatedFetch = async (url, options = {}) => {
+  const token = getAuthToken()
 
-    // Network error
-    if (!response) {
-      error.message = "Network error. Please check your connection.";
-      return Promise.reject(error);
-    }
+  if (!token) {
+    throw new Error("No authentication token found")
+  }
 
-    // If token is invalid (unauthenticated)
-    if (
-      response.status === 401 &&
-      response.config &&
-      !response.config.__isRetryRequest
-    ) {
-      // Check if the request was to an auth-critical route
-      const authCriticalRoutes = ["/auth/me", "/auth/refresh"];
+  const response = await fetch(`${API_BASE_URL}${url}`, {
+    ...options,
+    headers: {
+      ...getAuthHeaders(),
+      ...options.headers,
+    },
+  })
 
-      const isAuthCritical = authCriticalRoutes.some((path) =>
-        response.config.url.includes(path)
-      );
+  // Handle token refresh if needed
+  if (response.status === 401) {
+    const refreshToken = localStorage.getItem("refresh_token") || sessionStorage.getItem("refresh_token")
+    if (refreshToken) {
+      try {
+        const refreshResponse = await fetch(`${API_BASE_URL}/auth/token/refresh/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh: refreshToken }),
+        })
 
-      if (isAuthCritical) {
-        localStorage.removeItem("token");
-        window.location.href = "/sign-in";
+        if (refreshResponse.ok) {
+          const { access } = await refreshResponse.json()
+          localStorage.setItem("token", access)
+          localStorage.setItem("access_token", access)
+
+          // Retry original request with new token
+          return fetch(`${API_BASE_URL}${url}`, {
+            ...options,
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${access}`,
+              ...options.headers,
+            },
+          })
+        }
+      } catch (error) {
+        console.error("Token refresh failed:", error)
       }
     }
-
-    return Promise.reject(error);
+    throw new Error("Authentication failed")
   }
-);
 
-// Utility function to handle API errors consistently
-const handleAPIError = (error, defaultMessage) => {
-  console.error("API Error:", error);
+  return response
+}
 
-  if (error.response) {
-    // Server responded with error status
-    const { status, data } = error.response;
-
-    if (status === 400) {
-      return new Error(data?.message || data?.error || "Bad request");
-    } else if (status === 401) {
-      return new Error("Unauthorized access. Please log in again.");
-    } else if (status === 403) {
-      return new Error("You don't have permission to perform this action.");
-    } else if (status === 404) {
-      return new Error("Resource not found.");
-    } else if (status === 500) {
-      return new Error("Server error. Please try again later.");
-    } else {
-      return new Error(data?.message || data?.error || defaultMessage);
-    }
-  } else if (error.request) {
-    // Request was made but no response received
-    return new Error("Network error. Please check your connection.");
-  } else {
-    // Something else happened
-    return new Error(error.message || defaultMessage);
+// Transform frontend event data to backend format
+const transformEventToBackend = (eventData) => {
+  const transformed = {
+    title: eventData.title,
+    description: eventData.description || "",
+    date: eventData.date,
+    start_time: eventData.startTime,
+    end_time: eventData.endTime,
+    venue_name: eventData.venueName || "",
+    google_map_embed_link: eventData.googleMapLink || "",
+    youtube_embed_link: eventData.youtubeLink || "",
+    video_message_embed_link: eventData.videoMessageLink || "",
+    category: eventData.category || "wedding",
+    package_plan: eventData.packagePlan || null,
+    invitation_template: eventData.invitationTemplate || null,
+    team_members: eventData.teamMembers || [],
   }
-};
 
-// Simple cache for API responses
-const apiCache = new Map();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  // Transform host data
+  if (eventData.hosts && eventData.hosts.length > 0) {
+    transformed.host = eventData.hosts.map((host) => ({
+      avatar: host.avatar || null,
+      host_names: host.names || [],
+    }))
+  }
+
+  // Transform agenda data
+  if (eventData.agenda && eventData.agenda.length > 0) {
+    transformed.agenda = eventData.agenda.map((agendaItem) => ({
+      date: agendaItem.date,
+      agenda_detail: agendaItem.details || [],
+    }))
+  }
+
+  // Transform sponsors data
+  if (eventData.sponsors && eventData.sponsors.length > 0) {
+    transformed.event_sponsors = eventData.sponsors.map((sponsor) => ({
+      name: sponsor.name || "",
+      logo: sponsor.logo || null,
+    }))
+  }
+
+  return transformed
+}
+
+// Transform backend event data to frontend format
+const transformEventFromBackend = (backendData) => {
+  return {
+    id: backendData.id,
+    title: backendData.title,
+    description: backendData.description,
+    date: backendData.date,
+    startTime: backendData.start_time,
+    endTime: backendData.end_time,
+    venueName: backendData.venue_name,
+    googleMapLink: backendData.google_map_embed_link,
+    youtubeLink: backendData.youtube_embed_link,
+    videoMessageLink: backendData.video_message_embed_link,
+    category: backendData.category,
+    packagePlan: backendData.package_plan,
+    invitationTemplate: backendData.invitation_template,
+    teamMembers: backendData.team_members || [],
+    hosts: backendData.host || [],
+    agenda: backendData.agenda || [],
+    sponsors: backendData.event_sponsors || [],
+    createdAt: backendData.created_at,
+    updatedAt: backendData.updated_at,
+  }
+}
+
+// Simple cache implementation
+const cache = new Map()
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
 const getCachedData = (key) => {
-  const cached = apiCache.get(key);
+  const cached = cache.get(key)
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return cached.data;
+    return cached.data
   }
-  apiCache.delete(key);
-  return null;
-};
+  cache.delete(key)
+  return null
+}
 
 const setCachedData = (key, data) => {
-  apiCache.set(key, {
-    data,
-    timestamp: Date.now(),
-  });
-};
+  cache.set(key, { data, timestamp: Date.now() })
+}
 
-const clearCache = (pattern) => {
-  if (pattern) {
-    Array.from(apiCache.keys()).forEach((key) => {
-      if (key.includes(pattern)) {
-        apiCache.delete(key);
-      }
-    });
-  } else {
-    apiCache.clear();
-  }
-};
-
-// API service functions
-export const pricingAPI = {
-  // Get all pricing plans
-  getPlans: async () => {
-    try {
-      const response = await api.get("/site_setting/pricing-plans/");
-      return response.data;
-    } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "Failed to fetch pricing plans"
-      );
+// Create API object for default export
+const api = {
+  get: async (url) => {
+    const response = await authenticatedFetch(url)
+    return handleResponse(response)
+  },
+  post: async (url, data) => {
+    const response = await authenticatedFetch(url, {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+    return handleResponse(response)
+  },
+  put: async (url, data) => {
+    const response = await authenticatedFetch(url, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    })
+    return handleResponse(response)
+  },
+  patch: async (url, data) => {
+    const response = await authenticatedFetch(url, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    })
+    return handleResponse(response)
+  },
+  delete: async (url) => {
+    const response = await authenticatedFetch(url, {
+      method: "DELETE",
+    })
+    if (!response.ok) {
+      throw new Error(`Failed to delete: ${response.status}`)
     }
+    return true
   },
+}
 
-  // Get specific pricing plan
-  getPlan: async (id) => {
-    try {
-      const response = await api.get(`/site_setting/pricing-plans/${id}/`);
-      return response.data;
-    } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "Failed to fetch pricing plan"
-      );
-    }
-  },
-};
-
-export const teamAPI = {
-  // Get all team members
-  getMembers: async () => {
-    try {
-      const response = await api.get("/site_setting/team-members/");
-      return response.data;
-    } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "Failed to fetch team members"
-      );
-    }
-  },
-
-  // Get specific team member
-  getMember: async (id) => {
-    try {
-      const response = await api.get(`/site_setting/team-members/${id}/`);
-      return response.data;
-    } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "Failed to fetch team member"
-      );
-    }
-  },
-};
-
-export const eventAPI = {
-  // Get all events with optional filters
-  getEvents: async (filters = {}, useCache = true) => {
-    try {
-      const cacheKey = `events_${JSON.stringify(filters)}`;
-
-      // Check cache first
-      if (useCache) {
-        const cachedData = getCachedData(cacheKey);
-        if (cachedData) {
-          console.log("📦 Using cached events data");
-          return cachedData;
-        }
-      }
-
-      const params = new URLSearchParams();
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== "") {
-          params.append(key, value);
-        }
-      });
-
-      const url = `/events/${params.toString() ? `?${params.toString()}` : ""}`;
-      const response = await api.get(url);
-
-      // Cache the response
-      if (useCache) {
-        setCachedData(cacheKey, response.data);
-      }
-
-      return response.data;
-    } catch (error) {
-      throw handleAPIError(error, "Failed to fetch events");
-    }
-  },
-
-  // Get specific event
-  getEvent: async (id, useCache = true) => {
-    try {
-      const cacheKey = `event_${id}`;
-
-      if (useCache) {
-        const cachedData = getCachedData(cacheKey);
-        if (cachedData) {
-          console.log(`📦 Using cached event data for ID: ${id}`);
-          return cachedData;
-        }
-      }
-
-      const response = await api.get(`/events/${id}/`);
-
-      if (useCache) {
-        setCachedData(cacheKey, response.data);
-      }
-
-      return response.data;
-    } catch (error) {
-      throw handleAPIError(error, "Failed to fetch event");
-    }
-  },
-
-  // Create new event
-  createEvent: async (eventData) => {
-    try {
-      // Client-side role check for extra security
-      const userStr =
-        localStorage.getItem("user") || sessionStorage.getItem("user");
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        if (user.role !== "vendor") {
-          throw new Error("Only vendors can create events");
-        }
-      }
-
-      const response = await api.post("/events/", eventData);
-
-      // Clear events cache since we added a new event
-      clearCache("events_");
-
-      return response.data;
-    } catch (error) {
-      throw handleAPIError(error, "Failed to create event");
-    }
-  },
-
-  // Update event
-  updateEvent: async (id, eventData) => {
-    try {
-      const response = await api.put(`/events/${id}/`, eventData);
-
-      // Clear relevant cache entries
-      clearCache("events_");
-      clearCache(`event_${id}`);
-
-      return response.data;
-    } catch (error) {
-      throw handleAPIError(error, "Failed to update event");
-    }
-  },
-
-  // Delete event
-  deleteEvent: async (id) => {
-    try {
-      const response = await api.delete(`/events/${id}/`);
-
-      // Clear relevant cache entries
-      clearCache("events_");
-      clearCache(`event_${id}`);
-
-      return response.data;
-    } catch (error) {
-      throw handleAPIError(error, "Failed to delete event");
-    }
-  },
-
-  // Get events by vendor (for vendors to see their own events)
-  getVendorEvents: async (vendorId, useCache = true) => {
-    try {
-      const cacheKey = `vendor_events_${vendorId}`;
-
-      if (useCache) {
-        const cachedData = getCachedData(cacheKey);
-        if (cachedData) {
-          console.log(`📦 Using cached vendor events for ID: ${vendorId}`);
-          return cachedData;
-        }
-      }
-
-      const response = await api.get(`/events/vendor/${vendorId}/`);
-
-      if (useCache) {
-        setCachedData(cacheKey, response.data);
-      }
-
-      return response.data;
-    } catch (error) {
-      throw handleAPIError(error, "Failed to fetch vendor events");
-    }
-  },
-
-  // Get event analytics/stats
-  getEventStats: async (eventId, useCache = true) => {
-    try {
-      const cacheKey = `event_stats_${eventId}`;
-
-      if (useCache) {
-        const cachedData = getCachedData(cacheKey);
-        if (cachedData) {
-          console.log(`📦 Using cached event stats for ID: ${eventId}`);
-          return cachedData;
-        }
-      }
-
-      const response = await api.get(`/events/${eventId}/stats/`);
-
-      if (useCache) {
-        setCachedData(cacheKey, response.data);
-      }
-
-      return response.data;
-    } catch (error) {
-      throw handleAPIError(error, "Failed to fetch event statistics");
-    }
-  },
-
-  // Clear all event-related cache
-  clearEventCache: () => {
-    clearCache("events_");
-    clearCache("event_");
-    clearCache("vendor_events_");
-    clearCache("event_stats_");
-  },
-};
-
+// Authentication API
 export const authAPI = {
-  // Login
   login: async (credentials) => {
-    try {
-      const response = await api.post("/auth/login/", credentials);
-      if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
-      }
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || "Login failed");
-    }
+    const response = await fetch(`${API_BASE_URL}/auth/login/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(credentials),
+    })
+
+    const data = await handleResponse(response)
+
+    // Store tokens with consistent naming
+    localStorage.setItem("token", data.access)
+    localStorage.setItem("access_token", data.access)
+    localStorage.setItem("refresh_token", data.refresh)
+    localStorage.setItem("user", JSON.stringify(data.user))
+
+    return data
   },
 
-  // Logout
-  logout: async () => {
-    try {
-      await api.post("/auth/logout/");
-      localStorage.removeItem("token");
-    } catch (error) {
-      // Even if logout fails, remove token
-      localStorage.removeItem("token");
-      throw new Error(error.response?.data?.message || "Logout failed");
-    }
-  },
-
-  // Register
   register: async (userData) => {
-    try {
-      const response = await api.post("/auth/signup/", userData);
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || "Registration failed");
-    }
+    const response = await fetch(`${API_BASE_URL}/auth/register/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(userData),
+    })
+    return handleResponse(response)
   },
-};
 
-export default api;
+  logout: async () => {
+    const refreshToken = localStorage.getItem("refresh_token")
+    if (refreshToken) {
+      try {
+        await fetch(`${API_BASE_URL}/auth/logout/`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ refresh: refreshToken }),
+        })
+      } catch (error) {
+        console.error("Logout API call failed:", error)
+      }
+    }
 
-// Export utility functions for direct use
-export { handleAPIError, getCachedData, setCachedData, clearCache };
+    // Clear local storage regardless of API call success
+    localStorage.removeItem("token")
+    localStorage.removeItem("access_token")
+    localStorage.removeItem("refresh_token")
+    localStorage.removeItem("user")
+    sessionStorage.removeItem("token")
+    sessionStorage.removeItem("access_token")
+    sessionStorage.removeItem("refresh_token")
+    sessionStorage.removeItem("user")
+  },
+
+  getProfile: async () => {
+    const response = await authenticatedFetch("/auth/profile/")
+    return handleResponse(response)
+  },
+
+  updateProfile: async (profileData) => {
+    const response = await authenticatedFetch("/auth/profile/", {
+      method: "PUT",
+      body: JSON.stringify(profileData),
+    })
+    return handleResponse(response)
+  },
+
+  changePassword: async (passwordData) => {
+    const response = await authenticatedFetch("/auth/change-password/", {
+      method: "POST",
+      body: JSON.stringify(passwordData),
+    })
+    return handleResponse(response)
+  },
+
+  refreshToken: async () => {
+    const refreshToken = localStorage.getItem("refresh_token")
+    if (!refreshToken) {
+      throw new Error("No refresh token available")
+    }
+
+    const response = await fetch(`${API_BASE_URL}/auth/token/refresh/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh: refreshToken }),
+    })
+
+    const data = await handleResponse(response)
+    localStorage.setItem("token", data.access)
+    localStorage.setItem("access_token", data.access)
+    return data
+  },
+}
+
+// Event API
+export const eventAPI = {
+  // Renamed from getAll to getEvents
+  getEvents: async () => {
+    const cacheKey = "events_all"
+    const cached = getCachedData(cacheKey)
+    if (cached) return cached
+
+    const response = await authenticatedFetch("/events/")
+    const data = await handleResponse(response)
+    const transformedData = data.map(transformEventFromBackend)
+
+    setCachedData(cacheKey, transformedData)
+    return transformedData
+  },
+
+  // Renamed from getById to getEvent
+  getEvent: async (id) => {
+    const cacheKey = `event_${id}`
+    const cached = getCachedData(cacheKey)
+    if (cached) return cached
+
+    const response = await authenticatedFetch(`/events/${id}/`)
+    const data = await handleResponse(response)
+    const transformedData = transformEventFromBackend(data)
+
+    setCachedData(cacheKey, transformedData)
+    return transformedData
+  },
+
+  // Renamed from create to createEvent
+  createEvent: async (eventData) => {
+    const transformedData = transformEventToBackend(eventData)
+
+    // Debug log to see what we're sending
+    console.log("Sending event data:", transformedData)
+
+    const response = await authenticatedFetch("/events/", {
+      method: "POST",
+      body: JSON.stringify(transformedData),
+    })
+
+    const data = await handleResponse(response)
+
+    // Clear cache
+    cache.delete("events_all")
+
+    return transformEventFromBackend(data)
+  },
+
+  // Renamed from update to updateEvent
+  updateEvent: async (id, eventData) => {
+    const transformedData = transformEventToBackend(eventData)
+    const response = await authenticatedFetch(`/events/${id}/`, {
+      method: "PUT",
+      body: JSON.stringify(transformedData),
+    })
+
+    const data = await handleResponse(response)
+
+    // Clear cache
+    cache.delete("events_all")
+    cache.delete(`event_${id}`)
+
+    return transformEventFromBackend(data)
+  },
+
+  // Renamed from delete to deleteEvent
+  deleteEvent: async (id) => {
+    const response = await authenticatedFetch(`/events/${id}/`, {
+      method: "DELETE",
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete event: ${response.status}`)
+    }
+
+    // Clear cache
+    cache.delete("events_all")
+    cache.delete(`event_${id}`)
+
+    return true
+  },
+
+  getEventsByCategory: async (category) => {
+    const cacheKey = `events_category_${category}`
+    const cached = getCachedData(cacheKey)
+    if (cached) return cached
+
+    const response = await authenticatedFetch(`/events/?category=${category}`)
+    const data = await handleResponse(response)
+    const transformedData = data.map(transformEventFromBackend)
+
+    setCachedData(cacheKey, transformedData)
+    return transformedData
+  },
+
+  // Keep backward compatibility aliases
+  getAll: async () => {
+    return eventAPI.getEvents()
+  },
+
+  getById: async (id) => {
+    return eventAPI.getEvent(id)
+  },
+
+  create: async (eventData) => {
+    return eventAPI.createEvent(eventData)
+  },
+
+  update: async (id, eventData) => {
+    return eventAPI.updateEvent(id, eventData)
+  },
+
+  delete: async (id) => {
+    return eventAPI.deleteEvent(id)
+  },
+
+  getByCategory: async (category) => {
+    return eventAPI.getEventsByCategory(category)
+  },
+}
+
+// Pricing API
+export const pricingAPI = {
+  getAll: async () => {
+    const cacheKey = "pricing_plans"
+    const cached = getCachedData(cacheKey)
+    if (cached) return cached
+
+    const response = await fetch(`${API_BASE_URL}/pricing/`)
+    const data = await handleResponse(response)
+
+    setCachedData(cacheKey, data)
+    return data
+  },
+
+  getById: async (id) => {
+    const cacheKey = `pricing_plan_${id}`
+    const cached = getCachedData(cacheKey)
+    if (cached) return cached
+
+    const response = await fetch(`${API_BASE_URL}/pricing/${id}/`)
+    const data = await handleResponse(response)
+
+    setCachedData(cacheKey, data)
+    return data
+  },
+}
+
+// Team API
+export const teamAPI = {
+  getAll: async () => {
+    const cacheKey = "team_members"
+    const cached = getCachedData(cacheKey)
+    if (cached) return cached
+
+    const response = await authenticatedFetch("/team/")
+    const data = await handleResponse(response)
+
+    setCachedData(cacheKey, data)
+    return data
+  },
+
+  getById: async (id) => {
+    const cacheKey = `team_member_${id}`
+    const cached = getCachedData(cacheKey)
+    if (cached) return cached
+
+    const response = await authenticatedFetch(`/team/${id}/`)
+    const data = await handleResponse(response)
+
+    setCachedData(cacheKey, data)
+    return data
+  },
+}
+
+// Site API
+export const siteAPI = {
+  getSettings: async () => {
+    const cacheKey = "site_settings"
+    const cached = getCachedData(cacheKey)
+    if (cached) return cached
+
+    const response = await fetch(`${API_BASE_URL}/site/settings/`)
+    const data = await handleResponse(response)
+
+    setCachedData(cacheKey, data)
+    return data
+  },
+
+  getCategories: async () => {
+    const cacheKey = "event_categories"
+    const cached = getCachedData(cacheKey)
+    if (cached) return cached
+
+    const response = await fetch(`${API_BASE_URL}/categories/`)
+    const data = await handleResponse(response)
+
+    setCachedData(cacheKey, data)
+    return data
+  },
+
+  getInvitationTemplates: async () => {
+    const cacheKey = "invitation_templates"
+    const cached = getCachedData(cacheKey)
+    if (cached) return cached
+
+    const response = await authenticatedFetch("/invitation-templates/")
+    const data = await handleResponse(response)
+
+    setCachedData(cacheKey, data)
+    return data
+  },
+}
+
+// Blog API
+export const blogAPI = {
+  getAll: async () => {
+    const cacheKey = "blog_posts"
+    const cached = getCachedData(cacheKey)
+    if (cached) return cached
+
+    const response = await fetch(`${API_BASE_URL}/blog/`)
+    const data = await handleResponse(response)
+
+    setCachedData(cacheKey, data)
+    return data
+  },
+
+  getById: async (id) => {
+    const cacheKey = `blog_post_${id}`
+    const cached = getCachedData(cacheKey)
+    if (cached) return cached
+
+    const response = await fetch(`${API_BASE_URL}/blog/${id}/`)
+    const data = await handleResponse(response)
+
+    setCachedData(cacheKey, data)
+    return data
+  },
+
+  getBySlug: async (slug) => {
+    const cacheKey = `blog_post_slug_${slug}`
+    const cached = getCachedData(cacheKey)
+    if (cached) return cached
+
+    const response = await fetch(`${API_BASE_URL}/blog/slug/${slug}/`)
+    const data = await handleResponse(response)
+
+    setCachedData(cacheKey, data)
+    return data
+  },
+}
+
+// Guest API
+export const guestAPI = {
+  getByEvent: async (eventId) => {
+    const cacheKey = `guests_event_${eventId}`
+    const cached = getCachedData(cacheKey)
+    if (cached) return cached
+
+    const response = await authenticatedFetch(`/events/${eventId}/guests/`)
+    const data = await handleResponse(response)
+
+    setCachedData(cacheKey, data)
+    return data
+  },
+
+  create: async (eventId, guestData) => {
+    const response = await authenticatedFetch(`/events/${eventId}/guests/`, {
+      method: "POST",
+      body: JSON.stringify(guestData),
+    })
+
+    const data = await handleResponse(response)
+
+    // Clear cache
+    cache.delete(`guests_event_${eventId}`)
+
+    return data
+  },
+
+  update: async (eventId, guestId, guestData) => {
+    const response = await authenticatedFetch(`/events/${eventId}/guests/${guestId}/`, {
+      method: "PUT",
+      body: JSON.stringify(guestData),
+    })
+
+    const data = await handleResponse(response)
+
+    // Clear cache
+    cache.delete(`guests_event_${eventId}`)
+
+    return data
+  },
+
+  delete: async (eventId, guestId) => {
+    const response = await authenticatedFetch(`/events/${eventId}/guests/${guestId}/`, {
+      method: "DELETE",
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete guest: ${response.status}`)
+    }
+
+    // Clear cache
+    cache.delete(`guests_event_${eventId}`)
+
+    return true
+  },
+}
+
+// Export the authenticatedFetch function for use in other parts of the app
+export { authenticatedFetch }
+
+// Default export for backward compatibility
+export default api

@@ -1,81 +1,65 @@
-"use client";
+"use client"
 
-import { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useEffect } from "react"
+import { useSelector } from "react-redux"
+import { useNavigate, useLocation } from "react-router-dom"
 
-/**
- * Global URL monitor to catch any potential bypasses of vendor restrictions
- * This component runs on every route change to ensure compliance
- */
-export default function SecurityMonitor() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { user, isAuthenticated } = useSelector((state) => state.auth);
-
-  useEffect(() => {
-    // Only monitor if user is authenticated
-    if (!isAuthenticated || !user) return;
-
-    const { pathname, search } = location;
-    const searchParams = new URLSearchParams(search);
-
-    // Define patterns that should be restricted to vendors only
-    const restrictedPatterns = [
-      /\/events.*create=true/,
-      /\/create-event/,
-      /\/event\/create/,
-      /\/new-event/,
-      /\/events.*action=create/,
-      /\/events.*mode=create/,
-    ];
-
-    const currentUrl = pathname + search;
-
-    // Check if current URL matches any restricted pattern
-    const isRestrictedUrl = restrictedPatterns.some((pattern) =>
-      pattern.test(currentUrl)
-    );
-
-    if (isRestrictedUrl && user.role !== "vendor") {
-      console.error(
-        "Security violation detected: Non-vendor attempting to access restricted URL",
-        {
-          userRole: user.role,
-          userId: user.id,
-          email: user.email,
-          restrictedUrl: currentUrl,
-          timestamp: new Date().toISOString(),
-          userAgent: navigator.userAgent,
-          referrer: document.referrer,
-        }
-      );
-
-      // Block access and redirect to homepage
-      navigate("/homepage", { replace: true });
-    }
-  }, [location.pathname, location.search, user, isAuthenticated, navigate]);
-
-  return null; // This component doesn't render anything
-}
-
-// Hook to use in any component that needs to verify vendor access
 export const useVendorCheck = () => {
-  const { user } = useSelector((state) => state.auth);
+  const { user, isAuthenticated } = useSelector((state) => state.auth)
+  const navigate = useNavigate()
 
-  const is_vendor = user?.role === "vendor";
+  // Debug logging to see what we're getting from Redux
+  console.log("useVendorCheck - Debug Info:", {
+    isAuthenticated,
+    user,
+    is_vendor: user?.is_vendor,
+    userType: typeof user?.is_vendor,
+  })
+
+  // Check the is_vendor boolean from the JWT response
+  const is_vendor = isAuthenticated && user?.is_vendor === true
 
   const requireVendor = (action = "perform this action") => {
+    if (!isAuthenticated) {
+      navigate("/sign-in")
+      return false
+    }
+
     if (!is_vendor) {
-      console.warn(`Non-vendor user attempted to ${action}`, {
+      console.warn(`Vendor access required to ${action}`, {
         userRole: user?.role,
+        isVendor: user?.is_vendor,
         userId: user?.id,
         timestamp: new Date().toISOString(),
-      });
-      return false;
+      })
+      return false
     }
-    return true;
-  };
 
-  return { is_vendor, requireVendor };
-};
+    return true
+  }
+
+  return {
+    is_vendor,
+    requireVendor,
+    user,
+    isAuthenticated,
+  }
+}
+
+export default function SecurityMonitor() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { isAuthenticated } = useSelector((state) => state.auth)
+
+  useEffect(() => {
+    // Only redirect if user is not authenticated and trying to access protected routes
+    const protectedPaths = ["/dashboard", "/homepage", "/events", "/guests", "/checkout", "/reviews"]
+    const currentPath = location.pathname
+
+    if (!isAuthenticated && protectedPaths.some((path) => currentPath.startsWith(path))) {
+      navigate("/sign-in")
+    }
+  }, [location.pathname, isAuthenticated, navigate])
+
+  return null
+}

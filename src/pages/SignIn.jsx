@@ -1,123 +1,139 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
-import { authAPI } from "../utils/api"; // Import your API utility
-import { useDispatch } from "react-redux";
-import { loginStart, loginSuccess, loginFailure } from "../redux/slices/authSlice";
-const baseUrl = import.meta.env.VITE_API_URL;
-import { useNavigate } from "react-router-dom";
+import { useState } from "react"
+import { Eye, EyeOff, Mail, Lock } from "lucide-react"
+import { authAPI } from "../utils/api" // Import your API utility
+import { useDispatch } from "react-redux"
+import { loginStart, loginSuccess, loginFailure } from "../redux/slices/authSlice"
+const baseUrl = import.meta.env.VITE_API_URL
+import { useNavigate } from "react-router-dom"
 
 // Make authenticated API calls
 // const response = await authenticatedFetch('/api/user/profile/')
 
 const SignIn = () => {
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
+  const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [errors, setErrors] = useState({})
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     rememberMe: false,
-  });
-
-  
+  })
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors = {}
     if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = "Email is required"
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email is invalid";
+      newErrors.email = "Email is invalid"
     }
     if (!formData.password) {
-      newErrors.password = "Password is required";
+      newErrors.password = "Password is required"
     }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
- const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  if (!validateForm()) return;
-
-  dispatch(loginStart());
-  setErrors({});
-  setIsLoading(true);
-
-  try {
-    const data = await authAPI.login({
-      email: formData.email,
-      password: formData.password,
-    });
-
-    // Save tokens and user info in storage
-    if (formData.rememberMe) {
-      localStorage.setItem("access_token", data.access);
-      localStorage.setItem("refresh_token", data.refresh);
-      localStorage.setItem("user", JSON.stringify(data.user));
-    } else {
-      sessionStorage.setItem("access_token", data.access);
-      sessionStorage.setItem("refresh_token", data.refresh);
-      sessionStorage.setItem("user", JSON.stringify(data.user));
-    }
-
-    // Dispatch loginSuccess with expected payload shape
-    dispatch(
-      loginSuccess({
-        user: data.user,
-        access_token: data.access,
-        refresh_token: data.refresh,
-      })
-    );
-
-    setIsLoading(false);
-
-    navigate("/dashboard"); // Use React Router's Navigate component to redirect
-
-  } catch (error) {
-    dispatch(loginFailure(error.message));
-    setErrors({ general: error.message || "Login failed. Please try again." });
-    setIsLoading(false);
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
-};
 
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    if (!validateForm()) return
+
+    dispatch(loginStart())
+    setErrors({})
+    setIsLoading(true)
+
+    try {
+      const data = await authAPI.login({
+        email: formData.email,
+        password: formData.password,
+      })
+
+      // Save tokens and user info in storage
+      if (formData.rememberMe) {
+        localStorage.setItem("access_token", data.access)
+        localStorage.setItem("refresh_token", data.refresh)
+        localStorage.setItem("user", JSON.stringify(data.user))
+      } else {
+        sessionStorage.setItem("access_token", data.access)
+        sessionStorage.setItem("refresh_token", data.refresh)
+        sessionStorage.setItem("user", JSON.stringify(data.user))
+      }
+
+      // After login, fetch full profile to get complete user data
+      try {
+        const profileData = await authAPI.getProfile()
+
+        // Dispatch loginSuccess with profile data
+        dispatch(
+          loginSuccess({
+            user: profileData,
+            access_token: data.access,
+            refresh_token: data.refresh,
+          }),
+        )
+
+        // Update storage with complete profile data
+        if (formData.rememberMe) {
+          localStorage.setItem("user", JSON.stringify(profileData))
+        } else {
+          sessionStorage.setItem("user", JSON.stringify(profileData))
+        }
+      } catch (profileError) {
+        console.error("Failed to fetch profile:", profileError)
+        // Fallback to login data if profile fetch fails
+        dispatch(
+          loginSuccess({
+            user: data.user,
+            access_token: data.access,
+            refresh_token: data.refresh,
+          }),
+        )
+      }
+
+      setIsLoading(false)
+      navigate("/dashboard") // Use React Router's Navigate component to redirect
+    } catch (error) {
+      dispatch(loginFailure(error.message))
+      setErrors({ general: error.message || "Login failed. Please try again." })
+      setIsLoading(false)
+    }
+  }
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type, checked } = e.target
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
-    }));
+    }))
 
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
         [name]: "",
-      }));
+      }))
     }
-  };
-
+  }
 
   const handleGoogleSignIn = async () => {
     try {
       // Replace with your Google OAuth endpoint
-      window.location.href = "/api/auth/google/";
+      window.location.href = "/api/auth/google/"
     } catch (error) {
-      console.error("Google sign-in error:", error);
-      setErrors({ general: "Google sign-in failed. Please try again." });
+      console.error("Google sign-in error:", error)
+      setErrors({ general: "Google sign-in failed. Please try again." })
     }
-  };
+  }
 
   const handleForgotPassword = (e) => {
-    e.preventDefault();
+    e.preventDefault()
     // Redirect to forgot password page or open modal
-    window.location.href = "/forgot-password";
-  };
+    window.location.href = "/forgot-password"
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-700 via-blue-400 to-white font-['Plus_Jakarta_Sans'] pt-20 pb-56 overflow-hidden">
@@ -125,21 +141,14 @@ const SignIn = () => {
       <div className="relative z-10 max-w-md mx-auto px-4">
         <div className="bg-white rounded-3xl p-10 flex flex-col gap-6 shadow-xl">
           <div className="text-center flex flex-col gap-1.5">
-            <h2 className="text-3xl font-bold text-black">
-              Sign in to your account
-            </h2>
+            <h2 className="text-3xl font-bold text-black">Sign in to your account</h2>
             <p className="text-sm text-neutral-600">
               Or{" "}
-              <a
-                href="/sign-up"
-                className="font-medium text-blue-500 hover:text-blue-600"
-              >
+              <a href="/sign-up" className="font-medium text-blue-500 hover:text-blue-600">
                 create a new account
               </a>
             </p>
           </div>
-
-          
 
           {errors.general && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
@@ -151,10 +160,7 @@ const SignIn = () => {
             <div className="flex flex-col gap-4">
               {/* Email Field */}
               <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="email"
-                  className="text-base font-semibold text-black"
-                >
+                <label htmlFor="email" className="text-base font-semibold text-black">
                   Email address
                 </label>
                 <div className="relative">
@@ -175,17 +181,12 @@ const SignIn = () => {
                     placeholder="Enter your email"
                   />
                 </div>
-                {errors.email && (
-                  <p className="text-red-600 text-sm">{errors.email}</p>
-                )}
+                {errors.email && <p className="text-red-600 text-sm">{errors.email}</p>}
               </div>
 
               {/* Password Field */}
               <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="password"
-                  className="text-base font-semibold text-black"
-                >
+                <label htmlFor="password" className="text-base font-semibold text-black">
                   Password
                 </label>
                 <div className="relative">
@@ -217,9 +218,7 @@ const SignIn = () => {
                     )}
                   </button>
                 </div>
-                {errors.password && (
-                  <p className="text-red-600 text-sm">{errors.password}</p>
-                )}
+                {errors.password && <p className="text-red-600 text-sm">{errors.password}</p>}
               </div>
             </div>
 
@@ -239,11 +238,7 @@ const SignIn = () => {
                 </label>
               </div>
               <div className="text-sm">
-                <a
-                  href="#"
-                  onClick={handleForgotPassword}
-                  className="font-medium text-blue-600 hover:text-blue-500"
-                >
+                <a href="#" onClick={handleForgotPassword} className="font-medium text-blue-600 hover:text-blue-500">
                   Forgot your password?
                 </a>
               </div>
@@ -267,9 +262,7 @@ const SignIn = () => {
                   <div className="w-full border-t border-gray-300" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">
-                    Or continue with
-                  </span>
+                  <span className="px-2 bg-white text-gray-500">Or continue with</span>
                 </div>
               </div>
 
@@ -305,7 +298,7 @@ const SignIn = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default SignIn;
+export default SignIn

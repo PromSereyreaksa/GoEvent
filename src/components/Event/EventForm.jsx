@@ -31,9 +31,9 @@ export function EventForm({
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Basic validation
-    if (!formData.name?.trim()) {
-      alert("Event name is required");
+    // Basic validation - updated to match formData structure
+    if (!formData.title?.trim()) {
+      alert("Event title is required");
       return;
     }
     if (!formData.date) {
@@ -149,15 +149,15 @@ export function EventForm({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Event Name *
+                    Event Title *
                   </label>
                   <input
                     type="text"
-                    name="name"
-                    value={formData.name}
+                    name="title"
+                    value={formData.title}
                     onChange={onInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                    placeholder="Enter event name"
+                    placeholder="Enter event title"
                     required
                   />
                 </div>
@@ -205,7 +205,7 @@ export function EventForm({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Venue
+                    Venue *
                   </label>
                   <input
                     type="text"
@@ -214,6 +214,7 @@ export function EventForm({
                     onChange={onInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                     placeholder="Enter venue address"
+                    required
                   />
                 </div>
               </div>
@@ -227,8 +228,8 @@ export function EventForm({
                     Event Description
                   </label>
                   <textarea
-                    name="details"
-                    value={formData.details}
+                    name="description"
+                    value={formData.description}
                     onChange={onInputChange}
                     rows={6}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-colors"
@@ -274,6 +275,20 @@ export function EventForm({
                     onChange={onInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                     placeholder="https://youtube.com/watch?v=..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Video Message URL
+                  </label>
+                  <input
+                    type="url"
+                    name="videoMessageUrl"
+                    value={formData.videoMessageUrl}
+                    onChange={onInputChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    placeholder="https://..."
                   />
                 </div>
 
