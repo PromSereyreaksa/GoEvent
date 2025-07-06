@@ -1,29 +1,37 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
-import { Provider } from "react-redux"
-import { store } from "./redux/store"
-import Header from "./components/Header"
-import ProtectedRoute from "./components/ProtectedRoute"
-import RoleProtectedRoute from "./components/RoleProtectedRoute"
-import EventManagementWrapper from "./components/EventManagementWrapper"
-import CreateEventProtection from "./components/CreateEventProtection"
-import SecurityMonitor from "./components/SecurityMonitor"
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { Provider } from "react-redux";
+import { store } from "./redux/store";
+import Header from "./components/Header";
+import ProtectedRoute from "./components/ProtectedRoute";
+import RoleProtectedRoute from "./components/RoleProtectedRoute";
+import EventManagementWrapper from "./components/EventManagementWrapper";
+import CreateEventProtection from "./components/CreateEventProtection";
+import SecurityMonitor from "./components/SecurityMonitor";
 
 // redux
 import { useDispatch } from "react-redux";
 import { initializeAuth } from "./redux/slices/authSlice";
 
 // Pages
-import Home from "./pages/Home"
-import Homepage from "./pages/Homepage"
-import SignIn from "./pages/SignIn"
-import SignUp from "./pages/SignUp"
-import About from "./pages/About"
-import PricingSection from "./pages/Pricing"
-import EventManagement from "./pages/EventManagement"
-import Guests from "./components/Guests"
+import Home from "./pages/Home";
+import Homepage from "./pages/Homepage";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
+import About from "./pages/About";
+import PricingSection from "./pages/Pricing";
+import EventManagement from "./pages/EventManagement";
+import EventCreate from "./pages/EventCreate";
+import EventView from "./pages/EventView";
+import EventEdit from "./pages/EventEdit";
+import Guests from "./components/Guests";
 
 // effect
-import { useEffect } from "react"
+import { useEffect } from "react";
 
 function App() {
   const dispatch = useDispatch();
@@ -87,17 +95,30 @@ function App() {
               }
             />
             <Route
-              path="/events/:id"
+              path="/events/create"
               element={
                 <ProtectedRoute>
                   <CreateEventProtection>
                     <EventManagementWrapper>
-                      <EventManagement />
+                      <EventCreate />
                     </EventManagementWrapper>
                   </CreateEventProtection>
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/events/:id"
+              element={
+                <ProtectedRoute>
+                  <CreateEventProtection>
+                    <EventManagementWrapper>
+                      <EventView />
+                    </EventManagementWrapper>
+                  </CreateEventProtection>
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/events/:id/edit" element={<EventEdit />} />
 
             {/* Guests Route - Dedicated guest management page */}
             <Route
@@ -113,7 +134,10 @@ function App() {
             <Route
               path="/create-event"
               element={
-                <RoleProtectedRoute requiredRole="vendor" fallbackRoute="/homepage">
+                <RoleProtectedRoute
+                  requiredRole="vendor"
+                  fallbackRoute="/homepage"
+                >
                   <Navigate to="/events?create=true" replace />
                 </RoleProtectedRoute>
               }
@@ -121,7 +145,10 @@ function App() {
             <Route
               path="/event/create"
               element={
-                <RoleProtectedRoute requiredRole="vendor" fallbackRoute="/homepage">
+                <RoleProtectedRoute
+                  requiredRole="vendor"
+                  fallbackRoute="/homepage"
+                >
                   <Navigate to="/events?create=true" replace />
                 </RoleProtectedRoute>
               }
@@ -129,7 +156,10 @@ function App() {
             <Route
               path="/new-event"
               element={
-                <RoleProtectedRoute requiredRole="vendor" fallbackRoute="/homepage">
+                <RoleProtectedRoute
+                  requiredRole="vendor"
+                  fallbackRoute="/homepage"
+                >
                   <Navigate to="/events?create=true" replace />
                 </RoleProtectedRoute>
               }
@@ -141,7 +171,7 @@ function App() {
         </div>
       </Router>
     </Provider>
-  )
+  );
 }
 
-export default App
+export default App;
