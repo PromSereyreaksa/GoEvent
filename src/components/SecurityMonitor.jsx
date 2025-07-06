@@ -63,10 +63,10 @@ export default function SecurityMonitor() {
 export const useVendorCheck = () => {
   const { user } = useSelector((state) => state.auth);
 
-  const isVendor = user?.role === "vendor";
+  const is_vendor = user?.role === "vendor";
 
   const requireVendor = (action = "perform this action") => {
-    if (!isVendor) {
+    if (!is_vendor) {
       console.warn(`Non-vendor user attempted to ${action}`, {
         userRole: user?.role,
         userId: user?.id,
@@ -77,5 +77,5 @@ export const useVendorCheck = () => {
     return true;
   };
 
-  return { isVendor, requireVendor };
+  return { is_vendor, requireVendor };
 };

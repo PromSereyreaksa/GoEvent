@@ -31,7 +31,7 @@ export default function AppSidebar({
   const location = useLocation();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const { isVendor, requireVendor } = useVendorCheck();
+  const { is_vendor, requireVendor } = useVendorCheck();
 
   // Use prop-based collapsed state if provided (for EventManagement), otherwise use local state (for Homepage)
   const [localIsCollapsed, setLocalIsCollapsed] = useState(false);

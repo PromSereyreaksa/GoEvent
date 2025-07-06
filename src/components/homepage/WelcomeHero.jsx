@@ -8,7 +8,7 @@ import { useVendorCheck } from "../SecurityMonitor";
 export default function WelcomeHero({ user }) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate();
-  const { isVendor, requireVendor } = useVendorCheck();
+  const { is_vendor, requireVendor } = useVendorCheck();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -33,7 +33,7 @@ export default function WelcomeHero({ user }) {
 
   const quickActions = [
     // Add Create Event as first action for vendors
-    ...(isVendor
+    ...(is_vendor
       ? [
           {
             icon: Plus,

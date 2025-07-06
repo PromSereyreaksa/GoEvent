@@ -53,7 +53,7 @@ const [user, setUser] = useState(null);
 
   const navigate = useNavigate();
 
-  const { isVendor, requireVendor } = useVendorCheck();
+  const { is_vendor, requireVendor } = useVendorCheck();
   const [searchQuery, setSearchQuery] = useState("");
   const [isVisible, setIsVisible] = useState({});
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -100,7 +100,7 @@ const [user, setUser] = useState(null);
 
   // Floating button visibility observer for vendors
   useEffect(() => {
-    if (!isVendor) return;
+    if (!is_vendor) return;
 
     const createButtonObserver = new IntersectionObserver(
       (entries) => {
@@ -138,7 +138,7 @@ const [user, setUser] = useState(null);
       clearTimeout(timer);
       createButtonObserver.disconnect();
     };
-  }, [isVendor]);
+  }, [is_vendor]);
 
   // Mock data for dashboard
   const quickStats = [
@@ -178,7 +178,7 @@ const [user, setUser] = useState(null);
 
   const navigationCards = [
     // Add Create Event card for vendors as first priority
-    ...(isVendor
+    ...(is_vendor
       ? [
           {
             title: "Create New Event",
@@ -389,7 +389,7 @@ const [user, setUser] = useState(null);
         {/* Smart Floating Action Button for Vendors */}
         <div
           className={`fixed bottom-6 right-6 z-50 transition-all duration-300 ${
-            isVendor && showFloatingButton
+            is_vendor && showFloatingButton
               ? "opacity-100 translate-y-0 scale-100"
               : "opacity-0 translate-y-8 scale-75 pointer-events-none"
           }`}

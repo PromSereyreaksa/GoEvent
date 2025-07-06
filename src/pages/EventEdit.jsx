@@ -16,10 +16,10 @@ export default function EventEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
-  const { isVendor } = useVendorCheck();
+  const { is_vendor } = useVendorCheck();
 
   // Redirect non-vendors immediately
-  if (!isVendor) {
+  if (!is_vendor) {
     navigate("/events", { replace: true });
     return null;
   }
