@@ -452,12 +452,12 @@ export const pricingAPI = {
 
 // Team API
 export const teamAPI = {
-  getAll: async () => {
+  getMembers: async () => {
     const cacheKey = "team_members"
     const cached = getCachedData(cacheKey)
     if (cached) return cached
 
-    const response = await authenticatedFetch("/team/")
+    const response = await authenticatedFetch("/site_setting/team-members/")
     const data = await handleResponse(response)
 
     setCachedData(cacheKey, data)
