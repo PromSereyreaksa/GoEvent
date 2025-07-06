@@ -45,25 +45,27 @@ export default function EventManagement() {
     eventsCount: events.length,
   });
 
-  // Fetch events from API
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await eventAPI.getEvents();
-        setEvents(data);
-      } catch (err) {
-        console.error("Error fetching events:", err);
-        setError(err.message);
-        setEvents(sampleEvents);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchEvents = async () => {
+  try {
+    setLoading(true);
+    setError(null);
+    const data = await eventAPI.getEvents();
+    setEvents(data);
+  } catch (err) {
+    console.error("🔴 Error fetching events:", err);
 
-    // fetchEvents();
-  }, []);
+    // Check if it's unauthorized
+    if (err.message.includes("401") || err.message.includes("Unauthorized")) {
+      console.warn("👮 You were logged out due to unauthorized access");
+    }
+
+    setError(err.message);
+    setEvents(sampleEvents);
+  } finally {
+    setLoading(false);
+  } fetchEvents();
+};
+
 
   // Add scroll animation effect
   useEffect(() => {

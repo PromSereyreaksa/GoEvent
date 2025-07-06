@@ -10,46 +10,53 @@ const api = axios.create({
   timeout: 10000,
 });
 
-// Request interceptor to add auth token
+// Request interceptor to attach token
 api.interceptors.request.use(
   (config) => {
-    // Get token from localStorage
     const token = localStorage.getItem("token");
-
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor to handle errors
+// Response interceptor to handle auth errors more gracefully
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     const { response } = error;
 
-    if (response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem("token");
-      // Redirect to sign-in page if it exists
-      if (window.location.pathname !== "/sign-in") {
-        window.location.href = "/sign-in";
-      }
-    }
-
-    // Handle network errors
+    // Network error
     if (!response) {
       error.message = "Network error. Please check your connection.";
+      return Promise.reject(error);
+    }
+
+    // If token is invalid (unauthenticated)
+    if (
+      response.status === 401 &&
+      response.config &&
+      !response.config.__isRetryRequest
+    ) {
+      // Check if the request was to an auth-critical route
+      const authCriticalRoutes = ["/auth/me", "/auth/refresh"];
+
+      const isAuthCritical = authCriticalRoutes.some((path) =>
+        response.config.url.includes(path)
+      );
+
+      if (isAuthCritical) {
+        localStorage.removeItem("token");
+        window.location.href = "/sign-in";
+      }
     }
 
     return Promise.reject(error);
   }
 );
+
 
 // API service functions
 export const pricingAPI = {
