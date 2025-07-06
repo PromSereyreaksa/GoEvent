@@ -425,12 +425,12 @@ export const eventAPI = {
 
 // Pricing API
 export const pricingAPI = {
-  getAll: async () => {
+  getPlans: async () => {
     const cacheKey = "pricing_plans"
     const cached = getCachedData(cacheKey)
     if (cached) return cached
 
-    const response = await fetch(`${API_BASE_URL}/pricing/`)
+    const response = await fetch(`${API_BASE_URL}/site_setting/pricing-plans/`)
     const data = await handleResponse(response)
 
     setCachedData(cacheKey, data)
