@@ -14,24 +14,49 @@ export default function EventView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+   // Hide header when component mounts
+  useEffect(() => {
+    const header = document.querySelector("header");
+    if (header) {
+      header.style.display = "none";
+    }
+
+    return () => {
+      if (header) {
+        header.style.display = "block";
+      }
+    };
+  }, []);
+
   useEffect(() => {
     const fetchEvent = async () => {
       try {
         setLoading(true);
         setError(null);
 
+        // Add debugging
+        console.log("Fetching event with ID:", id);
+        console.log("Sample events:", sampleEvents);
+
         // Try to find in sample events first
-        const sampleEvent = sampleEvents.find((e) => e.id === parseInt(id));
+        const sampleEvent = sampleEvents.find((e) => {
+          // Handle both string and number IDs
+          return e.id === parseInt(id) || e.id === id || e.id.toString() === id;
+        });
+        
         if (sampleEvent) {
+          console.log("Found sample event:", sampleEvent);
           setEvent(sampleEvent);
         } else {
+          console.log("Event not found in samples, trying API...");
           // If not found in samples, try API
           const data = await eventAPI.getEvent(id);
+          console.log("API returned:", data);
           setEvent(data);
         }
       } catch (err) {
         console.error("Error fetching event:", err);
-        setError(err.message);
+        setError(err.message || "Failed to fetch event");
       } finally {
         setLoading(false);
       }
@@ -39,6 +64,10 @@ export default function EventView() {
 
     if (id) {
       fetchEvent();
+    } else {
+      console.error("No ID provided");
+      setError("No event ID provided");
+      setLoading(false);
     }
   }, [id]);
 
@@ -82,6 +111,9 @@ export default function EventView() {
           <p className="text-gray-600 mb-6">
             {error || "The event you're looking for doesn't exist."}
           </p>
+          <p className="text-sm text-gray-500 mb-6">
+            Event ID: {id}
+          </p>
           <button
             onClick={handleBack}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
@@ -93,15 +125,27 @@ export default function EventView() {
     );
   }
 
+  // Add debugging for successful render
+  console.log("Rendering EventInformation with event:", event);
+
   return (
-    <div className="min-h-screen bg-white font-['Plus_Jakarta_Sans'] overflow-hidden smooth-scroll">
+    <div className="min-h-screen bg-white font-['Plus_Jakarta_Sans']">
       <style>{animationStyles}</style>
-      <EventInformation
-        event={event}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onBack={handleBack}
-      />
+      
+      {/* Add fallback rendering if EventInformation component fails */}
+      {event ? (
+        <EventInformation
+          event={event}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onBack={handleBack}
+        />
+      ) : (
+        <div className="p-8">
+          <h1 className="text-2xl font-bold mb-4">Event Details</h1>
+          <p>No event data available</p>
+        </div>
+      )}
     </div>
   );
 }

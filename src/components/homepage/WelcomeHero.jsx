@@ -27,7 +27,7 @@ export default function WelcomeHero({ user }) {
 
   const handleCreateEvent = () => {
     if (requireVendor("create events")) {
-      navigate("/events?create=true");
+      navigate("/events/create");
     }
   };
 
