@@ -457,7 +457,7 @@ export const teamAPI = {
     const cached = getCachedData(cacheKey)
     if (cached) return cached
 
-    const response = await authenticatedFetch("/site_setting/team-members/")
+    const response = await fetch(`${API_BASE_URL}/site_setting/team-members/`)
     const data = await handleResponse(response)
 
     setCachedData(cacheKey, data)
@@ -469,7 +469,7 @@ export const teamAPI = {
     const cached = getCachedData(cacheKey)
     if (cached) return cached
 
-    const response = await authenticatedFetch(`/team/${id}/`)
+    const response = await fetch(`${API_BASE_URL}/site_setting/team-members/${id}/`)
     const data = await handleResponse(response)
 
     setCachedData(cacheKey, data)
