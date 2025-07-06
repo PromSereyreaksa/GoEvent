@@ -140,6 +140,12 @@ export default function EventEdit() {
   const handleFileUpload = (e, fieldName) => {
     const file = e.target.files[0]
     if (file) {
+      // Add file size check (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size too large. Please choose a smaller image (max 5MB).')
+        return
+      }
+      
       const reader = new FileReader()
       reader.onload = (event) => {
         setFormData((prev) => ({
@@ -151,12 +157,140 @@ export default function EventEdit() {
     }
   }
 
+  // Validation function with detailed debugging
+  const validateForm = () => {
+    console.log('Current formData:', formData)
+    console.log('Title value:', formData.title)
+    console.log('Title type:', typeof formData.title)
+    console.log('Title length:', formData.title?.length)
+    
+    const requiredFields = ['title', 'date', 'venue', 'eventType']
+    const missingFields = requiredFields.filter(field => {
+      const value = formData[field]
+      const isEmpty = !value || value.toString().trim() === ''
+      console.log(`Field ${field}:`, value, 'isEmpty:', isEmpty)
+      return isEmpty
+    })
+    
+    if (missingFields.length > 0) {
+      console.error('Missing required fields:', missingFields)
+      console.error('Full form data:', JSON.stringify(formData, null, 2))
+      alert(`Please fill in the following required fields: ${missingFields.join(', ')}`)
+      return false
+    }
+    
+    // Validate date format
+    if (formData.date && !isValidDate(formData.date)) {
+      alert('Please enter a valid date')
+      return false
+    }
+
+    // Validate time format if provided
+    if (formData.startTime && !isValidTime(formData.startTime)) {
+      alert('Please enter a valid start time')
+      return false
+    }
+
+    if (formData.endTime && !isValidTime(formData.endTime)) {
+      alert('Please enter a valid end time')
+      return false
+    }
+    
+    return true
+  }
+
+  const isValidDate = (dateString) => {
+    const date = new Date(dateString)
+    return date instanceof Date && !isNaN(date)
+  }
+
+  const isValidTime = (timeString) => {
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
+    return timeRegex.test(timeString)
+  }
+
+  // Clean up form data before sending - match Django model structure
+  const cleanFormData = (data) => {
+    // Clean up agenda data
+    const cleanedAgenda = data.agenda
+      .filter(day => day.date && day.title)
+      .map(day => ({
+        date: day.date,
+        agenda_details: day.activities
+          .filter(activity => activity.time && activity.activity)
+          .map((activity, index) => ({
+            language: 'en',
+            agenda_detail: activity.activity,
+            time_text: activity.time,
+            order: index + 1
+          }))
+      }))
+
+    // Clean up hosts data
+    const cleanedHosts = data.hosts
+      .filter(host => host.name)
+      .map(host => ({
+        host_names: [{
+          language: 'en',
+          host_name: host.name,
+          parent_a_name: host.parentNames[0] || '',
+          parent_b_name: host.parentNames[1] || ''
+        }]
+      }))
+
+    // Clean up sponsors data
+    const cleanedSponsors = data.sponsors
+      .filter(sponsor => sponsor && sponsor.name)
+      .map(sponsor => ({
+        name: sponsor.name,
+        logo: sponsor.logo || null
+      }))
+
+    return {
+      title: data.title,
+      description: data.description || '',
+      date: data.date || null,
+      start_time: data.startTime || null,
+      end_time: data.endTime || null,
+      venue_name: data.venue || '',
+      category: data.eventType === 'other' ? data.customEventType : data.eventType,
+      google_map_embed_link: data.googleMapLink || '',
+      youtube_embed_link: data.youtubeUrl || '',
+      video_message_embed_link: data.videoMessageUrl || '',
+      event_banner: data.image || null,
+      agenda: cleanedAgenda,
+      hosts: cleanedHosts,
+      sponsors: cleanedSponsors
+    }
+  }
+
   const handleSave = async () => {
     try {
-      await dispatch(updateEvent({ id: Number.parseInt(id), eventData: formData })).unwrap()
+      console.log("Raw form data:", formData)
+      
+      // Validate form
+      if (!validateForm()) {
+        return
+      }
+      
+      // Clean and format data
+      const cleanedData = cleanFormData(formData)
+      console.log("Cleaned data being sent:", cleanedData)
+      
+      await dispatch(updateEvent({ id: Number.parseInt(id), eventData: cleanedData })).unwrap()
       navigate("/events", { replace: true })
     } catch (err) {
       console.error("Error updating event:", err)
+      console.error("Error response:", err.response?.data)
+      
+      // Show more specific error message
+      if (err.response?.data?.message) {
+        alert(`Error: ${err.response.data.message}`)
+      } else if (err.message) {
+        alert(`Error: ${err.message}`)
+      } else {
+        alert('An error occurred while updating the event. Please try again.')
+      }
     }
   }
 
