@@ -3,6 +3,8 @@ import authReducer, { initializeAuth } from "./slices/authSlice"
 import eventReducer from "./slices/eventSlice"
 import guestReducer from "./slices/guestSlice"
 import userReducer from "./slices/userSlice"
+import teamReducer from "./slices/teamSlice"
+import notificationsReducer from "./slices/notificationsSlice"
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +12,8 @@ export const store = configureStore({
     events: eventReducer,
     guests: guestReducer,
     users: userReducer,
+    team: teamReducer,
+    notifications: notificationsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

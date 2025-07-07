@@ -5,10 +5,9 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useSelector, useDispatch } from "react-redux"
 import { Menu, AlertCircle } from "lucide-react"
 import AppSidebar from "../components/homepage/AppSidebar"
-import { NotificationsDropdown } from "../components/Event/NotificationsDropdown"
+import NotificationsDropdown from "../components/homepage/NotificationsDropdown"
 import { EventForm } from "../components/Event/EventForm"
 import { fetchEventById, updateEvent, clearError, clearCurrentEvent } from "../redux/slices/eventSlice"
-import { notifications } from "../components/Event/data"
 import { animationStyles } from "../components/Event/animations"
 
 export default function EventEdit() {
@@ -295,7 +294,12 @@ export default function EventEdit() {
   }
 
   const handleCancel = () => {
-    navigate("/events", { replace: true })
+    // Go back to the previous page if possible, otherwise fallback to events list
+    if (window.history.length > 2) {
+      window.history.back();
+    } else {
+      navigate("/events", { replace: true });
+    }
   }
 
   const handleClearError = () => {
@@ -458,7 +462,14 @@ export default function EventEdit() {
           <p className="text-gray-600 mb-6">{error}</p>
           <div className="flex gap-3 justify-center">
             <button
-              onClick={() => navigate("/events")}
+              onClick={() => {
+                // Go back to the previous page if possible, otherwise fallback to events list
+                if (window.history.length > 2) {
+                  window.history.back();
+                } else {
+                  navigate("/events");
+                }
+              }}
               className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
             >
               Back to Events
@@ -509,16 +520,16 @@ export default function EventEdit() {
             </div>
 
             <div className="flex items-center gap-3">
-              <NotificationsDropdown notifications={notifications} />
+              <NotificationsDropdown />
               <div className="text-sm text-gray-500">{loading ? "Saving..." : ""}</div>
             </div>
           </div>
         </div>
 
         {/* Page Content */}
-        <div className="px-4 sm:px-6 lg:px-8 py-8">
+        <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-8">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl">
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl max-w-7xl mx-auto">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center">

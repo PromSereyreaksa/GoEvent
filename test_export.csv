@@ -1,0 +1,4 @@
+ID,Title,Description,Date,Time,Location,Category,Status
+1,"Sample Event","A test event for import functionality","2024-01-15","14:00","Conference Room A","conference","confirmed"
+2,"Team Meeting","Weekly team sync","2024-01-20","10:00","Office","corporate","pending"
+3,"Birthday Party","John's birthday celebration","2024-01-25","18:00","Community Hall","birthday","confirmed"

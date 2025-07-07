@@ -112,7 +112,7 @@ export default function AppSidebar({
 
       {/* Sidebar */}
       <div
-        className={`fixed left-0 top-0 h-full bg-gradient-to-b from-blue-700 via-blue-500 to-white border-r border-blue-200 z-50 transition-all duration-300 ${
+        className={`fixed font-['Plus_Jakarta_Sans'] left-0 top-0 h-full bg-gradient-to-b from-blue-700 via-blue-500 to-white border-r border-blue-200 z-50 transition-all duration-300 ${
           isCollapsed ? "w-16" : "w-64"
         } ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
       >

@@ -62,6 +62,54 @@ const [user, setUser] = useState(null);
   const welcomeHeroRef = useRef();
   const navigationSectionRef = useRef();
 
+  // Global search functionality
+  const handleSearch = (e) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      performSearch(searchQuery.trim());
+    }
+  };
+
+  const performSearch = (query) => {
+    const lowercaseQuery = query.toLowerCase();
+    
+    // Search in events
+    const matchingEvents = events.filter(event =>
+      event.title?.toLowerCase().includes(lowercaseQuery) ||
+      event.description?.toLowerCase().includes(lowercaseQuery) ||
+      event.venue_name?.toLowerCase().includes(lowercaseQuery) ||
+      event.category?.toLowerCase().includes(lowercaseQuery)
+    );
+
+    // Search in guests
+    const matchingGuests = guests.filter(guest =>
+      guest.name?.toLowerCase().includes(lowercaseQuery) ||
+      guest.email?.toLowerCase().includes(lowercaseQuery)
+    );
+
+    // Navigation logic based on search results
+    if (matchingEvents.length > 0) {
+      // If we found events, navigate to events page with search applied
+      navigate(`/events?search=${encodeURIComponent(query)}`);
+    } else if (matchingGuests.length > 0) {
+      // If we found guests, navigate to guests page with search applied
+      navigate(`/guests?search=${encodeURIComponent(query)}`);
+    } else if (lowercaseQuery.includes('setting')) {
+      navigate('/settings');
+    } else if (lowercaseQuery.includes('team') || lowercaseQuery.includes('collaborat')) {
+      navigate('/team');
+    } else if (lowercaseQuery.includes('calendar')) {
+      navigate('/calendar');
+    } else if (lowercaseQuery.includes('pricing')) {
+      navigate('/pricing');
+    } else {
+      // No results found - show alert or navigate to search results page
+      alert(`No results found for "${query}". Try searching for events, guests, or page names.`);
+    }
+    
+    // Clear search after performing search
+    setSearchQuery('');
+  };
+
   // Hide header when component mounts
   useEffect(() => {
     const header = document.querySelector("header");
@@ -140,37 +188,58 @@ const [user, setUser] = useState(null);
     };
   }, [is_vendor]);
 
-  // Mock data for dashboard
+  // Get dynamic data from Redux store
+  const { events = [] } = useSelector((state) => state.events || {});
+  const { guests = [] } = useSelector((state) => state.guests || {});
+
+  // Calculate dynamic stats
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  
+  const eventsThisMonth = events.filter(event => {
+    if (!event.date) return false;
+    const eventDate = new Date(event.date);
+    return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear;
+  }).length;
+
+  const confirmedGuests = guests.filter(guest => guest.status === 'confirmed').length;
+  const activeEvents = events.filter(event => {
+    if (!event.date) return false;
+    const eventDate = new Date(event.date);
+    return eventDate >= new Date();
+  }).length;
+
+  // Dynamic dashboard data
   const quickStats = [
     {
       title: "Total Events",
-      value: "24",
-      change: "+12%",
+      value: events.length.toString(),
+      change: events.length > 0 ? `+${Math.round((events.length / 10) * 100)}%` : "0%",
       trend: "up",
       icon: Calendar,
       color: "blue",
     },
     {
       title: "Active Guests",
-      value: "1,247",
-      change: "+8%",
+      value: guests.length.toString(),
+      change: confirmedGuests > 0 ? `${Math.round((confirmedGuests / guests.length) * 100)}% confirmed` : "0%",
       trend: "up",
       icon: Users,
       color: "blue",
     },
     {
       title: "This Month",
-      value: "8",
-      change: "+3",
-      trend: "up",
+      value: eventsThisMonth.toString(),
+      change: eventsThisMonth > 0 ? `${eventsThisMonth} scheduled` : "None scheduled",
+      trend: eventsThisMonth > 0 ? "up" : "neutral",
       icon: TrendingUp,
       color: "blue",
     },
     {
-      title: "Revenue",
-      value: "$12,450",
-      change: "+15%",
-      trend: "up",
+      title: "Active Events",
+      value: activeEvents.toString(),
+      change: activeEvents > 0 ? `${activeEvents} upcoming` : "None upcoming",
+      trend: activeEvents > 0 ? "up" : "neutral",
       icon: BarChart3,
       color: "blue",
     },
@@ -197,7 +266,7 @@ const [user, setUser] = useState(null);
       icon: Calendar,
       href: "/events",
       color: "blue",
-      stats: "24 active events",
+      stats: `${events.length} total events`,
     },
     {
       title: "Guest Management",
@@ -205,7 +274,7 @@ const [user, setUser] = useState(null);
       icon: Users,
       href: "/guests",
       color: "blue",
-      stats: "1,247 total guests",
+      stats: `${guests.length} total guests`,
     },
     {
       title: "Calendar View",
@@ -241,44 +310,61 @@ const [user, setUser] = useState(null);
     },
   ];
 
-  const recentActivities = [
-    {
-      id: 1,
-      type: "event_created",
-      title: "New event created",
-      description: "Summer Music Festival 2024",
-      time: "2 hours ago",
-      icon: Calendar,
-      color: "blue",
-    },
-    {
-      id: 2,
-      type: "guest_registered",
-      title: "New guest registered",
-      description: "John Doe registered for Tech Conference",
-      time: "4 hours ago",
-      icon: Users,
-      color: "blue",
-    },
-    {
-      id: 3,
-      type: "event_updated",
-      title: "Event updated",
-      description: "Wedding Reception venue changed",
-      time: "1 day ago",
-      icon: MapPin,
-      color: "blue",
-    },
-    {
-      id: 4,
-      type: "team_invite",
-      title: "Team member invited",
-      description: "Sarah Johnson invited to Marketing Team",
-      time: "2 days ago",
-      icon: Activity,
-      color: "blue",
-    },
-  ];
+  // Generate dynamic recent activities based on actual data
+  const generateRecentActivities = () => {
+    const activities = [];
+    
+    // Add recent events (last 5)
+    const recentEvents = [...events]
+      .sort((a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date))
+      .slice(0, 3);
+    
+    recentEvents.forEach((event, index) => {
+      activities.push({
+        id: `event_${event.id}`,
+        type: "event_created",
+        title: "Event created",
+        description: event.title || `Event ${event.id}`,
+        time: event.created_at ? new Date(event.created_at).toLocaleDateString() : "Recently",
+        icon: Calendar,
+        color: "blue",
+      });
+    });
+
+    // Add recent guest activities
+    const recentGuests = [...guests]
+      .sort((a, b) => new Date(b.invitedAt || b.updatedAt) - new Date(a.invitedAt || a.updatedAt))
+      .slice(0, 2);
+
+    recentGuests.forEach((guest) => {
+      activities.push({
+        id: `guest_${guest.id}`,
+        type: "guest_invited",
+        title: "Guest invited",
+        description: `${guest.name} invited`,
+        time: guest.invitedAt ? new Date(guest.invitedAt).toLocaleDateString() : "Recently",
+        icon: Users,
+        color: "blue",
+      });
+    });
+
+    // If no activities, show placeholder
+    if (activities.length === 0) {
+      activities.push({
+        id: "welcome",
+        type: "welcome",
+        title: "Welcome to GoEvent!",
+        description: "Start by creating your first event",
+        time: "Now",
+        icon: Calendar,
+        color: "blue",
+      });
+    }
+
+    return activities.slice(0, 4); // Limit to 4 activities
+  };
+
+  const recentActivities = generateRecentActivities();
 
   return (
     <SidebarProvider>
@@ -308,8 +394,18 @@ const [user, setUser] = useState(null);
                     placeholder="Search events, guests, or settings..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleSearch}
                     className="pl-10 pr-4 py-2 w-full bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   />
+                  {searchQuery && (
+                    <button
+                      onClick={() => performSearch(searchQuery)}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-blue-600 hover:text-blue-800"
+                      title="Search"
+                    >
+                      <Search className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
 

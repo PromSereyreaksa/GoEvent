@@ -12,25 +12,26 @@ export default function EventManagementWrapper({ children }) {
     (state) => state.auth
   );
 
-  // Immediate check - no useEffect delay
-  if (isAuthenticated && initialized && user) {
-    const searchParams = new URLSearchParams(location.search);
-    const isCreateMode = searchParams.get("create") === "true";
+  // Check vendor privileges with useEffect to avoid immediate redirects during render
+  useEffect(() => {
+    if (isAuthenticated && initialized && user) {
+      const searchParams = new URLSearchParams(location.search);
+      const isCreateMode = searchParams.get("create") === "true";
 
-    // If user is trying to access create mode without vendor privileges
-    if (isCreateMode && user.role !== "vendor") {
-      console.warn("Non-vendor user attempted to access create mode via URL", {
-        userRole: user.role,
-        userId: user.id,
-        timestamp: new Date().toISOString(),
-        path: location.pathname + location.search,
-      });
+      // If user is trying to access create mode without vendor privileges
+      if (isCreateMode && user.role !== "vendor") {
+        console.warn("Non-vendor user attempted to access create mode via URL", {
+          userRole: user.role,
+          userId: user.id,
+          timestamp: new Date().toISOString(),
+          path: location.pathname + location.search,
+        });
 
-      // Immediate redirect to homepage
-      navigate("/homepage", { replace: true });
-      return null; // Don't render anything while redirecting
+        // Redirect to homepage
+        navigate("/homepage", { replace: true });
+      }
     }
-  }
+  }, [isAuthenticated, initialized, user, location.search, location.pathname, navigate]);
 
   return children;
 }

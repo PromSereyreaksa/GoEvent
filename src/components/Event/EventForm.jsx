@@ -28,6 +28,58 @@ export function EventForm({
 }) {
   const [activeTab, setActiveTab] = useState("basic");
 
+  // Get dynamic fields based on event type
+  const getFieldsForEventType = (eventType) => {
+    const baseFields = ["basic", "details"];
+    
+    switch (eventType) {
+      case "wedding":
+        return [...baseFields, "agenda", "hosts"];
+      case "conference":
+        return [...baseFields, "agenda", "speakers"];
+      case "corporate":
+        return [...baseFields, "agenda"];
+      case "birthday":
+        return [...baseFields, "hosts"];
+      default:
+        return [...baseFields];
+    }
+  };
+
+  const availableTabs = getFieldsForEventType(formData.eventType);
+
+  // Get label for hosts based on event type
+  const getHostLabel = (eventType) => {
+    switch (eventType) {
+      case "wedding":
+        return "Hosts (Bride & Groom)";
+      case "conference":
+        return "Speakers";
+      case "corporate":
+        return "Organizers";
+      case "birthday":
+        return "Celebrant";
+      default:
+        return "Hosts";
+    }
+  };
+
+  // Get parent names label based on event type
+  const getParentLabel = (eventType) => {
+    switch (eventType) {
+      case "wedding":
+        return "Parent Names";
+      case "conference":
+        return "Speaker Bio/Title";
+      case "corporate":
+        return "Contact Information";
+      case "birthday":
+        return "Guardian/Parent Names";
+      default:
+        return "Additional Info";
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
@@ -49,16 +101,16 @@ export function EventForm({
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <form onSubmit={handleSubmit} className="space-y-8">
+    <div className="w-full">
+      <form onSubmit={handleSubmit} className="space-y-8 max-w-7xl mx-auto">
         {/* Form Header */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <h2 className="text-3xl font-bold text-gray-900 mb-3">
                 {isEdit ? "Edit Event" : "Create New Event"}
               </h2>
-              <p className="text-gray-600">
+              <p className="text-lg text-gray-600">
                 {isEdit ? "Update your event details" : "Fill in the details to create your event"}
               </p>
             </div>
@@ -87,31 +139,31 @@ export function EventForm({
         {/* Form Tabs */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
           <div className="border-b border-gray-200">
-            <nav className="flex space-x-8 px-6">
-              {["basic", "details", "agenda", "hosts"].map((tab) => (
+            <nav className="flex space-x-8 px-8">
+              {availableTabs.map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setActiveTab(tab)}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm capitalize transition-colors ${
+                  className={`py-6 px-1 border-b-2 font-medium text-sm capitalize transition-colors ${
                     activeTab === tab
                       ? "border-blue-500 text-blue-600"
                       : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
                 >
-                  {tab}
+                  {tab === "speakers" ? "Speakers" : tab}
                 </button>
               ))}
             </nav>
           </div>
 
-          <div className="p-6">
+          <div className="p-8">
             {/* Basic Information Tab */}
             {activeTab === "basic" && (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Event Type *
+                    Event Type <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="eventType"
@@ -133,7 +185,7 @@ export function EventForm({
                 {formData.eventType === "other" && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Custom Event Type *
+                      Custom Event Type <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -149,7 +201,7 @@ export function EventForm({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Event Title *
+                    Event Title <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -164,7 +216,7 @@ export function EventForm({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Event Date *
+                    Event Date <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"
@@ -176,10 +228,10 @@ export function EventForm({
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Start Time
+                      Start Time <span className="text-gray-400">(Optional)</span>
                     </label>
                     <input
                       type="time"
@@ -191,7 +243,7 @@ export function EventForm({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      End Time
+                      End Time <span className="text-gray-400">(Optional)</span>
                     </label>
                     <input
                       type="time"
@@ -205,7 +257,7 @@ export function EventForm({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Venue *
+                    Venue <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -222,10 +274,10 @@ export function EventForm({
 
             {/* Details Tab */}
             {activeTab === "details" && (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Event Description
+                    Event Description <span className="text-gray-400">(Optional)</span>
                   </label>
                   <textarea
                     name="description"
@@ -239,7 +291,7 @@ export function EventForm({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Event Image
+                    Event Image <span className="text-gray-400">(Optional)</span>
                   </label>
                   <div className="space-y-4">
                     <input
@@ -309,17 +361,22 @@ export function EventForm({
             )}
 
             {/* Agenda Tab */}
-            {activeTab === "agenda" && (
-              <div className="space-y-6">
+            {activeTab === "agenda" && availableTabs.includes("agenda") && (
+              <div className="space-y-8">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">Event Agenda</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {formData.eventType === "conference" ? "Conference Schedule" :
+                     formData.eventType === "wedding" ? "Wedding Timeline" :
+                     formData.eventType === "corporate" ? "Meeting Agenda" : "Event Agenda"}
+                    <span className="text-gray-400 text-sm font-normal ml-2">(Optional)</span>
+                  </h3>
                   <button
                     type="button"
                     onClick={addAgendaDay}
                     className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
-                    Add Day
+                    {formData.eventType === "conference" ? "Add Session" : "Add Day"}
                   </button>
                 </div>
 
@@ -408,25 +465,32 @@ export function EventForm({
               </div>
             )}
 
-            {/* Hosts Tab */}
-            {activeTab === "hosts" && (
-              <div className="space-y-6">
+            {/* Hosts/Speakers Tab */}
+            {(activeTab === "hosts" || activeTab === "speakers") && (
+              <div className="space-y-8">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">Event Hosts</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {getHostLabel(formData.eventType)}
+                    <span className="text-gray-400 text-sm font-normal ml-2">(Optional)</span>
+                  </h3>
                   <button
                     type="button"
                     onClick={addHost}
                     className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
-                    Add Host
+                    {formData.eventType === "conference" ? "Add Speaker" : "Add Host"}
                   </button>
                 </div>
 
                 {formData.hosts?.map((host, hostIndex) => (
                   <div key={host.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-medium text-gray-900">Host {hostIndex + 1}</h4>
+                      <h4 className="font-medium text-gray-900">
+                        {formData.eventType === "conference" ? `Speaker ${hostIndex + 1}` :
+                         formData.eventType === "birthday" ? "Celebrant" :
+                         `Host ${hostIndex + 1}`}
+                      </h4>
                       {formData.hosts.length > 1 && (
                         <button
                           type="button"
@@ -441,49 +505,92 @@ export function EventForm({
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Host Name
+                          {formData.eventType === "conference" ? "Speaker Name" :
+                           formData.eventType === "birthday" ? "Celebrant Name" :
+                           "Host Name"}
                         </label>
                         <input
                           type="text"
                           value={host.name}
                           onChange={(e) => onHostChange(hostIndex, 'name', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                          placeholder="Enter host name"
+                          placeholder={formData.eventType === "conference" ? "Enter speaker name" :
+                                     formData.eventType === "birthday" ? "Enter celebrant name" :
+                                     "Enter host name"}
                         />
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Parent Names
-                        </label>
-                        {host.parentNames?.map((parentName, parentIndex) => (
-                          <div key={parentIndex} className="flex items-center gap-2 mb-2">
-                            <input
-                              type="text"
-                              value={parentName}
-                              onChange={(e) => onParentNameChange(hostIndex, parentIndex, e.target.value)}
-                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                              placeholder="Parent name"
+                      {/* Only show parent names for appropriate event types */}
+                      {formData.eventType !== "conference" && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            {getParentLabel(formData.eventType)}
+                          </label>
+                          {host.parentNames?.map((parentName, parentIndex) => (
+                            <div key={parentIndex} className="flex items-center gap-2 mb-2">
+                              <input
+                                type="text"
+                                value={parentName}
+                                onChange={(e) => onParentNameChange(hostIndex, parentIndex, e.target.value)}
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                                placeholder={formData.eventType === "wedding" ? "Parent name" :
+                                           formData.eventType === "birthday" ? "Parent/Guardian name" :
+                                           formData.eventType === "corporate" ? "Contact information" :
+                                           "Additional info"}
+                              />
+                              {host.parentNames.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeParentName(hostIndex, parentIndex)}
+                                  className="text-red-600 hover:text-red-700 transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => addParentName(hostIndex)}
+                            className="text-blue-600 hover:text-blue-700 text-sm transition-colors"
+                          >
+                            {formData.eventType === "wedding" ? "+ Add Parent" :
+                             formData.eventType === "birthday" ? "+ Add Guardian" :
+                             formData.eventType === "corporate" ? "+ Add Contact" :
+                             "+ Add Info"}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Speaker-specific fields for conferences */}
+                      {formData.eventType === "conference" && (
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Speaker Title/Bio
+                            </label>
+                            <textarea
+                              value={host.bio || ""}
+                              onChange={(e) => onHostChange(hostIndex, 'bio', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                              rows={3}
+                              placeholder="Speaker's title, company, or bio"
                             />
-                            {host.parentNames.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => removeParentName(hostIndex, parentIndex)}
-                                className="text-red-600 hover:text-red-700 transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
                           </div>
-                        ))}
-                        <button
-                          type="button"
-                          onClick={() => addParentName(hostIndex)}
-                          className="text-blue-600 hover:text-blue-700 text-sm transition-colors"
-                        >
-                          + Add Parent
-                        </button>
-                      </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Contact Email
+                            </label>
+                            <input
+                              type="email"
+                              value={host.email || ""}
+                              onChange={(e) => onHostChange(hostIndex, 'email', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                              placeholder="speaker@company.com"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -493,24 +600,26 @@ export function EventForm({
         </div>
 
         {/* Form Actions */}
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {loading && (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-            )}
-            {loading ? "Saving..." : isEdit ? "Update Event" : "Create Event"}
-          </button>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-8 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-10 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium"
+            >
+              {loading && (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              )}
+              {loading ? "Saving..." : isEdit ? "Update Event" : "Create Event"}
+            </button>
+          </div>
         </div>
       </form>
     </div>
