@@ -23,6 +23,9 @@ import EventManagement from "./pages/EventManagement"
 import EventCreate from "./pages/EventCreate"
 import EventView from "./pages/EventView"
 import EventEdit from "./pages/EventEdit"
+import Settings from "./pages/Settings"
+import Profile from "./pages/Profile"
+import TeamCollaboration from "./pages/TeamCollaboration"
 import Guests from "./components/Guests"
 
 // effect
@@ -124,6 +127,36 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Guests />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Settings Route */}
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Profile Route */}
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Team Collaboration Route */}
+            <Route
+              path="/team"
+              element={
+                <ProtectedRoute>
+                  <TeamCollaboration />
                 </ProtectedRoute>
               }
             />

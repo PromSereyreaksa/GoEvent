@@ -2,16 +2,19 @@
 
 import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { useNavigate } from "react-router-dom"
-import { Plus, Search, Filter, Calendar } from "lucide-react"
+import { useNavigate, useSearchParams } from "react-router-dom"
+import { Plus, Search, Filter, Calendar, ArrowLeft, Menu } from "lucide-react"
 import { fetchEvents, deleteEvent } from "../redux/slices/eventSlice"
 import { useVendorCheck } from "../components/SecurityMonitor"
 import EventCard from "../components/Event/EventCard"
 import ConfirmationModal from "../components/Event/ConfirmationModal"
+import { SidebarProvider } from "../components/homepage/SidebarProvider"
+import AppSidebar from "../components/homepage/AppSidebar"
 
 export default function EventManagement() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { is_vendor } = useVendorCheck()
 
   const { events, loading, error } = useSelector((state) => state.events)
@@ -19,6 +22,15 @@ export default function EventManagement() {
   const [filterCategory, setFilterCategory] = useState("all")
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [eventToDelete, setEventToDelete] = useState(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Handle search from URL params (from global search)
+  useEffect(() => {
+    const searchQuery = searchParams.get('search');
+    if (searchQuery) {
+      setSearchTerm(searchQuery);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     dispatch(fetchEvents())
@@ -85,8 +97,38 @@ export default function EventManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <SidebarProvider>
+      <div className="min-h-screen bg-gray-50">
+        <AppSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        
+        {/* Main Content - with proper margin for sidebar */}
+        <div className="lg:ml-64 transition-all duration-300 min-h-screen">
+          <div className="w-full px-6 py-6">
+            {/* Header with Back Navigation and Mobile Menu */}
+            <div className="flex items-center gap-4 mb-6">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              
+              <button
+                onClick={() => {
+                  // Go back to the previous page if possible, otherwise fallback to dashboard
+                  if (window.history.length > 2) {
+                    window.history.back();
+                  } else {
+                    navigate("/dashboard");
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Dashboard
+              </button>
+            </div>
+        
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
           <div>
@@ -207,7 +249,9 @@ export default function EventManagement() {
           confirmText="Delete"
           confirmButtonClass="bg-red-600 hover:bg-red-700"
         />
+          </div>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   )
 }

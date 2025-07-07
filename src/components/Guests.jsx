@@ -3,6 +3,9 @@
 import { useState } from "react"
 import { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
+import { useSearchParams } from "react-router-dom"
+import { fetchGuests } from "../redux/slices/guestSlice"
+import { fetchEvents } from "../redux/slices/eventSlice"
 import {
   Users,
   Search,
@@ -21,12 +24,14 @@ import {
   X,
   Filter,
   Send,
+  ArrowLeft,
 } from "lucide-react"
 import { SidebarProvider } from "../components/homepage/SidebarProvider"
 import AppSidebar from "../components/homepage/AppSidebar"
 
 const Guests = () => {
   const dispatch = useDispatch()
+  const [searchParams] = useSearchParams()
 
   // Hide header when component mounts
     useEffect(() => {
@@ -56,6 +61,12 @@ const Guests = () => {
       };
     }, []);
 
+  // Fetch initial data
+  useEffect(() => {
+    dispatch(fetchEvents()) // Ensure we have events for the dropdown
+    // Note: fetchGuests is typically called per event, but for now we'll use local state
+  }, [dispatch])
+
   // Fix Redux selector to match your store structure
   const { guests = [] } = useSelector((state) => state.guests || {})
   const { events = [] } = useSelector((state) => state.events || {})
@@ -69,6 +80,14 @@ const Guests = () => {
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingGuest, setEditingGuest] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Handle search from URL params (from global search)
+  useEffect(() => {
+    const searchQuery = searchParams.get('search');
+    if (searchQuery) {
+      setSearchTerm(searchQuery);
+    }
+  }, [searchParams]);
 
   // Guest form state
   const [guestForm, setGuestForm] = useState({
@@ -101,25 +120,49 @@ const Guests = () => {
     checkedIn: eventSpecificGuests.filter((g) => g.checkedIn).length,
   }
 
-  const handleInviteGuest = (e) => {
+  const handleInviteGuest = async (e) => {
     e.preventDefault()
-    const newGuest = {
-      id: Date.now().toString(),
-      ...guestForm,
-      invitedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
+    
+    try {
+      // If we have API integration, use it
+      if (guestForm.eventId && events.find(e => e.id === guestForm.eventId)) {
+        const newGuest = {
+          name: guestForm.name,
+          email: guestForm.email,
+          phone: guestForm.phone,
+          status: guestForm.status,
+        }
+        
+        // Try API call if available
+        // await dispatch(inviteGuest({ eventId: guestForm.eventId, guestData: newGuest }))
+      }
+      
+      // Fallback to local state management
+      const newGuest = {
+        id: Date.now().toString(),
+        ...guestForm,
+        invitedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
 
-    dispatch({ type: "guests/addGuest", payload: newGuest })
-    setGuestForm({
-      name: "",
-      email: "",
-      phone: "",
-      eventId: "",
-      status: "pending",
-      checkedIn: false,
-    })
-    setShowInviteModal(false)
+      dispatch({ type: "guests/addGuest", payload: newGuest })
+      
+      // Reset form
+      setGuestForm({
+        name: "",
+        email: "",
+        phone: "",
+        eventId: "",
+        status: "pending",
+        checkedIn: false,
+      })
+      setShowInviteModal(false)
+      
+      // Show success message
+      console.log(`Guest ${newGuest.name} invited successfully!`)
+    } catch (error) {
+      console.error('Failed to invite guest:', error)
+    }
   }
 
   const handleEditGuest = (e) => {
@@ -148,6 +191,79 @@ const Guests = () => {
       dispatch({ type: "guests/removeGuest", payload: guestId })
     }
   }
+
+  // Import/Export functionality for guests
+  const handleExportGuests = () => {
+    if (guests.length === 0) {
+      alert("No guests to export");
+      return;
+    }
+
+    // Convert guests to CSV format
+    const headers = ["ID", "Name", "Email", "Phone", "Event", "Status", "Checked In", "Invited At"];
+    const csvContent = [
+      headers.join(","),
+      ...guests.map(guest => {
+        const eventName = events.find(e => e.id === guest.eventId)?.title || "No Event";
+        return [
+          guest.id,
+          `"${guest.name || ''}"`,
+          `"${guest.email || ''}"`,
+          `"${guest.phone || ''}"`,
+          `"${eventName}"`,
+          guest.status || '',
+          guest.checkedIn ? 'Yes' : 'No',
+          guest.invitedAt || ''
+        ].join(",");
+      })
+    ].join("\n");
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `guests_export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleImportGuests = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.csv')) {
+      alert("Please select a CSV file");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target.result;
+        const lines = text.split('\n');
+        const headers = lines[0].split(',');
+        
+        // Basic validation
+        if (!headers.includes('Name') && !headers.includes('name')) {
+          alert("CSV must contain a 'Name' column");
+          return;
+        }
+
+        // For now, just show success message. In a real app, you'd process and save the data
+        alert(`CSV file "${file.name}" processed successfully! ${lines.length - 1} guests found. (Note: This is a demo - actual import would require backend implementation)`);
+        
+        // Reset the input
+        event.target.value = '';
+      } catch (error) {
+        alert("Error processing CSV file. Please check the format.");
+      }
+    };
+    
+    reader.readAsText(file);
+  };
 
   const handleBulkAction = (action) => {
     selectedGuests.forEach((guestId) => {
@@ -230,6 +346,13 @@ const Guests = () => {
                 <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 rounded-lg hover:bg-gray-100">
                   <Menu className="w-5 h-5 text-gray-600" />
                 </button>
+                <button
+                  onClick={() => window.history.back()}
+                  className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back
+                </button>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                     <Users className="w-7 h-7 text-blue-600" />
@@ -244,11 +367,22 @@ const Guests = () => {
               </div>
 
               <div className="flex items-center gap-3">
-                <button className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <label className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
                   <Upload className="w-4 h-4" />
                   Import
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleImportGuests}
+                    className="hidden"
+                  />
+                </label>
+                <button 
+                  onClick={handleExportGuests}
+                  disabled={guests.length === 0}
+                  className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Export guests to CSV"
+                >
                   <Download className="w-4 h-4" />
                   Export
                 </button>
@@ -626,13 +760,16 @@ const Guests = () => {
 
       {/* Invite Guest Modal */}
       {showInviteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <Send className="w-5 h-5 text-blue-600" />
-                Invite Guest
-              </h2>
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl border border-gray-100">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                  <Send className="w-5 h-5 text-blue-600" />
+                  Invite Guest
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">Send an invitation to join your event</p>
+              </div>
               <button
                 onClick={() => setShowInviteModal(false)}
                 className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
@@ -726,10 +863,13 @@ const Guests = () => {
 
       {/* Edit Guest Modal */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Edit Guest</h2>
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl border border-gray-100">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Edit Guest</h2>
+                <p className="text-sm text-gray-600 mt-1">Update guest information</p>
+              </div>
               <button
                 onClick={() => setShowEditModal(false)}
                 className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"

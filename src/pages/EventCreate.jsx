@@ -3,12 +3,11 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useSelector, useDispatch } from "react-redux"
-import { Menu } from "lucide-react"
+import { Menu, ArrowLeft } from "lucide-react"
 import AppSidebar from "../components/homepage/AppSidebar"
-import { NotificationsDropdown } from "../components/Event/NotificationsDropdown"
+import NotificationsDropdown from "../components/homepage/NotificationsDropdown"
 import { EventForm } from "../components/Event/EventForm"
 import { createEvent, clearError } from "../redux/slices/eventSlice"
-import { notifications } from "../components/Event/data"
 import { animationStyles } from "../components/Event/animations"
 
 export default function EventCreate() {
@@ -233,7 +232,12 @@ export default function EventCreate() {
   }
 
   const handleCancel = () => {
-    navigate("/events", { replace: true })
+    // Go back to the previous page if possible, otherwise fallback to events list
+    if (window.history.length > 2) {
+      window.history.back();
+    } else {
+      navigate("/events", { replace: true });
+    }
   }
 
   const handleClearError = () => {
@@ -395,6 +399,22 @@ export default function EventCreate() {
                 <Menu className="w-5 h-5" />
               </button>
 
+              {/* Back Button */}
+              <button
+                onClick={() => {
+                  // Go back to the previous page if possible, otherwise fallback to events list
+                  if (window.history.length > 2) {
+                    window.history.back();
+                  } else {
+                    navigate("/events");
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Events
+              </button>
+
               <div className="relative max-w-md">
                 <h1 className="text-xl font-bold text-gray-900">Create Event</h1>
                 <p className="text-sm text-gray-600">Fill in the details to create a new event</p>
@@ -402,15 +422,16 @@ export default function EventCreate() {
             </div>
 
             <div className="flex items-center gap-3">
-              <NotificationsDropdown notifications={notifications} />
+              <NotificationsDropdown />
             </div>
           </div>
         </div>
 
         {/* Page Content */}
-        <div className="px-4 sm:px-6 lg:px-8 py-8">
+        <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-8">
+          <div className="w-full">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl">
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl max-w-7xl mx-auto">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center">
@@ -452,6 +473,7 @@ export default function EventCreate() {
             addParentName={addParentName}
             removeParentName={removeParentName}
           />
+          </div>
         </div>
       </div>
     </div>
