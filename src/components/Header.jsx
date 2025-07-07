@@ -125,7 +125,7 @@ export default function Header() {
   // Component render helpers
   const renderLogo = () => (
     <a
-      href={isAuthenticated ? "/homepage" : "/"}
+      href={isAuthenticated ? "/" : "/"}
       className="flex items-center gap-3 group"
     >
       <div className="relative">
