@@ -89,14 +89,15 @@ const transformEventToBackend = (eventData) => {
     date: eventData.date,
     start_time: eventData.startTime,
     end_time: eventData.endTime,
-    venue_name: eventData.venueName || "",
-    google_map_embed_link: eventData.googleMapLink || "",
-    youtube_embed_link: eventData.youtubeLink || "",
-    video_message_embed_link: eventData.videoMessageLink || "",
+    venue_name: eventData.venueName || eventData.venue_name || "",
+    google_map_embed_link: eventData.googleMapLink || eventData.google_map_embed_link || "",
+    youtube_embed_link: eventData.youtubeLink || eventData.youtube_embed_link || "",
+    video_message_embed_link: eventData.videoMessageLink || eventData.video_message_embed_link || "",
     category: eventData.category || "wedding",
+    original_category: eventData.original_category || null, // Preserve original category
     package_plan: eventData.packagePlan || null,
     invitation_template: eventData.invitationTemplate || null,
-    team_members: eventData.teamMembers || [],
+    team_members: eventData.teamMembers || eventData.team_members || [],
   }
 
   // Transform host data
@@ -135,14 +136,22 @@ const transformEventFromBackend = (backendData) => {
     date: backendData.date,
     startTime: backendData.start_time,
     endTime: backendData.end_time,
+    venue: backendData.venue_name, // Add compatibility field
     venueName: backendData.venue_name,
+    venue_name: backendData.venue_name, // Keep original format
     googleMapLink: backendData.google_map_embed_link,
     youtubeLink: backendData.youtube_embed_link,
     videoMessageLink: backendData.video_message_embed_link,
-    category: backendData.category,
+    category: backendData.original_category || backendData.category, // Use original category if available, fallback to backend category
+    backend_category: backendData.category, // Keep backend category for reference
+    original_category: backendData.original_category, // Preserve original category from backend
+    eventType: backendData.original_category || backendData.category, // Add eventType field for display
+    event_banner: backendData.event_banner, // Add event banner field
+    image: backendData.event_banner, // Compatibility field
     packagePlan: backendData.package_plan,
     invitationTemplate: backendData.invitation_template,
     teamMembers: backendData.team_members || [],
+    team_members: backendData.team_members || [], // Add both formats for compatibility
     hosts: backendData.host || [],
     agenda: backendData.agenda || [],
     sponsors: backendData.event_sponsors || [],
@@ -303,6 +312,36 @@ export const authAPI = {
 
 // Event API
 export const eventAPI = {
+  // Get event types from backend API
+  getEventTypes: async () => {
+    const cacheKey = "category"
+    const cached = getCachedData(cacheKey)
+    if (cached) return cached
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/events/`)
+      const data = await handleResponse(response)
+      
+      setCachedData(cacheKey, data)
+      return data
+    } catch (error) {
+      console.warn('Failed to fetch event types from API, using fallback data:', error)
+      // Fallback to static data if API fails
+      const fallbackData = [
+        { value: 'wedding', label: 'Wedding' },
+  { value: 'birthday', label: 'Birthday' },
+  { value: 'housewarming', label: 'Housewarming' },
+  { value: 'Conferences', label: 'Conferences' },
+  { value: 'concert', label: 'Concert' },
+  { value: 'seminars', label: 'Seminars' },
+  { value: 'retreat', label: 'Retreat' },
+  { value: 'other', label: 'Other' }
+      ]
+      setCachedData(cacheKey, fallbackData)
+      return fallbackData
+    }
+  },
+
   // Renamed from getAll to getEvents
   getEvents: async () => {
     const cacheKey = "events_all"
@@ -310,7 +349,7 @@ export const eventAPI = {
     if (cached) return cached
 
     const response = await authenticatedFetch("/events/")
-    const data = await handleResponsef(response)
+    const data = await handleResponse(response)
     const transformedData = data.map(transformEventFromBackend)
 
     setCachedData(cacheKey, transformedData)
