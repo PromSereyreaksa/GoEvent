@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "react-router-dom";
 import { fetchGuests } from "../redux/slices/guestSlice";
-import { fetchEvents } from "../redux/slices/eventSlice";
+import { fetchEventsLight } from "../redux/slices/eventSlice";
 import {
   Users,
   Search,
@@ -103,7 +103,7 @@ const Guests = () => {
 
   // Fetch initial data
   useEffect(() => {
-    dispatch(fetchEvents());
+    dispatch(fetchEventsLight());
     // Note: fetchGuests is typically called per event, but for now we'll use local state
   }, [dispatch]);
 
@@ -144,7 +144,10 @@ const Guests = () => {
       guest.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || guest.status === statusFilter;
-    const matchesEvent = eventFilter === "all" || guest.eventId === eventFilter;
+    const matchesEvent =
+      eventFilter === "all" ||
+      guest.eventId === eventFilter ||
+      String(guest.eventId) === String(eventFilter);
     return matchesSearch && matchesStatus && matchesEvent;
   });
 
@@ -152,7 +155,11 @@ const Guests = () => {
   const eventSpecificGuests =
     eventFilter === "all"
       ? guests
-      : guests.filter((g) => g.eventId === eventFilter);
+      : guests.filter(
+          (g) =>
+            g.eventId === eventFilter ||
+            String(g.eventId) === String(eventFilter)
+        );
   const stats = {
     total: eventSpecificGuests.length,
     confirmed: eventSpecificGuests.filter((g) => g.status === "confirmed")
@@ -165,21 +172,26 @@ const Guests = () => {
   const handleInviteGuest = async (e) => {
     e.preventDefault();
     try {
-      if (guestForm.eventId && events.find((e) => e.id === guestForm.eventId)) {
-        const newGuest = {
-          name: guestForm.name,
-          email: guestForm.email,
-          phone: guestForm.phone,
-          status: guestForm.status,
-        };
-        // await dispatch(inviteGuest({ eventId: guestForm.eventId, guestData: newGuest }))
+      // Ensure eventId is properly validated
+      const selectedEvent = events.find(
+        (e) =>
+          e.id === guestForm.eventId ||
+          String(e.id) === String(guestForm.eventId)
+      );
+
+      if (!guestForm.eventId || !selectedEvent) {
+        alert("Please select a valid event");
+        return;
       }
+
       const newGuest = {
         id: Date.now().toString(),
         ...guestForm,
+        eventId: selectedEvent.id, // Use the actual event ID from the selected event
         invitedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
+
       dispatch({ type: "guests/addGuest", payload: newGuest });
       setGuestForm({
         name: "",
@@ -198,9 +210,22 @@ const Guests = () => {
 
   const handleEditGuest = (e) => {
     e.preventDefault();
+
+    // Ensure eventId is properly validated
+    const selectedEvent = events.find(
+      (e) =>
+        e.id === guestForm.eventId || String(e.id) === String(guestForm.eventId)
+    );
+
+    if (!guestForm.eventId || !selectedEvent) {
+      alert("Please select a valid event");
+      return;
+    }
+
     const updatedGuest = {
       ...editingGuest,
       ...guestForm,
+      eventId: selectedEvent.id, // Use the actual event ID from the selected event
       updatedAt: new Date().toISOString(),
     };
     dispatch({ type: "guests/updateGuest", payload: updatedGuest });
@@ -341,7 +366,15 @@ const Guests = () => {
   };
 
   const getEventName = (eventId) => {
-    const event = events.find((e) => e.id === eventId);
+    if (!eventId) return "No Event";
+
+    // Handle both string and number eventId
+    const event = events.find(
+      (e) =>
+        e.id === eventId ||
+        e.id === String(eventId) ||
+        String(e.id) === String(eventId)
+    );
     return event ? event.title : "Unknown Event";
   };
 
