@@ -75,23 +75,17 @@ export default function AppSidebar({
       active: location.pathname === "/guests",
     },
     {
-      icon: Clock,
-      label: "Calendar",
-      href: "/calendar",
-      active: location.pathname === "/calendar",
-    },
-    {
       icon: Activity,
       label: "Team",
       href: "/team",
       active: location.pathname === "/team",
     },
-    {
-      icon: Star,
-      label: "Pricing",
-      href: "/pricing",
-      active: location.pathname === "/pricing",
-    },
+    // {
+    //   icon: Star,
+    //   label: "Pricing",
+    //   href: "/pricing",
+    //   active: location.pathname === "/pricing",
+    // },
     {
       icon: Settings,
       label: "Settings",
