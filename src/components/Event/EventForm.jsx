@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar, Clock, MapPin, Users, Plus, Trash2, Image } from "lucide-react";
+import { eventAPI } from "../../utils/api";
 
 export function EventForm({
   formData,
@@ -27,6 +28,36 @@ export function EventForm({
   removeParentName,
 }) {
   const [activeTab, setActiveTab] = useState("basic");
+  const [eventTypes, setEventTypes] = useState([]);
+  const [eventTypesLoading, setEventTypesLoading] = useState(true);
+
+  // Load event types on component mount
+  useEffect(() => {
+    const loadEventTypes = async () => {
+      try {
+        setEventTypesLoading(true);
+        const types = await eventAPI.getEventTypes();
+        setEventTypes(types);
+      } catch (error) {
+        console.error('Failed to load event types:', error);
+        // Fallback to hardcoded types if API fails
+        setEventTypes([
+          { value: 'wedding', label: 'Wedding' },
+  { value: 'birthday', label: 'Birthday' },
+  { value: 'housewarming', label: 'Housewarming' },
+  { value: 'conferences', label: 'Conferences' },
+  { value: 'concert', label: 'Concert' },
+  { value: 'seminars', label: 'Seminars' },
+  { value: 'retreat', label: 'Retreat' },
+  { value: 'other', label: 'Other' }
+        ]);
+      } finally {
+        setEventTypesLoading(false);
+      }
+    };
+
+    loadEventTypes();
+  }, []);
 
   // Get dynamic fields based on event type
   const getFieldsForEventType = (eventType) => {
@@ -171,15 +202,20 @@ export function EventForm({
                     onChange={onInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                     required
+                    disabled={eventTypesLoading}
                   >
-                    <option value="">Select event type</option>
-                    <option value="wedding">Wedding</option>
-                    <option value="birthday">Birthday</option>
-                    <option value="corporate">Corporate</option>
-                    <option value="conference">Conference</option>
-                    <option value="party">Party</option>
-                    <option value="other">Other</option>
+                    <option value="">
+                      {eventTypesLoading ? "Loading event types..." : "Select event type"}
+                    </option>
+                    {eventTypes.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
                   </select>
+                  {eventTypesLoading && (
+                    <p className="text-sm text-gray-500 mt-1">Loading available event types...</p>
+                  )}
                 </div>
 
                 {formData.eventType === "other" && (

@@ -148,6 +148,18 @@ export default function EventCreate() {
 
   // Clean up form data before sending - match Django model structure
   const cleanFormData = (data) => {
+    // Backend-compatible event type mapping
+    const eventTypeMapping = {
+      'wedding': 'Wedding',
+      'birthday': 'Birthday', 
+      'housewarming': 'Housewarming', // Map to working type temporarily
+      'Conferences': 'Conferences', // Map to working type temporarily
+      'concert': 'Concert', // Map to working type temporarily
+      'seminars': 'Seminars', // Map to working type temporarily
+      'retreat': 'Retreat', // Map to working type temporarily
+      'other': data.customEventType // Map to working type temporarily
+    };
+
     // Clean up agenda data
     const cleanedAgenda = data.agenda
       .filter(day => day.date && day.title)
@@ -183,6 +195,8 @@ export default function EventCreate() {
         logo: sponsor.logo || null
       }))
 
+    const backendCompatibleType = eventTypeMapping[data.eventType];
+
     return {
       title: data.title,
       description: data.description || '',
@@ -190,7 +204,8 @@ export default function EventCreate() {
       start_time: data.startTime || null,
       end_time: data.endTime || null,
       venue_name: data.venue || '',
-      category: data.eventType === 'other' ? data.customEventType : data.eventType,
+      category: backendCompatibleType, // Use mapped type for backend
+      original_category: data.eventType === 'other' ? data.customEventType : data.eventType, // Store original type
       google_map_embed_link: data.googleMapLink || '',
       youtube_embed_link: data.youtubeUrl || '',
       video_message_embed_link: data.videoMessageUrl || '',
@@ -204,6 +219,7 @@ export default function EventCreate() {
   const handleSave = async () => {
     try {
       console.log("Raw form data:", formData)
+      console.log("Original event type:", formData.eventType)
       
       // Validate form
       if (!validateForm()) {
@@ -213,16 +229,72 @@ export default function EventCreate() {
       // Clean and format data
       const cleanedData = cleanFormData(formData)
       console.log("Cleaned data being sent:", cleanedData)
+      console.log("Backend category (mapped):", cleanedData.category)
+      console.log("Original category (stored):", cleanedData.original_category)
+      
+      // Additional validation for backend compatibility
+      if (!cleanedData.title || !cleanedData.date || !cleanedData.venue_name || !cleanedData.category) {
+        alert('Missing required fields after data cleaning. Please check all required fields.')
+        return
+      }
+      
+      // Ensure date is in correct format (YYYY-MM-DD)
+      if (cleanedData.date) {
+        const dateObj = new Date(cleanedData.date)
+        cleanedData.date = dateObj.toISOString().split('T')[0]
+      }
+      
+      // Ensure times are in HH:MM format if provided
+      if (cleanedData.start_time && !cleanedData.start_time.match(/^\d{2}:\d{2}$/)) {
+        cleanedData.start_time = null
+      }
+      if (cleanedData.end_time && !cleanedData.end_time.match(/^\d{2}:\d{2}$/)) {
+        cleanedData.end_time = null
+      }
+      
+      // Remove null/undefined values to avoid backend issues
+      Object.keys(cleanedData).forEach(key => {
+        if (cleanedData[key] === null || cleanedData[key] === undefined || cleanedData[key] === '') {
+          if (['agenda', 'hosts', 'sponsors'].includes(key)) {
+            cleanedData[key] = []
+          } else if (!['title', 'date', 'venue_name', 'category'].includes(key)) {
+            delete cleanedData[key]
+          }
+        }
+      })
+      
+      console.log("Final cleaned data:", cleanedData)
       
       await dispatch(createEvent(cleanedData)).unwrap()
       navigate("/events", { replace: true })
     } catch (err) {
       console.error("Error creating event:", err)
       console.error("Error response:", err.response?.data)
+      console.error("Error status:", err.response?.status)
+      console.error("Full error object:", err)
       
-      // Show more specific error message
-      if (err.response?.data?.message) {
+      // More detailed error handling for 400 errors
+      if (err.response?.status === 400) {
+        const errorData = err.response.data
+        if (typeof errorData === 'object') {
+          const errorMessages = []
+          Object.keys(errorData).forEach(field => {
+            if (Array.isArray(errorData[field])) {
+              errorMessages.push(`${field}: ${errorData[field].join(', ')}`)
+            } else {
+              errorMessages.push(`${field}: ${errorData[field]}`)
+            }
+          })
+          alert(`Validation Error:\n${errorMessages.join('\n')}`)
+        } else {
+          alert(`Bad Request: ${errorData || 'Invalid data format'}`)
+        }
+      } else if (err.response?.data?.message) {
         alert(`Error: ${err.response.data.message}`)
+      } else if (err.response?.data?.detail) {
+        alert(`Error: ${err.response.data.detail}`)
+      } else if (err.response?.data) {
+        alert(`Error: ${JSON.stringify(err.response.data)}`)
       } else if (err.message) {
         alert(`Error: ${err.message}`)
       } else {

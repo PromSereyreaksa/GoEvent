@@ -52,7 +52,10 @@ export function EventInformation({ event, onBack }) {
               </div>
               <div className="flex items-center gap-4">
                   <Heart size={24} className="text-pink-500 flex-shrink-0" />
-                  <span className="text-lg"><strong>Type:</strong> {event?.eventType || event?.category || "N/A"}</span>
+                  <span className="text-lg"><strong>Type:</strong> {
+                    event?.category || 
+                    "N/A"
+                  }</span>
               </div>
           </div>
       </div>

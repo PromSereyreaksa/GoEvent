@@ -12,10 +12,12 @@ export default function EventCard({ event, onView }) {
     }
   }
 
+  console.log('Event category:', event.category);
+  console.log('Full event object:', event);
   return (
     <div 
-      onClick={onView}
-      className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden border border-gray-100"
+    onClick={onView}
+    className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden border border-gray-100"
     >
       {/* Event Banner */}
       {event.event_banner ? (
@@ -29,11 +31,12 @@ export default function EventCard({ event, onView }) {
       <div className="p-6">
         {/* Event Type Tag and Status */}
         <div className="flex items-center justify-between mb-4">
-          {event.category && (
+          {(event.category) && (
             <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded-full uppercase tracking-wide">
               {event.category}
             </span>
           )}
+          
           
           <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
             event.is_published 
