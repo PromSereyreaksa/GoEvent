@@ -30,6 +30,7 @@ export default function Profile() {
   const { user } = useSelector((state) => state.auth);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -66,9 +67,9 @@ export default function Profile() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -76,16 +77,16 @@ export default function Profile() {
     setLoading(true);
     try {
       // Here you would make API calls to save the profile
-      console.log('Saving profile:', formData);
-      
+      console.log("Saving profile:", formData);
+
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       setEditMode(false);
-      alert('Profile updated successfully!');
+      alert("Profile updated successfully!");
     } catch (error) {
-      console.error('Error saving profile:', error);
-      alert('Failed to save profile. Please try again.');
+      console.error("Error saving profile:", error);
+      alert("Failed to save profile. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -118,9 +119,9 @@ export default function Profile() {
       // Handle profile picture upload
       const reader = new FileReader();
       reader.onload = (e) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          avatar: e.target.result
+          avatar: e.target.result,
         }));
       };
       reader.readAsDataURL(file);
@@ -128,17 +129,19 @@ export default function Profile() {
   };
 
   const getInitials = () => {
-    const first = formData.firstName?.charAt(0) || user?.first_name?.charAt(0) || "";
-    const last = formData.lastName?.charAt(0) || user?.last_name?.charAt(0) || "";
+    const first =
+      formData.firstName?.charAt(0) || user?.first_name?.charAt(0) || "";
+    const last =
+      formData.lastName?.charAt(0) || user?.last_name?.charAt(0) || "";
     return (first + last).toUpperCase() || "U";
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return "Not specified";
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -172,7 +175,9 @@ export default function Profile() {
 
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">Profile</h1>
-                  <p className="text-sm text-gray-600">Manage your personal information</p>
+                  <p className="text-sm text-gray-600">
+                    Manage your personal information
+                  </p>
                 </div>
               </div>
 
@@ -224,7 +229,9 @@ export default function Profile() {
                       <h2 className="text-2xl font-bold text-gray-900">
                         {formData.firstName} {formData.lastName}
                       </h2>
-                      <p className="text-gray-600 mt-1">{formData.jobTitle || "Event Organizer"}</p>
+                      <p className="text-gray-600 mt-1">
+                        {formData.jobTitle || "Event Organizer"}
+                      </p>
                       <p className="text-gray-500 text-sm mt-1 flex items-center gap-1">
                         <Building className="w-4 h-4" />
                         {formData.company || "Not specified"}
@@ -251,7 +258,7 @@ export default function Profile() {
                             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                           >
                             <Save className="w-4 h-4" />
-                            {loading ? 'Saving...' : 'Save Changes'}
+                            {loading ? "Saving..." : "Save Changes"}
                           </button>
                         </>
                       ) : (
@@ -273,8 +280,10 @@ export default function Profile() {
                 {/* Personal Information */}
                 <div className="lg:col-span-2">
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-6">Personal Information</h3>
-                    
+                    <h3 className="text-lg font-semibold text-gray-900 mb-6">
+                      Personal Information
+                    </h3>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -396,7 +405,9 @@ export default function Profile() {
                     {/* Password Change Section */}
                     {editMode && (
                       <div>
-                        <h4 className="text-md font-medium text-gray-900 mb-4">Change Password</h4>
+                        <h4 className="text-md font-medium text-gray-900 mb-4">
+                          Change Password
+                        </h4>
                         <div className="space-y-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -415,7 +426,11 @@ export default function Profile() {
                                 onClick={() => setShowPassword(!showPassword)}
                                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                               >
-                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                {showPassword ? (
+                                  <EyeOff className="w-4 h-4" />
+                                ) : (
+                                  <Eye className="w-4 h-4" />
+                                )}
                               </button>
                             </div>
                           </div>
@@ -453,27 +468,41 @@ export default function Profile() {
                 <div className="space-y-6">
                   {/* Account Info */}
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Info</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Account Info
+                    </h3>
                     <div className="space-y-4">
                       <div className="flex items-center gap-3">
                         <Calendar className="w-5 h-5 text-gray-400" />
                         <div>
-                          <p className="text-sm font-medium text-gray-900">Member Since</p>
-                          <p className="text-sm text-gray-500">{formatDate(formData.joinDate)}</p>
+                          <p className="text-sm font-medium text-gray-900">
+                            Member Since
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {formatDate(formData.joinDate)}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <Award className="w-5 h-5 text-gray-400" />
                         <div>
-                          <p className="text-sm font-medium text-gray-900">Account Type</p>
-                          <p className="text-sm text-gray-500">{user?.is_vendor ? "Vendor" : "Standard"}</p>
+                          <p className="text-sm font-medium text-gray-900">
+                            Account Type
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {user?.is_vendor ? "Vendor" : "Standard"}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <User className="w-5 h-5 text-gray-400" />
                         <div>
-                          <p className="text-sm font-medium text-gray-900">User ID</p>
-                          <p className="text-sm text-gray-500">#{user?.id || "N/A"}</p>
+                          <p className="text-sm font-medium text-gray-900">
+                            User ID
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            #{user?.id || "N/A"}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -481,7 +510,9 @@ export default function Profile() {
 
                   {/* Quick Actions */}
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Quick Actions
+                    </h3>
                     <div className="space-y-3">
                       <button
                         onClick={() => navigate("/settings")}

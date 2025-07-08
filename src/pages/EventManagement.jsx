@@ -1,119 +1,143 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useDispatch, useSelector } from "react-redux"
-import { useNavigate, useSearchParams } from "react-router-dom"
-import { Plus, Search, Filter, Calendar, ArrowLeft, Menu, Users, X } from "lucide-react"
-import { fetchEventsLight, deleteEvent } from "../redux/slices/eventSlice"
-import { useVendorCheck } from "../components/SecurityMonitor"
-import EventCard from "../components/Event/EventCard"
-import ConfirmationModal from "../components/Event/ConfirmationModal"
-import TeamManagement from "../components/Event/TeamManagement"
-import { SidebarProvider } from "../components/homepage/SidebarProvider"
-import AppSidebar from "../components/homepage/AppSidebar"
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import {
+  Plus,
+  Search,
+  Filter,
+  Calendar,
+  ArrowLeft,
+  Menu,
+  Users,
+  X,
+} from "lucide-react";
+import { fetchEventsLight, deleteEvent } from "../redux/slices/eventSlice";
+import { useVendorCheck } from "../components/SecurityMonitor";
+import EventCard from "../components/Event/EventCard";
+import ConfirmationModal from "../components/Event/ConfirmationModal";
+import TeamManagement from "../components/Event/TeamManagement";
+import { SidebarProvider } from "../components/homepage/SidebarProvider";
+import AppSidebar from "../components/homepage/AppSidebar";
 
 export default function EventManagement() {
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const { is_vendor } = useVendorCheck()
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { is_vendor } = useVendorCheck();
 
-  const { events, loading, error } = useSelector((state) => state.events)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filterCategory, setFilterCategory] = useState("all")
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [eventToDelete, setEventToDelete] = useState(null)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [selectedEvent, setSelectedEvent] = useState(null)
-  const [showTeamManagement, setShowTeamManagement] = useState(false)
+  const { events, loading, error } = useSelector((state) => state.events);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [showTeamManagement, setShowTeamManagement] = useState(false);
 
   // Handle search from URL params (from global search)
   useEffect(() => {
-    const searchQuery = searchParams.get('search');
+    const searchQuery = searchParams.get("search");
     if (searchQuery) {
       setSearchTerm(searchQuery);
     }
   }, [searchParams]);
 
   useEffect(() => {
-    dispatch(fetchEventsLight())
-  }, [dispatch])
+    dispatch(fetchEventsLight());
+  }, [dispatch]);
 
   const handleCreateEvent = () => {
     if (is_vendor) {
-      navigate("/events/create")
+      navigate("/events/create");
     } else {
-      alert("Vendor access required to create events. Please upgrade your account to become a vendor.")
+      alert(
+        "Vendor access required to create events. Please upgrade your account to become a vendor."
+      );
     }
-  }
+  };
 
   useEffect(() => {
-      const header = document.querySelector("header");
+    const header = document.querySelector("header");
+    if (header) {
+      header.style.display = "none";
+    }
+
+    return () => {
       if (header) {
-        header.style.display = "none";
+        header.style.display = "block";
       }
-  
-      return () => {
-        if (header) {
-          header.style.display = "block";
-        }
-      };
-    }, []);
+    };
+  }, []);
 
   const handleViewEvent = (event) => {
-    navigate(`/events/${event.id}`)
-  }
+    navigate(`/events/${event.id}`);
+  };
 
   const handleEditEvent = (eventId) => {
     if (is_vendor) {
-      navigate(`/events/${eventId}/edit`)
+      navigate(`/events/${eventId}/edit`);
     } else {
-      alert("Vendor access required to edit events.")
+      alert("Vendor access required to edit events.");
     }
-  }
+  };
 
   const handleDeleteEvent = (event) => {
     if (is_vendor) {
-      setEventToDelete(event)
-      setShowDeleteModal(true)
+      setEventToDelete(event);
+      setShowDeleteModal(true);
     } else {
-      alert("Vendor access required to delete events.")
+      alert("Vendor access required to delete events.");
     }
-  }
+  };
 
   const confirmDelete = async () => {
     if (eventToDelete) {
-      await dispatch(deleteEvent(eventToDelete.id))
-      setShowDeleteModal(false)
-      setEventToDelete(null)
+      await dispatch(deleteEvent(eventToDelete.id));
+      setShowDeleteModal(false);
+      setEventToDelete(null);
     }
-  }
+  };
 
   const handleManageTeam = (event) => {
-    setSelectedEvent(event)
-    setShowTeamManagement(true)
-  }
+    setSelectedEvent(event);
+    setShowTeamManagement(true);
+  };
 
   const filteredEvents = events.filter((event) => {
-    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = filterCategory === "all" || event.category === filterCategory
-    return matchesSearch && matchesCategory
-  })
+    const matchesSearch = event.title
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      filterCategory === "all" || event.category === filterCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
-    )
+    );
   }
 
   return (
     <SidebarProvider>
       <div className="min-h-screen bg-gray-50 flex w-full">
-        <AppSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <AppSidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          isCollapsed={sidebarCollapsed}
+          setIsCollapsed={setSidebarCollapsed}
+        />
         {/* Main Content - full width with proper margins */}
-        <div className="flex-1 transition-all duration-300 min-h-screen w-full lg:ml-64">
+        <div
+          className={`flex-1 transition-all duration-300 ease-in-out min-h-screen w-full ${
+            sidebarCollapsed ? "lg:ml-16" : "lg:ml-64"
+          }`}
+        >
           <div className="w-full max-w-none px-4 sm:px-6 lg:px-8 py-6">
             {/* Header with Back Navigation and Mobile Menu */}
             <div className="flex items-center gap-4 mb-6">
@@ -123,7 +147,7 @@ export default function EventManagement() {
               >
                 <Menu className="w-5 h-5" />
               </button>
-              
+
               <button
                 onClick={() => {
                   // Go back to the previous page if possible, otherwise fallback to dashboard
@@ -139,11 +163,13 @@ export default function EventManagement() {
                 Back to Dashboard
               </button>
             </div>
-        
+
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Event Management</h1>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  Event Management
+                </h1>
                 <p className="text-gray-600">Manage and organize your events</p>
               </div>
 
@@ -197,7 +223,9 @@ export default function EventManagement() {
             {/* Non-vendor message */}
             {!is_vendor && (
               <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h3 className="font-semibold text-blue-900 mb-2">Upgrade to Vendor Account</h3>
+                <h3 className="font-semibold text-blue-900 mb-2">
+                  Upgrade to Vendor Account
+                </h3>
                 <p className="text-blue-800 text-sm">
                   To create, edit, and manage events, you need a vendor account.
                   <button className="ml-2 text-blue-600 underline hover:text-blue-800">
@@ -217,13 +245,15 @@ export default function EventManagement() {
             {filteredEvents.length === 0 ? (
               <div className="text-center py-12">
                 <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">No events found</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  No events found
+                </h3>
                 <p className="text-gray-600 mb-6">
                   {searchTerm || filterCategory !== "all"
                     ? "Try adjusting your search or filter criteria"
                     : is_vendor
-                      ? "Get started by creating your first event"
-                      : "No events available at the moment"}
+                    ? "Get started by creating your first event"
+                    : "No events available at the moment"}
                 </p>
                 {is_vendor && !searchTerm && filterCategory === "all" && (
                   <button
@@ -244,17 +274,16 @@ export default function EventManagement() {
                   />
                 ))}
               </div>
-              
-              
-
             )}
-             {/* Team Management Modal */}
+            {/* Team Management Modal */}
             {showTeamManagement && selectedEvent && (
               <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                 <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
                   <div className="flex items-center justify-between p-6 border-b border-gray-200">
                     <div>
-                      <h2 className="text-2xl font-bold text-gray-900">Team Management</h2>
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        Team Management
+                      </h2>
                       <p className="text-gray-600">{selectedEvent.title}</p>
                     </div>
                     <button
@@ -268,14 +297,15 @@ export default function EventManagement() {
                     <TeamManagement
                       eventId={selectedEvent.id}
                       teamMembers={selectedEvent.teamMembers || []}
-                      canManage={is_vendor || selectedEvent.createdBy === "current_user_id"} // You'll need to implement proper user ID checking
+                      canManage={
+                        is_vendor ||
+                        selectedEvent.createdBy === "current_user_id"
+                      } // You'll need to implement proper user ID checking
                     />
                   </div>
                 </div>
               </div>
             )}
-
-           
 
             {/* Delete Confirmation Modal */}
             <ConfirmationModal
@@ -291,5 +321,5 @@ export default function EventManagement() {
         </div>
       </div>
     </SidebarProvider>
-  )
+  );
 }

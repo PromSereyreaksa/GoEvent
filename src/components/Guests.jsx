@@ -120,6 +120,7 @@ const Guests = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingGuest, setEditingGuest] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Handle search from URL params (from global search)
   useEffect(() => {
@@ -414,10 +415,16 @@ const Guests = () => {
         <AppSidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
+          isCollapsed={sidebarCollapsed}
+          setIsCollapsed={setSidebarCollapsed}
         />
 
         {/* Main Content - full width with proper margins */}
-        <div className="flex-1 transition-all duration-300 min-h-screen w-full lg:ml-64">
+        <div
+          className={`flex-1 transition-all duration-300 ease-in-out min-h-screen w-full ${
+            sidebarCollapsed ? "lg:ml-16" : "lg:ml-64"
+          }`}
+        >
           <div className="w-full max-w-none px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
             {/* Header */}
             <div className="bg-white border-b border-gray-200 rounded-xl shadow-sm mb-6 px-4 sm:px-6 py-4">
