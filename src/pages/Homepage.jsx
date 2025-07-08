@@ -492,7 +492,7 @@ const [user, setUser] = useState(null);
         >
           <button
             onClick={() =>
-              requireVendor("create events") && navigate("/events?create=true")
+              requireVendor("create events") && navigate("/events")
             }
             className="bg-gradient-to-r from-green-600 to-green-700 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110 group"
             title="Create New Event"

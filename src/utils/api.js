@@ -148,6 +148,7 @@ const transformEventFromBackend = (backendData) => {
     sponsors: backendData.event_sponsors || [],
     createdAt: backendData.created_at,
     updatedAt: backendData.updated_at,
+    is_published: backendData.is_published || false,
   }
 }
 
@@ -395,6 +396,104 @@ export const eventAPI = {
 
     setCachedData(cacheKey, transformedData)
     return transformedData
+  },
+
+  // Get events with minimal data for list view (optimized)
+  getEventsLight: async () => {
+    const cacheKey = "events_light"
+    const cached = getCachedData(cacheKey)
+    if (cached) return cached
+
+    const response = await authenticatedFetch("/events/?fields=id,title,date,start_time,venue_name,category,guest_count,created_by,is_published")
+    const data = await handleResponse(response)
+    
+    // Transform only the necessary fields for list view
+    const transformedData = data.map(backendData => ({
+      id: backendData.id,
+      title: backendData.title,
+      date: backendData.date,
+      startTime: backendData.start_time,
+      venueName: backendData.venue_name,
+      category: backendData.category,
+      guest_count: backendData.guest_count || 0,
+      createdBy: backendData.created_by,
+      is_published: backendData.is_published || false,
+    }))
+
+    setCachedData(cacheKey, transformedData)
+    return transformedData
+  },
+
+  // Team Management for Events
+  addTeamMember: async (eventId, memberData) => {
+    try {
+      const response = await api.post(`/events/${eventId}/team-members/`, memberData)
+      return response.data
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to add team member"
+      )
+    }
+  },
+
+  // Remove team member from event
+  removeTeamMember: async (eventId, memberId) => {
+    try {
+      const response = await api.delete(`/events/${eventId}/team-members/${memberId}/`)
+      return response.data
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to remove team member"
+      )
+    }
+  },
+
+  // Get team members for an event
+  getTeamMembers: async (eventId) => {
+    try {
+      const response = await api.get(`/events/${eventId}/team-members/`)
+      return response.data
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch team members"
+      )
+    }
+  },
+
+  // Send invitation to join event team
+  inviteTeamMember: async (eventId, invitationData) => {
+    try {
+      const response = await api.post(`/events/${eventId}/invite/`, invitationData)
+      return response.data
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to send invitation"
+      )
+    }
+  },
+
+  // Accept invitation to join event team
+  acceptInvitation: async (invitationToken) => {
+    try {
+      const response = await api.post(`/events/accept-invitation/`, { token: invitationToken })
+      return response.data
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to accept invitation"
+      )
+    }
+  },
+
+  // Search users for team invitation
+  searchUsers: async (query) => {
+    try {
+      const response = await api.get(`/users/search/?q=${encodeURIComponent(query)}`)
+      return response.data
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to search users"
+      )
+    }
   },
 
   // Keep backward compatibility aliases
