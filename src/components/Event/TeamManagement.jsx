@@ -1,77 +1,67 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Plus, X, Mail, User, Search, Copy, Check } from "lucide-react";
+import { Plus, X, User, Search } from "lucide-react";
 import { 
   addTeamMember, 
   removeTeamMember, 
-  inviteTeamMember, 
   searchUsers,
   clearSearchResults
 } from "../../redux/slices/eventSlice";
 
 export default function TeamManagement({ eventId, teamMembers = [], canManage = false, eventTitle = "" }) {
   const dispatch = useDispatch();
-  const { searchResults, teamMemberLoading, invitationLoading } = useSelector((state) => state.events);
+  const { searchResults, teamMemberLoading, loading } = useSelector((state) => state.events);
   
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  const [inviteMethod, setInviteMethod] = useState('email'); // 'email', 'username', 'link'
-  const [inviteValue, setInviteValue] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [inviteLink, setInviteLink] = useState('');
-  const [linkCopied, setLinkCopied] = useState(false);
-
-  // Generate invite link
-  useEffect(() => {
-    if (eventId) {
-      const baseUrl = window.location.origin;
-      setInviteLink(`${baseUrl}/events/${eventId}/join?token=invite_${eventId}_${Date.now()}`);
-    }
-  }, [eventId]);
+  const [isSearching, setIsSearching] = useState(false);
 
   const handleSearch = async (query) => {
+    console.log('Searching for users with query:', query);
     if (query.length >= 2) {
-      dispatch(searchUsers(query));
+      setIsSearching(true);
+      try {
+        await dispatch(searchUsers(query));
+        console.log('Search completed, results:', searchResults);
+      } catch (error) {
+        console.error('Search failed:', error);
+      } finally {
+        setIsSearching(false);
+      }
     } else {
       dispatch(clearSearchResults());
-    }
-  };
-
-  const handleInviteUser = async () => {
-    if (!inviteValue.trim()) return;
-
-    const invitationData = {
-      [inviteMethod]: inviteValue,
-      eventId,
-      message: `You've been invited to collaborate on an event. Join us to help plan and manage this event together.`
-    };
-
-    try {
-      await dispatch(inviteTeamMember({ eventId, invitationData })).unwrap();
-      setShowInviteModal(false);
-      setInviteValue('');
-      setSearchQuery('');
-      dispatch(clearSearchResults());
-    } catch (error) {
-      console.error('Failed to send invitation:', error);
+      setIsSearching(false);
     }
   };
 
   const handleAddFromSearch = async (user) => {
     try {
+      // Prepare member data for the API
       const memberData = {
-        id: user.id,
+        id: user.id, // This will be used as user_id in the API
         first_name: user.first_name,
         last_name: user.last_name,
         email: user.email,
+        role: 'member', // Default role
+        permissions: ['view'], // Default permissions
+        invited_by: 'current_user', // You should replace with actual current user ID
+        event_id: eventId, // Include event ID for site_setting endpoint
         addedAt: new Date().toISOString()
       };
       
+      // Add team member directly - no pending status
+      console.log('Adding team member with data:', memberData);
       await dispatch(addTeamMember({ eventId, memberData })).unwrap();
-      setShowInviteModal(false);
+      
+      setShowAddModal(false);
       setSearchQuery('');
       dispatch(clearSearchResults());
+      
+      // Show success message
+      alert('Team member added successfully!');
     } catch (error) {
       console.error('Failed to add team member:', error);
+      alert(`Failed to add team member: ${error.message || 'Please try again.'}`);
     }
   };
 
@@ -81,17 +71,8 @@ export default function TeamManagement({ eventId, teamMembers = [], canManage = 
         await dispatch(removeTeamMember({ eventId, memberId })).unwrap();
       } catch (error) {
         console.error('Failed to remove team member:', error);
+        alert(`Failed to remove team member: ${error.message || 'Please try again.'}`);
       }
-    }
-  };
-
-  const copyInviteLink = async () => {
-    try {
-      await navigator.clipboard.writeText(inviteLink);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
-    } catch (error) {
-      console.error('Failed to copy link:', error);
     }
   };
 
@@ -104,7 +85,7 @@ export default function TeamManagement({ eventId, teamMembers = [], canManage = 
         </div>
         {canManage && (
           <button
-            onClick={() => setShowInviteModal(true)}
+            onClick={() => setShowAddModal(true)}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
           >
             <Plus className="w-5 h-5" />
@@ -153,14 +134,14 @@ export default function TeamManagement({ eventId, teamMembers = [], canManage = 
         )}
       </div>
 
-      {/* Invite Modal */}
-      {showInviteModal && (
+      {/* Add Member Modal */}
+      {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-4">
               <h4 className="text-lg font-bold text-gray-900">Add Team Member</h4>
               <button
-                onClick={() => setShowInviteModal(false)}
+                onClick={() => setShowAddModal(false)}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <X className="w-5 h-5" />
@@ -174,139 +155,82 @@ export default function TeamManagement({ eventId, teamMembers = [], canManage = 
               </p>
             </div>
 
-            {/* Invite Method Tabs */}
-            <div className="flex bg-gray-100 rounded-lg p-1 mb-4">
-              <button
-                onClick={() => setInviteMethod('email')}
-                className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                  inviteMethod === 'email' 
-                    ? 'bg-white text-blue-600 shadow-sm' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <Mail className="w-4 h-4 inline mr-1" />
-                Email
-              </button>
-              <button
-                onClick={() => setInviteMethod('username')}
-                className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                  inviteMethod === 'username' 
-                    ? 'bg-white text-blue-600 shadow-sm' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <User className="w-4 h-4 inline mr-1" />
-                Search
-              </button>
-              <button
-                onClick={() => setInviteMethod('link')}
-                className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                  inviteMethod === 'link' 
-                    ? 'bg-white text-blue-600 shadow-sm' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <Copy className="w-4 h-4 inline mr-1" />
-                Link
-              </button>
-            </div>
-
-            {/* Email Invite */}
-            {inviteMethod === 'email' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
+            {/* User Search */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Search Users
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
-                  type="email"
-                  value={inviteValue}
-                  onChange={(e) => setInviteValue(e.target.value)}
-                  placeholder="Enter email address"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    handleSearch(e.target.value);
+                  }}
+                  placeholder="Search by name or email"
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
+              </div>
+              
+              {/* Debug: Test button to trigger search with mock data */}
+              <div className="mt-2">
                 <button
-                  onClick={handleInviteUser}
-                  disabled={!inviteValue.trim() || invitationLoading}
-                  className="w-full mt-4 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  onClick={() => {
+                    setSearchQuery('john');
+                    handleSearch('john');
+                  }}
+                  className="text-xs text-blue-600 hover:text-blue-800 underline"
                 >
-                  {invitationLoading ? 'Sending...' : 'Send Invitation'}
+                  Test search with "john"
                 </button>
               </div>
-            )}
-
-            {/* Username Search */}
-            {inviteMethod === 'username' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Search Users
-                </label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      handleSearch(e.target.value);
-                    }}
-                    placeholder="Search by name or email"
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+              
+              {/* Search Results */}
+              {isSearching && (
+                <div className="mt-3 p-3 text-center text-gray-500 text-sm">
+                  Searching for users...
                 </div>
-                
-                {/* Search Results */}
-                {searchResults.length > 0 && (
-                  <div className="mt-3 max-h-40 overflow-y-auto border border-gray-200 rounded-lg">
-                    {searchResults.map((user) => (
-                      <div
-                        key={user.id}
-                        className="flex items-center justify-between p-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                      >
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            {user.first_name} {user.last_name}
-                          </p>
-                          <p className="text-sm text-gray-600">{user.email}</p>
-                        </div>
-                        <button
-                          onClick={() => handleAddFromSearch(user)}
-                          disabled={teamMemberLoading}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                        >
-                          Add
-                        </button>
+              )}
+              
+              {!isSearching && searchQuery.length >= 2 && searchResults.length === 0 && (
+                <div className="mt-3 p-3 text-center text-gray-500 text-sm">
+                  No users found matching "{searchQuery}"
+                </div>
+              )}
+              
+              {!isSearching && searchResults.length > 0 && (
+                <div className="mt-3 max-h-40 overflow-y-auto border border-gray-200 rounded-lg">
+                  {searchResults.map((user) => (
+                    <div
+                      key={user.id}
+                      className="flex items-center justify-between p-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {user.first_name} {user.last_name}
+                        </p>
+                        <p className="text-sm text-gray-600">{user.email}</p>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Link Invite */}
-            {inviteMethod === 'link' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Invitation Link
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={inviteLink}
-                    readOnly
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
-                  />
-                  <button
-                    onClick={copyInviteLink}
-                    className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
-                  >
-                    {linkCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  </button>
+                      <button
+                        onClick={() => handleAddFromSearch(user)}
+                        disabled={teamMemberLoading}
+                        className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50"
+                      >
+                        {teamMemberLoading ? 'Adding...' : 'Add'}
+                      </button>
+                    </div>
+                  ))}
                 </div>
-                <p className="text-xs text-gray-600 mt-2">
-                  Share this link with anyone you want to add to your event team
-                </p>
-              </div>
-            )}
+              )}
+              
+              {searchQuery.length > 0 && searchQuery.length < 2 && (
+                <div className="mt-3 p-3 text-center text-gray-500 text-sm">
+                  Type at least 2 characters to search
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

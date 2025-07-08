@@ -278,7 +278,7 @@ export default function EventView() {
             <div className="flex-1 overflow-y-auto p-6">
               <TeamManagement
                 eventId={event.id}
-                teamMembers={event.teamMembers || []}
+                teamMembers={event.team_members || []}
                 canManage={is_vendor || event.createdBy === "current_user_id"}
                 eventTitle={event.title}
               />

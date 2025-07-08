@@ -82,18 +82,6 @@ export const removeTeamMember = createAsyncThunk(
   }
 )
 
-export const inviteTeamMember = createAsyncThunk(
-  "events/inviteTeamMember",
-  async ({ eventId, invitationData }, { rejectWithValue }) => {
-    try {
-      const result = await eventAPI.inviteTeamMember(eventId, invitationData)
-      return result
-    } catch (error) {
-      return rejectWithValue(error.message)
-    }
-  }
-)
-
 export const searchUsers = createAsyncThunk(
   "events/searchUsers",
   async (query, { rejectWithValue }) => {
@@ -115,7 +103,6 @@ const eventSlice = createSlice({
     error: null,
     searchResults: [], // For user search results
     teamMemberLoading: false,
-    invitationLoading: false,
     filters: {
       category: null,
       search: "",
@@ -168,22 +155,22 @@ const eventSlice = createSlice({
       const { eventId, member } = action.payload
       const event = state.events.find(e => e.id === eventId)
       if (event) {
-        if (!event.teamMembers) event.teamMembers = []
-        event.teamMembers.push(member)
+        if (!event.team_members) event.team_members = []
+        event.team_members.push(member)
       }
       if (state.currentEvent && state.currentEvent.id === eventId) {
-        if (!state.currentEvent.teamMembers) state.currentEvent.teamMembers = []
-        state.currentEvent.teamMembers.push(member)
+        if (!state.currentEvent.team_members) state.currentEvent.team_members = []
+        state.currentEvent.team_members.push(member)
       }
     },
     removeTeamMemberLocally: (state, action) => {
       const { eventId, memberId } = action.payload
       const event = state.events.find(e => e.id === eventId)
-      if (event?.teamMembers) {
-        event.teamMembers = event.teamMembers.filter(m => m.id !== memberId)
+      if (event?.team_members) {
+        event.team_members = event.team_members.filter(m => m.id !== memberId)
       }
-      if (state.currentEvent?.id === eventId && state.currentEvent.teamMembers) {
-        state.currentEvent.teamMembers = state.currentEvent.teamMembers.filter(m => m.id !== memberId)
+      if (state.currentEvent?.id === eventId && state.currentEvent.team_members) {
+        state.currentEvent.team_members = state.currentEvent.team_members.filter(m => m.id !== memberId)
       }
     },
   },
@@ -287,12 +274,12 @@ const eventSlice = createSlice({
         const { eventId, member } = action.payload
         const event = state.events.find(e => e.id === eventId)
         if (event) {
-          if (!event.teamMembers) event.teamMembers = []
-          event.teamMembers.push(member)
+          if (!event.team_members) event.team_members = []
+          event.team_members.push(member)
         }
         if (state.currentEvent && state.currentEvent.id === eventId) {
-          if (!state.currentEvent.teamMembers) state.currentEvent.teamMembers = []
-          state.currentEvent.teamMembers.push(member)
+          if (!state.currentEvent.team_members) state.currentEvent.team_members = []
+          state.currentEvent.team_members.push(member)
         }
       })
       .addCase(addTeamMember.rejected, (state, action) => {
@@ -308,27 +295,15 @@ const eventSlice = createSlice({
         state.teamMemberLoading = false
         const { eventId, memberId } = action.payload
         const event = state.events.find(e => e.id === eventId)
-        if (event?.teamMembers) {
-          event.teamMembers = event.teamMembers.filter(m => m.id !== memberId)
+        if (event?.team_members) {
+          event.team_members = event.team_members.filter(m => m.id !== memberId)
         }
-        if (state.currentEvent?.id === eventId && state.currentEvent.teamMembers) {
-          state.currentEvent.teamMembers = state.currentEvent.teamMembers.filter(m => m.id !== memberId)
+        if (state.currentEvent?.id === eventId && state.currentEvent.team_members) {
+          state.currentEvent.team_members = state.currentEvent.team_members.filter(m => m.id !== memberId)
         }
       })
       .addCase(removeTeamMember.rejected, (state, action) => {
         state.teamMemberLoading = false
-        state.error = action.payload
-      })
-      // Invite team member
-      .addCase(inviteTeamMember.pending, (state) => {
-        state.invitationLoading = true
-        state.error = null
-      })
-      .addCase(inviteTeamMember.fulfilled, (state) => {
-        state.invitationLoading = false
-      })
-      .addCase(inviteTeamMember.rejected, (state, action) => {
-        state.invitationLoading = false
         state.error = action.payload
       })
       // Search users
