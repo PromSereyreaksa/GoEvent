@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { fetchGuests } from "../redux/slices/guestSlice";
 import { fetchEventsLight } from "../redux/slices/eventSlice";
 import {
@@ -81,6 +81,7 @@ const mobileStyles = `
 
 const Guests = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   // Hide header when component mounts
@@ -425,69 +426,73 @@ const Guests = () => {
             sidebarCollapsed ? "lg:ml-16" : "lg:ml-64"
           }`}
         >
-          <div className="w-full max-w-none px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
-            {/* Header */}
-            <div className="bg-white border-b border-gray-200 rounded-xl shadow-sm mb-6 px-4 sm:px-6 py-4">
-              <div className="flex flex-col gap-4">
-                {/* Top row - Mobile menu, back button, and title */}
-                <div className="flex items-center gap-2 sm:gap-4">
-                  <button
-                    onClick={() => setSidebarOpen(true)}
-                    className="lg:hidden p-2 rounded-lg hover:bg-gray-100 touch-target"
-                  >
-                    <Menu className="w-5 h-5 text-gray-600" />
-                  </button>
-                  <button
-                    onClick={() => window.history.back()}
-                    className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors text-sm sm:text-base"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span className="hidden sm:inline">Back</span>
-                  </button>
-                  <div className="flex-1">
-                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-                      <Users className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600" />
-                      <span className="hidden sm:inline">Guest Management</span>
-                      <span className="sm:hidden">Guests</span>
-                    </h1>
-                    <p className="text-gray-600 text-sm sm:text-base mt-1">
-                      {eventFilter !== "all"
-                        ? `Managing guests for ${selectedEventName}`
-                        : "Manage all your event guests"}
-                    </p>
-                  </div>
-                </div>
+          <div className="w-full max-w-none px-4 sm:px-6 lg:px-8 py-6">
+            {/* Mobile Menu */}
+            <div className="flex items-center gap-4 mb-6 lg:hidden">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="p-2 rounded-lg hover:bg-gray-100"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+            </div>
 
-                {/* Action buttons row */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 sm:justify-end">
-                  <label className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer text-sm sm:text-base touch-target">
-                    <Upload className="w-4 h-4" />
-                    <span className="sm:inline">Import</span>
-                    <input
-                      type="file"
-                      accept=".csv"
-                      onChange={handleImportGuests}
-                      className="hidden"
-                    />
-                  </label>
-                  <button
-                    onClick={handleExportGuests}
-                    disabled={guests.length === 0}
-                    className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base touch-target"
-                    title="Export guests to CSV"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span className="sm:inline">Export</span>
-                  </button>
-                  <button
-                    onClick={() => setShowInviteModal(true)}
-                    className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base touch-target"
-                  >
-                    <Send className="w-4 h-4" />
-                    <span className="sm:hidden">Invite</span>
-                    <span className="hidden sm:inline">Invite Guest</span>
-                  </button>
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    // Go back to the previous page if possible, otherwise fallback to dashboard
+                    if (window.history.length > 2) {
+                      window.history.back();
+                    } else {
+                      navigate("/dashboard");
+                    }
+                  }}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <ArrowLeft className="w-5 h-5 text-gray-600" />
+                </button>
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    Guest Management
+                  </h1>
+                  <p className="text-gray-600">
+                    {eventFilter !== "all"
+                      ? `Managing guests for ${selectedEventName}`
+                      : "Manage attendees and guest lists for your events"}
+                  </p>
                 </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mt-4 md:mt-0 w-full sm:w-auto">
+                <label className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer text-sm sm:text-base min-h-[44px]">
+                  <Upload className="w-4 h-4 flex-shrink-0" />
+                  <span className="whitespace-nowrap">Import</span>
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleImportGuests}
+                    className="hidden"
+                  />
+                </label>
+                <button
+                  onClick={handleExportGuests}
+                  disabled={guests.length === 0}
+                  className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base min-h-[44px]"
+                  title="Export guests to CSV"
+                >
+                  <Download className="w-4 h-4 flex-shrink-0" />
+                  <span className="whitespace-nowrap">Export</span>
+                </button>
+                <button
+                  onClick={() => setShowInviteModal(true)}
+                  className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base font-medium min-h-[44px] shadow-sm hover:shadow-md"
+                >
+                  <Send className="w-4 h-4 flex-shrink-0" />
+                  <span className="whitespace-nowrap">Invite Guest</span>
+                </button>
               </div>
             </div>
 
@@ -750,7 +755,7 @@ const Guests = () => {
                         {filteredGuests.map((guest) => (
                           <div
                             key={guest.id}
-                            className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+                            className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm hover:shadow-md hover:bg-blue-50 transition-all duration-200"
                           >
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex items-center gap-3 flex-1">
@@ -773,15 +778,18 @@ const Guests = () => {
                                   }}
                                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                 />
-                                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 font-medium text-sm">
+                                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-md">
                                   {guest.name?.charAt(0)?.toUpperCase() || "?"}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <div className="text-sm font-medium text-gray-900 truncate">
+                                  <div className="text-sm font-semibold text-gray-900 truncate">
                                     {guest.name}
                                   </div>
-                                  <div className="text-xs text-gray-500 truncate">
-                                    {guest.email}
+                                  <div className="text-xs text-gray-600 truncate flex items-center gap-1 mt-1">
+                                    <Mail className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                                    <span className="truncate">
+                                      {guest.email}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
@@ -798,30 +806,52 @@ const Guests = () => {
                               </button>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="grid grid-cols-2 gap-3 text-xs">
                               <div>
-                                <span className="text-gray-500">Event:</span>
-                                <div className="font-medium text-gray-900 truncate">
+                                <span className="text-gray-500 font-medium">
+                                  Event:
+                                </span>
+                                <div className="font-semibold text-gray-900 truncate mt-1">
                                   {getEventName(guest.eventId)}
                                 </div>
                               </div>
                               <div>
-                                <span className="text-gray-500">Status:</span>
+                                <span className="text-gray-500 font-medium">
+                                  Status:
+                                </span>
                                 <div className="mt-1">
                                   {getStatusBadge(guest.status)}
                                 </div>
                               </div>
                               <div>
-                                <span className="text-gray-500">Check-in:</span>
-                                <div className="font-medium text-gray-900">
-                                  {guest.checkedIn
-                                    ? "✓ Checked In"
-                                    : "Not checked in"}
+                                <span className="text-gray-500 font-medium">
+                                  Check-in:
+                                </span>
+                                <div className="mt-1">
+                                  {guest.checkedIn ? (
+                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-green-100 text-green-800 border border-green-200 shadow-sm">
+                                      <UserCheck className="w-3 h-3 flex-shrink-0" />
+                                      <span className="hidden sm:inline">
+                                        Checked In
+                                      </span>
+                                      <span className="sm:hidden">✓</span>
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                                      <Clock className="w-3 h-3 flex-shrink-0 text-gray-400" />
+                                      <span className="hidden sm:inline">
+                                        Not checked in
+                                      </span>
+                                      <span className="sm:hidden">–</span>
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                               <div>
-                                <span className="text-gray-500">Invited:</span>
-                                <div className="font-medium text-gray-900">
+                                <span className="text-gray-500 font-medium">
+                                  Invited:
+                                </span>
+                                <div className="font-semibold text-gray-700 mt-1">
                                   {guest.invitedAt
                                     ? new Date(
                                         guest.invitedAt
@@ -1005,16 +1035,20 @@ const Guests = () => {
                             </td>
                             <td className="px-4 lg:px-6 py-5">
                               {guest.checkedIn ? (
-                                <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200 shadow-sm">
-                                  <UserCheck className="w-3 h-3" />
-                                  <span className="hidden lg:inline">
+                                <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-semibold bg-green-100 text-green-800 border border-green-200 shadow-sm">
+                                  <UserCheck className="w-3 h-3 flex-shrink-0" />
+                                  <span className="hidden sm:inline">
                                     Checked In
                                   </span>
-                                  <span className="lg:hidden">✓</span>
+                                  <span className="sm:hidden">✓</span>
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
-                                  <span>Not checked in</span>
+                                <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                                  <Clock className="w-3 h-3 flex-shrink-0 text-gray-400" />
+                                  <span className="hidden sm:inline">
+                                    Not checked in
+                                  </span>
+                                  <span className="sm:hidden">–</span>
                                 </span>
                               )}
                             </td>

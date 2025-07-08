@@ -139,77 +139,83 @@ export default function EventManagement() {
           }`}
         >
           <div className="w-full max-w-none px-4 sm:px-6 lg:px-8 py-6">
-            {/* Header with Back Navigation and Mobile Menu */}
-            <div className="flex items-center gap-4 mb-6">
+            {/* Mobile Menu */}
+            <div className="flex items-center gap-4 mb-6 lg:hidden">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+                className="p-2 rounded-lg hover:bg-gray-100"
               >
                 <Menu className="w-5 h-5" />
-              </button>
-
-              <button
-                onClick={() => {
-                  // Go back to the previous page if possible, otherwise fallback to dashboard
-                  if (window.history.length > 2) {
-                    window.history.back();
-                  } else {
-                    navigate("/dashboard");
-                  }
-                }}
-                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Back to Dashboard
               </button>
             </div>
 
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Event Management
-                </h1>
-                <p className="text-gray-600">Manage and organize your events</p>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8">
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                <button
+                  onClick={() => {
+                    // Go back to the previous page if possible, otherwise fallback to dashboard
+                    if (window.history.length > 2) {
+                      window.history.back();
+                    } else {
+                      navigate("/dashboard");
+                    }
+                  }}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+                >
+                  <ArrowLeft className="w-5 h-5 text-gray-600" />
+                </button>
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2 truncate">
+                    Event Management
+                  </h1>
+                  <p className="text-sm sm:text-base text-gray-600">
+                    Manage and organize your events
+                  </p>
+                </div>
               </div>
 
               {/* Create Event Button - Only show for vendors */}
-              {is_vendor ? (
-                <button
-                  onClick={handleCreateEvent}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <Plus className="w-5 h-5" />
-                  Create Event
-                </button>
-              ) : (
-                <div className="bg-gray-100 text-gray-500 px-6 py-3 rounded-lg cursor-not-allowed">
-                  <div className="flex items-center gap-2">
-                    <Plus className="w-5 h-5" />
-                    Create Event (Vendor Only)
+              <div className="w-full md:w-auto mt-4 md:mt-0">
+                {is_vendor ? (
+                  <button
+                    onClick={handleCreateEvent}
+                    className="w-full md:w-auto flex items-center justify-center gap-2 bg-blue-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base min-h-[44px]"
+                  >
+                    <Plus className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                    <span className="whitespace-nowrap">Create Event</span>
+                  </button>
+                ) : (
+                  <div className="w-full md:w-auto bg-gray-100 text-gray-500 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg cursor-not-allowed text-sm sm:text-base min-h-[44px] flex items-center justify-center">
+                    <div className="flex items-center gap-2">
+                      <Plus className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                      <span className="whitespace-nowrap">
+                        Create Event (Vendor Only)
+                      </span>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* Search and Filter */}
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                 <input
                   type="text"
                   placeholder="Search events..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                 />
               </div>
               <div className="relative">
-                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                 <select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
+                  className="w-full sm:w-auto pl-9 sm:pl-10 pr-8 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white text-sm sm:text-base min-w-[160px]"
                 >
                   <option value="all">All Categories</option>
                   <option value="wedding">Wedding</option>
@@ -222,11 +228,11 @@ export default function EventManagement() {
 
             {/* Non-vendor message */}
             {!is_vendor && (
-              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h3 className="font-semibold text-blue-900 mb-2">
+              <div className="mb-6 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 className="font-semibold text-blue-900 mb-2 text-sm sm:text-base">
                   Upgrade to Vendor Account
                 </h3>
-                <p className="text-blue-800 text-sm">
+                <p className="text-blue-800 text-xs sm:text-sm">
                   To create, edit, and manage events, you need a vendor account.
                   <button className="ml-2 text-blue-600 underline hover:text-blue-800">
                     Learn more about vendor benefits
@@ -243,12 +249,12 @@ export default function EventManagement() {
             )}
 
             {filteredEvents.length === 0 ? (
-              <div className="text-center py-12">
-                <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <div className="text-center py-8 sm:py-12 px-4">
+                <Calendar className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
                   No events found
                 </h3>
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base max-w-md mx-auto">
                   {searchTerm || filterCategory !== "all"
                     ? "Try adjusting your search or filter criteria"
                     : is_vendor
@@ -258,14 +264,14 @@ export default function EventManagement() {
                 {is_vendor && !searchTerm && filterCategory === "all" && (
                   <button
                     onClick={handleCreateEvent}
-                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                    className="bg-blue-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base min-h-[44px]"
                   >
                     Create Your First Event
                   </button>
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {filteredEvents.map((event) => (
                   <EventCard
                     key={event.id}
@@ -277,23 +283,25 @@ export default function EventManagement() {
             )}
             {/* Team Management Modal */}
             {showTeamManagement && selectedEvent && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-                  <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                    <div>
-                      <h2 className="text-2xl font-bold text-gray-900">
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
+                <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] sm:max-h-[80vh] overflow-y-auto mx-4">
+                  <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">
                         Team Management
                       </h2>
-                      <p className="text-gray-600">{selectedEvent.title}</p>
+                      <p className="text-sm sm:text-base text-gray-600 truncate">
+                        {selectedEvent.title}
+                      </p>
                     </div>
                     <button
                       onClick={() => setShowTeamManagement(false)}
-                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                      className="text-gray-400 hover:text-gray-600 transition-colors p-1 ml-2"
                     >
-                      <X className="w-6 h-6" />
+                      <X className="w-5 h-5 sm:w-6 sm:h-6" />
                     </button>
                   </div>
-                  <div className="p-6">
+                  <div className="p-4 sm:p-6">
                     <TeamManagement
                       eventId={selectedEvent.id}
                       teamMembers={selectedEvent.teamMembers || []}
