@@ -82,46 +82,73 @@ const authenticatedFetch = async (url, options = {}) => {
 }
 
 // Transform frontend event data to backend format
-const transformEventToBackend = (eventData) => {
+const transformEventToBackend = (eventData, isEdit = false) => {
+  // Required fields for creation
   const transformed = {
     title: eventData.title,
     description: eventData.description || "",
     date: eventData.date,
     start_time: eventData.startTime,
     end_time: eventData.endTime,
-    venue_name: eventData.venueName || eventData.venue_name || "",
-    google_map_embed_link: eventData.googleMapLink || eventData.google_map_embed_link || "",
-    youtube_embed_link: eventData.youtubeLink || eventData.youtube_embed_link || "",
-    video_message_embed_link: eventData.videoMessageLink || eventData.video_message_embed_link || "",
+    venue_name: eventData.venueName || eventData.venue_name || eventData.venue || "",
     category: eventData.category || "wedding",
-    original_category: eventData.original_category || null, // Preserve original category
-    package_plan: eventData.packagePlan || null,
-    invitation_template: eventData.invitationTemplate || null,
-    team_members: eventData.teamMembers || eventData.team_members || [],
   }
 
-  // Transform host data
-  if (eventData.hosts && eventData.hosts.length > 0) {
-    transformed.host = eventData.hosts.map((host) => ({
-      avatar: host.avatar || null,
-      host_names: host.names || [],
-    }))
-  }
+  // Additional fields only for editing
+  if (isEdit) {
+    Object.assign(transformed, {
+      google_map_embed_link: eventData.googleMapLink || eventData.google_map_embed_link || "",
+      youtube_embed_link: eventData.youtubeLink || eventData.youtube_embed_link || "",
+      video_message_embed_link: eventData.videoMessageLink || eventData.video_message_embed_link || "",
+      
+      // New media and design fields (editing only)
+      invitation_background_music: eventData.invitationBackgroundMusic || null,
+      logo_kh: eventData.logoKh || null,
+      logo_en: eventData.logoEn || null,
+      loading_screen: eventData.loadingScreen || null,
+      event_banner: eventData.eventBanner || eventData.event_banner || eventData.image || null,
+      transition_video: eventData.transitionVideo || null,
+      
+      // Package and template selection (editing only)
+      package_plan: eventData.packagePlan || null,
+      invitation_template: eventData.invitationTemplate || null,
+      
+      // Team management (editing only)
+      team_members: eventData.teamMembers || eventData.team_members || [],
+    })
 
-  // Transform agenda data
-  if (eventData.agenda && eventData.agenda.length > 0) {
-    transformed.agenda = eventData.agenda.map((agendaItem) => ({
-      date: agendaItem.date,
-      agenda_detail: agendaItem.details || [],
-    }))
-  }
+    // Transform host data (editing only)
+    if (eventData.hosts && eventData.hosts.length > 0) {
+      transformed.hosts = eventData.hosts.map((host) => ({
+        host_names: host.names || [{
+          language: 'en',
+          host_name: host.name || '',
+          parent_a_name: host.parentNames?.[0] || '',
+          parent_b_name: host.parentNames?.[1] || ''
+        }]
+      }))
+    }
 
-  // Transform sponsors data
-  if (eventData.sponsors && eventData.sponsors.length > 0) {
-    transformed.event_sponsors = eventData.sponsors.map((sponsor) => ({
-      name: sponsor.name || "",
-      logo: sponsor.logo || null,
-    }))
+    // Transform agenda data (editing only)
+    if (eventData.agenda && eventData.agenda.length > 0) {
+      transformed.agenda = eventData.agenda.map((day) => ({
+        date: day.date,
+        agenda_details: day.activities?.filter(activity => activity.time && activity.activity).map((activity, index) => ({
+          language: 'en',
+          agenda_detail: activity.activity,
+          time_text: activity.time,
+          order: index + 1
+        })) || []
+      }))
+    }
+
+    // Transform sponsors data (editing only)
+    if (eventData.sponsors && eventData.sponsors.length > 0) {
+      transformed.sponsors = eventData.sponsors.map((sponsor) => ({
+        name: sponsor.name || "",
+        logo: sponsor.logo || null,
+      }))
+    }
   }
 
   return transformed
@@ -139,22 +166,38 @@ const transformEventFromBackend = (backendData) => {
     venue: backendData.venue_name, // Add compatibility field
     venueName: backendData.venue_name,
     venue_name: backendData.venue_name, // Keep original format
+    category: backendData.category,
+    
+    // Media and links
     googleMapLink: backendData.google_map_embed_link,
     youtubeLink: backendData.youtube_embed_link,
     videoMessageLink: backendData.video_message_embed_link,
-    category: backendData.original_category || backendData.category, // Use original category if available, fallback to backend category
-    backend_category: backendData.category, // Keep backend category for reference
-    original_category: backendData.original_category, // Preserve original category from backend
-    eventType: backendData.original_category || backendData.category, // Add eventType field for display
-    event_banner: backendData.event_banner, // Add event banner field
+    
+    // New media and design fields
+    invitationBackgroundMusic: backendData.invitation_background_music,
+    logoKh: backendData.logo_kh,
+    logoEn: backendData.logo_en,
+    loadingScreen: backendData.loading_screen,
+    eventBanner: backendData.event_banner,
+    event_banner: backendData.event_banner, // Keep original format
     image: backendData.event_banner, // Compatibility field
+    transitionVideo: backendData.transition_video,
+    
+    // Package and template
     packagePlan: backendData.package_plan,
     invitationTemplate: backendData.invitation_template,
+    
+    // Team management
+    admin: backendData.admin,
     teamMembers: backendData.team_members || [],
     team_members: backendData.team_members || [], // Add both formats for compatibility
-    hosts: backendData.host || [],
+    
+    // Event content
+    hosts: backendData.hosts || [],
     agenda: backendData.agenda || [],
-    sponsors: backendData.event_sponsors || [],
+    sponsors: backendData.sponsors || [],
+    
+    // Metadata
     createdAt: backendData.created_at,
     updatedAt: backendData.updated_at,
     is_published: backendData.is_published || false,
@@ -176,6 +219,12 @@ const getCachedData = (key) => {
 
 const setCachedData = (key, data) => {
   cache.set(key, { data, timestamp: Date.now() })
+}
+
+// Clear cache on page load for development
+if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+  cache.clear()
+  console.log('🧹 Cache cleared for development (updated for backend team_members support)')
 }
 
 // Create API object for default export
@@ -342,18 +391,58 @@ export const eventAPI = {
     }
   },
 
-  // Renamed from getAll to getEvents
+  // Get all events - now includes team_members from backend
   getEvents: async () => {
+    console.log('🌐 API: Starting getEvents...')
     const cacheKey = "events_all"
     const cached = getCachedData(cacheKey)
-    if (cached) return cached
+    if (cached) {
+      console.log('💾 API: Returning cached events:', cached.length)
+      return cached
+    }
 
-    const response = await authenticatedFetch("/events/")
-    const data = await handleResponse(response)
-    const transformedData = data.map(transformEventFromBackend)
+    try {
+      console.log('🌐 API: Fetching events with team member data...')
+      const response = await authenticatedFetch("/events/")
+      const data = await handleResponse(response)
+      console.log('✅ API: Events fetched:', data.length, 'events')
+      
+      const transformedData = data.map((event, index) => {
+        const transformed = transformEventFromBackend(event)
+        console.log(`📋 API: Event ${index + 1} - "${transformed.title}":`, {
+          id: transformed.id,
+          admin: transformed.admin,
+          team_members: transformed.team_members || transformed.teamMembers || []
+        })
+        return transformed
+      })
 
-    setCachedData(cacheKey, transformedData)
-    return transformedData
+      setCachedData(cacheKey, transformedData)
+      console.log('✅ API: All events transformed and cached')
+      return transformedData
+    } catch (error) {
+      console.error("❌ API: Error fetching events:", error)
+      
+      // Check if it's a server error related to team_members field
+      if (error.message.includes('team_members') || error.message.includes('500')) {
+        console.warn("⚠️ API: Backend serializer issue detected. Falling back to light events...")
+        try {
+          // Fallback to light events if there's a serializer issue
+          const fallbackResponse = await authenticatedFetch("/events/?fields=id,title,date,venue_name,category,is_publish")
+          const fallbackData = await handleResponse(fallbackResponse)
+          console.log('✅ API: Fallback events fetched:', fallbackData.length, 'events')
+          
+          const fallbackTransformed = fallbackData.map(transformEventFromBackend)
+          setCachedData(cacheKey, fallbackTransformed)
+          return fallbackTransformed
+        } catch (fallbackError) {
+          console.error("❌ API: Fallback also failed:", fallbackError)
+          throw new Error("Both main and fallback event fetching failed")
+        }
+      }
+      
+      throw error
+    }
   },
 
   // Renamed from getById to getEvent
@@ -372,7 +461,7 @@ export const eventAPI = {
 
   // Renamed from create to createEvent
   createEvent: async (eventData) => {
-    const transformedData = transformEventToBackend(eventData)
+    const transformedData = transformEventToBackend(eventData, false) // false = creation mode
 
     // Debug log to see what we're sending
     console.log("Sending event data:", transformedData)
@@ -392,7 +481,7 @@ export const eventAPI = {
 
   // Renamed from update to updateEvent
   updateEvent: async (id, eventData) => {
-    const transformedData = transformEventToBackend(eventData)
+    const transformedData = transformEventToBackend(eventData, true) // true = edit mode
     const response = await authenticatedFetch(`/events/${id}/`, {
       method: "PUT",
       body: JSON.stringify(transformedData),
@@ -568,66 +657,21 @@ export const eventAPI = {
     }
   },
 
-  // Search users for team collaboration - with fallback to mock data
-  searchUsers: async (query) => {
+  // Search users by email for team collaboration
+  searchUsers: async (email) => {
     try {
-      // First try the main users endpoint
-      const response = await authenticatedFetch(`/users/?search=${encodeURIComponent(query)}`)
+      // Use the specific email search endpoint
+      const response = await authenticatedFetch(`/site_setting/search/?email=${encodeURIComponent(email)}`)
       const data = await handleResponse(response)
-      return data.results || data
+      // Return as array to maintain consistency with UI expectations
+      return [data]
     } catch (error) {
-      console.log('Primary user search failed, trying alternative endpoint...', error)
-      try {
-        // Try alternative endpoint
-        const response = await authenticatedFetch(`/auth/users/?search=${encodeURIComponent(query)}`)
-        const data = await handleResponse(response)
-        return data.results || data
-      } catch (error2) {
-        console.log('Alternative user search failed, using mock data...', error2)
-        // Fallback to mock data for testing
-        const mockUsers = [
-          {
-            id: 1,
-            first_name: 'John',
-            last_name: 'Doe',
-            email: 'john.doe@example.com',
-          },
-          {
-            id: 2,
-            first_name: 'Jane',
-            last_name: 'Smith',
-            email: 'jane.smith@example.com',
-          },
-          {
-            id: 3,
-            first_name: 'Bob',
-            last_name: 'Johnson',
-            email: 'bob.johnson@example.com',
-          },
-          {
-            id: 4,
-            first_name: 'Alice',
-            last_name: 'Brown',
-            email: 'alice.brown@example.com',
-          },
-          {
-            id: 5,
-            first_name: 'Charlie',
-            last_name: 'Wilson',
-            email: 'charlie.wilson@example.com',
-          }
-        ]
-        
-        // Filter mock users based on query
-        const filteredUsers = mockUsers.filter(user => 
-          user.first_name.toLowerCase().includes(query.toLowerCase()) ||
-          user.last_name.toLowerCase().includes(query.toLowerCase()) ||
-          user.email.toLowerCase().includes(query.toLowerCase())
-        )
-        
-        console.log('Returning mock users:', filteredUsers)
-        return filteredUsers
+      console.log('Email search failed:', error)
+      // If user not found or other error, return empty array
+      if (error.message.includes('User with this email does not exist')) {
+        return []
       }
+      throw error
     }
   },
 

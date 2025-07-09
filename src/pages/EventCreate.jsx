@@ -26,22 +26,8 @@ export default function EventCreate() {
     startTime: "",
     endTime: "",
     venue: "",
-    eventType: "wedding",
-    customEventType: "",
-    googleMapLink: "",
-    youtubeUrl: "",
-    videoMessageUrl: "",
-    image: "",
-    agenda: [
-      {
-        id: Date.now(),
-        date: "",
-        title: "",
-        activities: [{ id: Date.now() + 1, time: "", activity: "" }],
-      },
-    ],
-    hosts: [{ id: Date.now(), name: "", parentNames: ["", ""] }],
-    sponsors: [],
+    category: "wedding",
+    customCategory: "",
   })
 
   const isVendor = user?.is_vendor || user?.role === "vendor"
@@ -101,7 +87,7 @@ export default function EventCreate() {
     console.log('Title type:', typeof formData.title)
     console.log('Title length:', formData.title?.length)
     
-    const requiredFields = ['title', 'date', 'venue', 'eventType']
+    const requiredFields = ['title', 'date', 'venue', 'category']
     const missingFields = requiredFields.filter(field => {
       const value = formData[field]
       const isEmpty = !value || value.toString().trim() === ''
@@ -146,80 +132,36 @@ export default function EventCreate() {
     return timeRegex.test(timeString)
   }
 
-  // Clean up form data before sending - match Django model structure
+  // Clean up form data before sending - only required fields for creation
   const cleanFormData = (data) => {
-    // Backend-compatible event type mapping
-    const eventTypeMapping = {
-      'wedding': 'Wedding',
-      'birthday': 'Birthday', 
-      'housewarming': 'Housewarming', // Map to working type temporarily
-      'Conferences': 'Conferences', // Map to working type temporarily
-      'concert': 'Concert', // Map to working type temporarily
-      'seminars': 'Seminars', // Map to working type temporarily
-      'retreat': 'Retreat', // Map to working type temporarily
-      'other': data.customEventType // Map to working type temporarily
-    };
-
-    // Clean up agenda data
-    const cleanedAgenda = data.agenda
-      .filter(day => day.date && day.title)
-      .map(day => ({
-        date: day.date,
-        agenda_details: day.activities
-          .filter(activity => activity.time && activity.activity)
-          .map((activity, index) => ({
-            language: 'en',
-            agenda_detail: activity.activity,
-            time_text: activity.time,
-            order: index + 1
-          }))
-      }))
-
-    // Clean up hosts data
-    const cleanedHosts = data.hosts
-      .filter(host => host.name)
-      .map(host => ({
-        host_names: [{
-          language: 'en',
-          host_name: host.name,
-          parent_a_name: host.parentNames[0] || '',
-          parent_b_name: host.parentNames[1] || ''
-        }]
-      }))
-
-    // Clean up sponsors data
-    const cleanedSponsors = data.sponsors
-      .filter(sponsor => sponsor && sponsor.name)
-      .map(sponsor => ({
-        name: sponsor.name,
-        logo: sponsor.logo || null
-      }))
-
-    const backendCompatibleType = eventTypeMapping[data.eventType];
+    console.log('cleanFormData received:', data);
+    console.log('data.category:', data.category);
+    console.log('data.customCategory:', data.customCategory);
+    
+    // Handle custom category
+    let finalCategory = data.category;
+    if (data.category === 'other' && data.customCategory) {
+      finalCategory = data.customCategory;
+    }
+    
+    console.log('finalCategory:', finalCategory);
 
     return {
       title: data.title,
       description: data.description || '',
       date: data.date || null,
-      start_time: data.startTime || null,
-      end_time: data.endTime || null,
-      venue_name: data.venue || '',
-      category: backendCompatibleType, // Use mapped type for backend
-      original_category: data.eventType === 'other' ? data.customEventType : data.eventType, // Store original type
-      google_map_embed_link: data.googleMapLink || '',
-      youtube_embed_link: data.youtubeUrl || '',
-      video_message_embed_link: data.videoMessageUrl || '',
-      event_banner: data.image || null,
-      agenda: cleanedAgenda,
-      hosts: cleanedHosts,
-      sponsors: cleanedSponsors
+      startTime: data.startTime || null,
+      endTime: data.endTime || null,
+      venueName: data.venue || '',
+      category: finalCategory,
     }
   }
+  
 
   const handleSave = async () => {
     try {
       console.log("Raw form data:", formData)
-      console.log("Original event type:", formData.eventType)
+      console.log("Original category:", formData.category)
       
       // Validate form
       if (!validateForm()) {
@@ -229,11 +171,10 @@ export default function EventCreate() {
       // Clean and format data
       const cleanedData = cleanFormData(formData)
       console.log("Cleaned data being sent:", cleanedData)
-      console.log("Backend category (mapped):", cleanedData.category)
-      console.log("Original category (stored):", cleanedData.original_category)
+      console.log("Backend category:", cleanedData.category)
       
       // Additional validation for backend compatibility
-      if (!cleanedData.title || !cleanedData.date || !cleanedData.venue_name || !cleanedData.category) {
+      if (!cleanedData.title || !cleanedData.date || !cleanedData.venueName || !cleanedData.category) {
         alert('Missing required fields after data cleaning. Please check all required fields.')
         return
       }
@@ -316,138 +257,6 @@ export default function EventCreate() {
     dispatch(clearError())
   }
   
-  // Form handlers for complex nested data
-  const handleAgendaChange = (agendaIndex, field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      agenda: prev.agenda.map((day, index) => (index === agendaIndex ? { ...day, [field]: value } : day)),
-    }))
-  }
-
-  const handleActivityChange = (agendaIndex, activityIndex, field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      agenda: prev.agenda.map((day, dayIndex) =>
-        dayIndex === agendaIndex
-          ? {
-              ...day,
-              activities: day.activities.map((activity, actIndex) =>
-                actIndex === activityIndex ? { ...activity, [field]: value } : activity,
-              ),
-            }
-          : day,
-      ),
-    }))
-  }
-
-  const handleHostChange = (hostIndex, field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      hosts: prev.hosts.map((host, index) => (index === hostIndex ? { ...host, [field]: value } : host)),
-    }))
-  }
-
-  const handleParentNameChange = (hostIndex, parentIndex, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      hosts: prev.hosts.map((host, hIndex) =>
-        hIndex === hostIndex
-          ? {
-              ...host,
-              parentNames: host.parentNames.map((name, pIndex) => (pIndex === parentIndex ? value : name)),
-            }
-          : host,
-      ),
-    }))
-  }
-
-  const addAgendaDay = () => {
-    setFormData((prev) => ({
-      ...prev,
-      agenda: [
-        ...prev.agenda,
-        {
-          id: Date.now(),
-          date: "",
-          title: "",
-          activities: [{ id: Date.now() + 1, time: "", activity: "" }],
-        },
-      ],
-    }))
-  }
-
-  const removeAgendaDay = (agendaIndex) => {
-    setFormData((prev) => ({
-      ...prev,
-      agenda: prev.agenda.filter((_, index) => index !== agendaIndex),
-    }))
-  }
-
-  const addActivity = (agendaIndex) => {
-    setFormData((prev) => ({
-      ...prev,
-      agenda: prev.agenda.map((day, index) =>
-        index === agendaIndex
-          ? {
-              ...day,
-              activities: [...day.activities, { id: Date.now(), time: "", activity: "" }],
-            }
-          : day,
-      ),
-    }))
-  }
-
-  const removeActivity = (agendaIndex, activityIndex) => {
-    setFormData((prev) => ({
-      ...prev,
-      agenda: prev.agenda.map((day, dayIndex) =>
-        dayIndex === agendaIndex
-          ? {
-              ...day,
-              activities: day.activities.filter((_, actIndex) => actIndex !== activityIndex),
-            }
-          : day,
-      ),
-    }))
-  }
-
-  const addHost = () => {
-    setFormData((prev) => ({
-      ...prev,
-      hosts: [...prev.hosts, { id: Date.now(), name: "", parentNames: ["", ""] }],
-    }))
-  }
-
-  const removeHost = (hostIndex) => {
-    setFormData((prev) => ({
-      ...prev,
-      hosts: prev.hosts.filter((_, index) => index !== hostIndex),
-    }))
-  }
-
-  const addParentName = (hostIndex) => {
-    setFormData((prev) => ({
-      ...prev,
-      hosts: prev.hosts.map((host, index) =>
-        index === hostIndex ? { ...host, parentNames: [...host.parentNames, ""] } : host,
-      ),
-    }))
-  }
-
-  const removeParentName = (hostIndex, parentIndex) => {
-    setFormData((prev) => ({
-      ...prev,
-      hosts: prev.hosts.map((host, hIndex) =>
-        hIndex === hostIndex
-          ? {
-              ...host,
-              parentNames: host.parentNames.filter((_, pIndex) => pIndex !== parentIndex),
-            }
-          : host,
-      ),
-    }))
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 font-['Plus_Jakarta_Sans']">
       <style>{animationStyles}</style>
@@ -531,19 +340,6 @@ export default function EventCreate() {
             isEdit={false}
             loading={loading}
             error={error}
-            // Extended props for complex form handling
-            onAgendaChange={handleAgendaChange}
-            onActivityChange={handleActivityChange}
-            onHostChange={handleHostChange}
-            onParentNameChange={handleParentNameChange}
-            addAgendaDay={addAgendaDay}
-            removeAgendaDay={removeAgendaDay}
-            addActivity={addActivity}
-            removeActivity={removeActivity}
-            addHost={addHost}
-            removeHost={removeHost}
-            addParentName={addParentName}
-            removeParentName={removeParentName}
           />
           </div>
         </div>

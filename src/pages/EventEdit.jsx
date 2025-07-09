@@ -27,8 +27,8 @@ export default function EventEdit() {
     startTime: "",
     endTime: "",
     venue: "",
-    eventType: "wedding",
-    customEventType: "",
+    category: "wedding",
+    customCategory: "",
     googleMapLink: "",
     youtubeUrl: "",
     videoMessageUrl: "",
@@ -82,8 +82,8 @@ export default function EventEdit() {
         startTime: currentEvent.startTime || "",
         endTime: currentEvent.endTime || "",
         venue: currentEvent.venue || "",
-        eventType: currentEvent.eventType || "wedding",
-        customEventType: currentEvent.customEventType || "",
+        category: currentEvent.category || "wedding",
+        customCategory: currentEvent.customCategory || "",
         googleMapLink: currentEvent.googleMapLink || "",
         youtubeUrl: currentEvent.youtubeUrl || "",
         videoMessageUrl: currentEvent.videoMessageUrl || "",
@@ -163,7 +163,7 @@ export default function EventEdit() {
     console.log('Title type:', typeof formData.title)
     console.log('Title length:', formData.title?.length)
     
-    const requiredFields = ['title', 'date', 'venue', 'eventType']
+    const requiredFields = ['title', 'date', 'venue', 'category']
     const missingFields = requiredFields.filter(field => {
       const value = formData[field]
       const isEmpty = !value || value.toString().trim() === ''
@@ -252,7 +252,7 @@ export default function EventEdit() {
       start_time: data.startTime || null,
       end_time: data.endTime || null,
       venue_name: data.venue || '',
-      category: data.eventType === 'other' ? data.customEventType : data.eventType,
+      category: data.category === 'other' ? data.customCategory : data.category,
       google_map_embed_link: data.googleMapLink || '',
       youtube_embed_link: data.youtubeUrl || '',
       video_message_embed_link: data.videoMessageUrl || '',

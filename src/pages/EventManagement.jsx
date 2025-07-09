@@ -13,7 +13,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { fetchEventsLight, deleteEvent } from "../redux/slices/eventSlice";
+import { fetchEvents, deleteEvent } from "../redux/slices/eventSlice";
 import { useVendorCheck } from "../components/SecurityMonitor";
 import EventCard from "../components/Event/EventCard";
 import ConfirmationModal from "../components/Event/ConfirmationModal";
@@ -28,6 +28,7 @@ export default function EventManagement() {
   const { is_vendor } = useVendorCheck();
 
   const { events, loading, error } = useSelector((state) => state.events);
+  const { user } = useSelector((state) => state.auth);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -46,8 +47,93 @@ export default function EventManagement() {
   }, [searchParams]);
 
   useEffect(() => {
-    dispatch(fetchEventsLight());
+    console.log('🔄 EventManagement: Fetching events (with backend team_members support)...')
+    dispatch(fetchEvents());
   }, [dispatch]);
+
+  // Debug: Log current user and events for troubleshooting
+  useEffect(() => {
+    console.log('🔍 EventManagement Debug:');
+    console.log('👤 Current user:', { 
+      is_vendor, 
+      user_id: user?.id, 
+      user_email: user?.email,
+      user_role: user?.role,
+      user_is_vendor: user?.is_vendor 
+    });
+    console.log('📋 Events loaded:', events.length);
+    
+    if (events.length > 0) {
+      console.log('📋 Events with team member access:');
+      events.forEach((event, index) => {
+        const teamMembers = event.team_members || event.teamMembers || [];
+        const isUserTeamMember = teamMembers.some(tm => 
+          tm.id === user?.id || 
+          tm.user_id === user?.id ||
+          tm.email === user?.email ||
+          (typeof tm === 'string' && tm === user?.email) ||
+          (typeof tm === 'number' && tm === user?.id)
+        );
+        const isUserAdmin = event.admin?.id === user?.id || 
+                           event.admin?.user_id === user?.id ||
+                           event.admin?.email === user?.email ||
+                           event.created_by === user?.id ||
+                           event.createdBy === user?.id;
+        
+        console.log(`  ${index + 1}. "${event.title}":`, {
+          id: event.id,
+          admin: event.admin,
+          team_members_count: teamMembers.length,
+          team_members: teamMembers,
+          user_is_admin: isUserAdmin,
+          user_is_team_member: isUserTeamMember,
+          user_has_access: isUserAdmin || isUserTeamMember,
+          raw_event_data: {
+            admin_structure: event.admin,
+            team_members_structure: teamMembers
+          }
+        });
+      });
+      
+      // Summary of access
+      const accessibleEvents = events.filter(event => {
+        const teamMembers = event.team_members || event.teamMembers || [];
+        const isUserTeamMember = teamMembers.some(tm => 
+          tm.id === user?.id || 
+          tm.user_id === user?.id ||
+          tm.email === user?.email ||
+          (typeof tm === 'string' && tm === user?.email) ||
+          (typeof tm === 'number' && tm === user?.id)
+        );
+        const isUserAdmin = event.admin?.id === user?.id || 
+                           event.admin?.user_id === user?.id ||
+                           event.admin?.email === user?.email ||
+                           event.created_by === user?.id ||
+                           event.createdBy === user?.id;
+        return isUserAdmin || isUserTeamMember;
+      });
+      
+      console.log(`🎯 Summary: User has access to ${accessibleEvents.length} out of ${events.length} events`);
+      if (accessibleEvents.length !== events.length) {
+        console.log('⚠️ Backend filtering may not be working correctly - frontend shows events user shouldn\'t have access to');
+      }
+      
+    } else {
+      console.log('❌ No events found for current user');
+      console.log('🔍 This could mean:');
+      console.log('  1. User is not a vendor and not added as team member to any events');
+      console.log('  2. Backend filtering is working correctly');
+      console.log('  3. There are no events in the system');
+    }
+    
+    if (loading) console.log('🔄 Loading state:', loading);
+    if (error) console.log('❌ Error state:', error);
+    
+    // Run detailed debug analysis
+    if (events.length > 0 && user) {
+      // Debug functionality removed
+    }
+  }, [events, is_vendor, user, loading, error]);
 
   const handleCreateEvent = () => {
     if (is_vendor) {
@@ -176,7 +262,7 @@ export default function EventManagement() {
               </div>
 
               {/* Create Event Button - Only show for vendors */}
-              <div className="w-full md:w-auto mt-4 md:mt-0">
+              <div className="w-full md:w-auto mt-4 md:mt-0 flex gap-2">
                 {is_vendor ? (
                   <button
                     onClick={handleCreateEvent}

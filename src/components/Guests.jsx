@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { fetchGuests } from "../redux/slices/guestSlice";
-import { fetchEventsLight } from "../redux/slices/eventSlice";
+import { fetchEvents } from "../redux/slices/eventSlice";
 import {
   Users,
   Search,
@@ -104,7 +104,7 @@ const Guests = () => {
 
   // Fetch initial data
   useEffect(() => {
-    dispatch(fetchEventsLight());
+    dispatch(fetchEvents());
     // Note: fetchGuests is typically called per event, but for now we'll use local state
   }, [dispatch]);
 

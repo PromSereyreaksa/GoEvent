@@ -5,9 +5,26 @@ import { mockEvents } from "../../data/mockCollaborationData"
 // Async thunks for event operations
 export const fetchEvents = createAsyncThunk("events/fetchEvents", async (_, { rejectWithValue }) => {
   try {
+    console.log('🔄 Redux: Fetching events with team member data...')
     const events = await eventAPI.getEvents()
+    console.log('✅ Redux: Events fetched successfully:', events.length, 'events')
+    console.log('📋 Redux: Events with team members:', events.map(e => ({ 
+      id: e.id, 
+      title: e.title, 
+      admin: e.admin?.email || e.admin?.id, 
+      team_members_count: (e.team_members || e.teamMembers || []).length,
+      team_members: (e.team_members || e.teamMembers || []).map(tm => tm.email || tm.id)
+    })))
     return events
   } catch (error) {
+    console.error('❌ Redux: Error fetching events:', error)
+    
+    // If it's a backend serializer error, provide helpful message
+    if (error.message.includes('team_members') || error.message.includes('AssertionError')) {
+      console.error('🔧 Redux: Backend serializer error detected - check team_members field definition')
+      return rejectWithValue('Backend configuration error: Please check team_members field in EventsSerializer')
+    }
+    
     return rejectWithValue(error.message)
   }
 })
