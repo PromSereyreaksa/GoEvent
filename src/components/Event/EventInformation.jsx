@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import {
   ArrowLeft,
@@ -12,55 +12,49 @@ import {
   AlertCircle,
   Info,
   CheckCircle,
-} from "lucide-react";
+} from "lucide-react"
 
 export function EventInformation({ event, onBack }) {
   if (!event) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center max-w-md">
-          <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-8 h-8 text-red-600" />
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 flex items-center justify-center p-6 font-['Plus_Jakarta_Sans']">
+        <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-lg border border-gray-200/60 p-8 text-center max-w-md">
+          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="w-10 h-10 text-red-600" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Event Not Found
-          </h3>
-          <p className="text-gray-600 mb-6">
-            The event data could not be loaded.
-          </p>
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">Event Not Found</h3>
+          <p className="text-gray-600 mb-8 leading-relaxed">The event data could not be loaded. Please try again.</p>
           <button
             onClick={onBack}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-2xl font-semibold hover:shadow-lg transition-all duration-200 transform hover:scale-105"
           >
             Go Back
           </button>
         </div>
       </div>
-    );
+    )
   }
 
-  const displayEvent = event;
+  const displayEvent = event
 
   return (
-    <div className="min-h-screen bg-gray-50 font-['Plus_Jakarta_Sans'] w-full">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 font-['Plus_Jakarta_Sans'] w-full">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm w-full">
+      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200/60 shadow-sm w-full">
         <div className="px-4 sm:px-6 lg:px-8 py-4 w-full">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
                 onClick={onBack}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-3 rounded-2xl hover:bg-gray-100/80 transition-all duration-200 transform hover:scale-105 backdrop-blur-sm"
               >
                 <ArrowLeft className="w-5 h-5 text-gray-600" />
               </button>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text">
                   {displayEvent?.name || displayEvent?.title || "Event Details"}
                 </h1>
-                <p className="text-gray-600 mt-1">
-                  Manage event details and settings
-                </p>
+                <p className="text-gray-600 mt-1 font-medium">Comprehensive event information and details</p>
               </div>
             </div>
           </div>
@@ -71,7 +65,7 @@ export function EventInformation({ event, onBack }) {
       <div className="px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Event Image */}
         {(displayEvent?.image || displayEvent?.event_banner) && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-lg border border-gray-200/60 overflow-hidden transform hover:scale-[1.02] transition-all duration-300">
             <img
               src={displayEvent.image || displayEvent.event_banner}
               alt={displayEvent?.name || displayEvent?.title || "Event"}
@@ -81,13 +75,15 @@ export function EventInformation({ event, onBack }) {
         )}
 
         {/* Core Details Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Info className="w-6 h-6 text-blue-600" />
+        <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-lg border border-gray-200/60 p-6 sm:p-8 transform hover:scale-[1.01] transition-all duration-300">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3 bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center">
+                <Info className="w-5 h-5 text-white" />
+              </div>
               Event Details
             </h2>
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-green-50 text-green-700 border border-green-200">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold bg-gradient-to-r from-green-50 to-green-100 text-green-700 border border-green-200/60 backdrop-blur-sm">
               <CheckCircle className="w-4 h-4" />
               Active
             </span>
@@ -95,85 +91,75 @@ export function EventInformation({ event, onBack }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Date */}
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Calendar className="w-6 h-6 text-blue-600" />
+            <div className="flex items-start gap-4 p-4 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/60 backdrop-blur-sm transform hover:scale-105 transition-all duration-200">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                <Calendar className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date
-                </label>
-                <p className="text-gray-900 font-medium">
-                  {displayEvent?.date || "Not set"}
-                </p>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Date</label>
+                <p className="text-gray-900 font-bold">{displayEvent?.date || "Not set"}</p>
               </div>
             </div>
 
             {/* Time */}
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Clock className="w-6 h-6 text-green-600" />
+            <div className="flex items-start gap-4 p-4 rounded-2xl bg-gradient-to-br from-green-50 to-green-100/50 border border-green-200/60 backdrop-blur-sm transform hover:scale-105 transition-all duration-200">
+              <div className="w-12 h-12 bg-gradient-to-r from-green-600 to-green-700 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                <Clock className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Time
-                </label>
-                <p className="text-gray-900 font-medium">
-                  {displayEvent?.startTime || displayEvent?.start_time || "N/A"}{" "}
-                  - {displayEvent?.endTime || displayEvent?.end_time || "N/A"}
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Time</label>
+                <p className="text-gray-900 font-bold">
+                  {displayEvent?.startTime || displayEvent?.start_time || "N/A"} -{" "}
+                  {displayEvent?.endTime || displayEvent?.end_time || "N/A"}
                 </p>
               </div>
             </div>
 
             {/* Venue */}
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                <MapPin className="w-6 h-6 text-purple-600" />
+            <div className="flex items-start gap-4 p-4 rounded-2xl bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200/60 backdrop-blur-sm transform hover:scale-105 transition-all duration-200">
+              <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-purple-700 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                <MapPin className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Venue
-                </label>
-                <p className="text-gray-900 font-medium">
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Venue</label>
+                <p className="text-gray-900 font-bold">
                   {displayEvent?.venue || displayEvent?.venue_name || "Not set"}
                 </p>
               </div>
             </div>
 
             {/* Category */}
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-pink-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Heart className="w-6 h-6 text-pink-600" />
+            <div className="flex items-start gap-4 p-4 rounded-2xl bg-gradient-to-br from-pink-50 to-pink-100/50 border border-pink-200/60 backdrop-blur-sm transform hover:scale-105 transition-all duration-200">
+              <div className="w-12 h-12 bg-gradient-to-r from-pink-600 to-pink-700 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                <Heart className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
-                </label>
-                <p className="text-gray-900 font-medium">
-                  {displayEvent?.category || "N/A"}
-                </p>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Category</label>
+                <p className="text-gray-900 font-bold">{displayEvent?.category || "N/A"}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Description Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Description</h2>
-          <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-            <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-              {displayEvent?.details ||
-                displayEvent?.description ||
-                "No description available."}
+        <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-lg border border-gray-200/60 p-6 sm:p-8 transform hover:scale-[1.01] transition-all duration-300">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text">
+            Description
+          </h2>
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl p-6 border border-gray-200/60 backdrop-blur-sm">
+            <p className="text-gray-700 whitespace-pre-wrap leading-relaxed font-medium">
+              {displayEvent?.details || displayEvent?.description || "No description available."}
             </p>
           </div>
         </div>
 
         {/* Hosts Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Users className="w-6 h-6 text-blue-600" />
+        <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-lg border border-gray-200/60 p-6 sm:p-8 transform hover:scale-[1.01] transition-all duration-300">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3 bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center">
+                <Users className="w-5 h-5 text-white" />
+              </div>
               Event Hosts
             </h2>
           </div>
@@ -183,20 +169,17 @@ export function EventInformation({ event, onBack }) {
               {displayEvent.hosts.map((host, index) => (
                 <div
                   key={host?.id || index}
-                  className="bg-gray-50 rounded-lg p-6 border border-gray-200 relative"
+                  className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl p-6 border border-gray-200/60 backdrop-blur-sm transform hover:scale-105 transition-all duration-200 relative"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <User className="w-6 h-6 text-blue-600" />
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                      <User className="w-6 h-6 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        {host?.name || "Unnamed Host"}
-                      </h3>
+                      <h3 className="text-lg font-bold text-gray-900 mb-2">{host?.name || "Unnamed Host"}</h3>
                       {host?.parentNames?.length > 0 && (
-                        <p className="text-sm text-gray-600">
-                          <span className="font-medium">Parents:</span>{" "}
-                          {host.parentNames.join(", ")}
+                        <p className="text-sm text-gray-600 font-medium">
+                          <span className="font-semibold">Parents:</span> {host.parentNames.join(", ")}
                         </p>
                       )}
                     </div>
@@ -205,67 +188,65 @@ export function EventInformation({ event, onBack }) {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-gray-400" />
+            <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl border border-gray-200/60 backdrop-blur-sm">
+              <div className="w-20 h-20 bg-gradient-to-r from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Users className="w-10 h-10 text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No hosts added yet
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Add team members to manage this event
-              </p>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">No hosts added yet</h3>
+              <p className="text-gray-600 mb-6 font-medium">Add team members to manage this event</p>
             </div>
           )}
         </div>
 
         {/* Agenda Card */}
         {displayEvent?.agenda?.length > 0 && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <CalendarDays className="w-6 h-6 text-blue-600" />
+          <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-lg border border-gray-200/60 p-6 sm:p-8 transform hover:scale-[1.01] transition-all duration-300">
+            <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3 bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center">
+                <CalendarDays className="w-5 h-5 text-white" />
+              </div>
               Event Agenda
             </h2>
-            <div className="space-y-6">
+            <div className="space-y-8">
               {displayEvent.agenda.map((day, index) => (
                 <div
                   key={day?.id || index}
-                  className="bg-gray-50 rounded-lg p-6 border border-gray-200"
+                  className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl p-6 border border-gray-200/60 backdrop-blur-sm transform hover:scale-[1.02] transition-all duration-200"
                 >
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm">
+                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center text-white font-bold text-sm shadow-lg">
                       {index + 1}
                     </div>
                     {day?.title || `Day ${index + 1}`}
                     {day?.date && (
-                      <span className="text-sm font-normal text-gray-600 ml-2">
+                      <span className="text-sm font-medium text-gray-600 ml-2 px-3 py-1 bg-white/60 rounded-xl border border-gray-200/60">
                         ({day.date})
                       </span>
                     )}
                   </h3>
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {day?.activities?.length > 0 ? (
                       day.activities.map((activity, actIndex) => (
                         <div
                           key={activity?.id || actIndex}
-                          className="flex items-start gap-3 p-3 bg-white rounded-lg border border-gray-200"
+                          className="flex items-start gap-4 p-4 bg-white/60 rounded-2xl border border-gray-200/60 backdrop-blur-sm transform hover:scale-[1.02] transition-all duration-200"
                         >
-                          <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
+                          <div className="w-3 h-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full mt-2 flex-shrink-0 shadow-sm"></div>
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Clock className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm font-medium text-gray-900">
-                                {activity?.time || "Time TBD"}
-                              </span>
+                            <div className="flex items-center gap-3 mb-2">
+                              <div className="w-5 h-5 bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
+                                <Clock className="w-3 h-3 text-gray-500" />
+                              </div>
+                              <span className="text-sm font-bold text-gray-900">{activity?.time || "Time TBD"}</span>
                             </div>
-                            <p className="text-gray-700">
+                            <p className="text-gray-700 font-medium leading-relaxed">
                               {activity?.activity || "No activity description."}
                             </p>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <p className="text-gray-600 italic">
+                      <p className="text-gray-600 italic font-medium text-center py-4">
                         No activities listed for this day.
                       </p>
                     )}
@@ -277,5 +258,5 @@ export function EventInformation({ event, onBack }) {
         )}
       </div>
     </div>
-  );
+  )
 }
