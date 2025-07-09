@@ -24,7 +24,7 @@ import EventCreate from "./pages/EventCreate"
 import EventView from "./pages/EventView"
 import EventEdit from "./pages/EventEdit"
 import Settings from "./pages/Settings"
-import Profile from "./pages/Profile"
+import User from "./pages/User"
 import TeamCollaboration from "./pages/TeamCollaboration"
 import Guests from "./components/Guests"
 
@@ -141,12 +141,12 @@ function App() {
               }
             />
 
-            {/* Profile Route */}
+            {/* User Profile Route */}
             <Route
-              path="/profile"
+              path="/user"
               element={
                 <ProtectedRoute>
-                  <Profile />
+                  <User />
                 </ProtectedRoute>
               }
             />

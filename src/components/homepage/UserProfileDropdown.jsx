@@ -32,7 +32,7 @@ export default function UserProfileDropdown({ user }) {
     {
       icon: User,
       label: "Profile",
-      onClick: () => navigate("/profile"),
+      onClick: () => navigate("/user"),
     },
     {
       icon: Settings,
