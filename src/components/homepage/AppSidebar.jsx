@@ -19,6 +19,7 @@ import {
   LogOut,
   X,
   Plus,
+  User,
 } from "lucide-react";
 
 export default function AppSidebar({
@@ -79,6 +80,12 @@ export default function AppSidebar({
       label: "Team",
       href: "/team",
       active: location.pathname === "/team",
+    },
+    {
+      icon: User,
+      label: "Profile",
+      href: "/user",
+      active: location.pathname === "/user",
     },
     // {
     //   icon: Star,
