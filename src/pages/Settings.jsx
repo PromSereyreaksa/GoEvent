@@ -7,6 +7,7 @@ import { Menu, ArrowLeft, Bell, Shield, Palette, Save, User, Camera, Eye, EyeOff
 import AppSidebar from "../components/layout/AppSidebar";
 import { SidebarProvider } from "../components/shared/SidebarProvider";
 import { useSearchParams } from "react-router-dom";
+import { authAPI } from "../utils/api";
 
 
 export default function Settings() {
