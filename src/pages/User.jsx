@@ -177,6 +177,9 @@ function EditProfileModal({ isOpen, onClose, userData, onSave, loading }) {
       last_name: formData.last_name,
       email: formData.email,
       phone_number: formData.phone_number,
+      // Preserve vendor status fields to prevent them from being changed
+      is_vendor: userData?.is_vendor || false,
+      is_partner: userData?.is_partner || false,
     };
     
     // Add password fields if changing password
