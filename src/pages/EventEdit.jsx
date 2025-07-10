@@ -49,6 +49,7 @@ export default function EventEdit() {
 
   // Redirect non-vendors immediately
   useEffect(() => {
+    
     if (!isVendor) {
       navigate("/events", { replace: true })
     }
@@ -204,9 +205,29 @@ export default function EventEdit() {
   }
 
   const isValidTime = (timeString) => {
-    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
-    return timeRegex.test(timeString)
+  if (!timeString) return true // Allow empty times
+  
+  // Remove any whitespace
+  const cleanTime = timeString.trim()
+  
+  // More lenient time validation - just check if it's a reasonable time format
+  const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
+  
+  // Try to create a valid time and see if it works
+  try {
+    const [hours, minutes] = cleanTime.split(':')
+    const h = parseInt(hours, 10)
+    const m = parseInt(minutes, 10)
+    
+    if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+      return true
+    }
+  } catch (e) {
+    // If parsing fails, fall back to regex
   }
+  
+  return timeRegex.test(cleanTime)
+}
 
   // Clean up form data before sending - match Django model structure
   const cleanFormData = (data) => {

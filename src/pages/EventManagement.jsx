@@ -13,7 +13,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { fetchEvents, deleteEvent } from "../redux/slices/eventSlice";
+import { fetchEvents, deleteEvent, clearRefreshFlag, searchEvents } from "../redux/slices/eventSlice";
 import { useVendorCheck } from "../components/SecurityMonitor";
 import EventCard from "../components/Event/EventCard";
 import ConfirmationModal from "../components/Event/ConfirmationModal";
@@ -27,9 +27,10 @@ export default function EventManagement() {
   const [searchParams] = useSearchParams();
   const { is_vendor } = useVendorCheck();
 
-  const { events, loading, error } = useSelector((state) => state.events);
+  const { events, loading, error, shouldRefreshEvents } = useSelector((state) => state.events);
   const { user } = useSelector((state) => state.auth);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchQuery, setSearchQuery] = useState(""); // Actual search query that triggers API calls
   const [filterCategory, setFilterCategory] = useState("all");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
@@ -37,19 +38,63 @@ export default function EventManagement() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showTeamManagement, setShowTeamManagement] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Handle search from URL params (from global search)
   useEffect(() => {
-    const searchQuery = searchParams.get("search");
-    if (searchQuery) {
-      setSearchTerm(searchQuery);
+    const searchQueryParam = searchParams.get("search");
+    if (searchQueryParam) {
+      setSearchTerm(searchQueryParam);
+      setSearchQuery(searchQueryParam); // Trigger search immediately for URL params
     }
   }, [searchParams]);
 
+  // Search effect - only triggers when searchQuery changes (on Enter)
   useEffect(() => {
-    console.log('🔄 EventManagement: Fetching events (with backend team_members support)...')
-    dispatch(fetchEvents());
-  }, [dispatch]);
+    console.log('🔍 Search effect triggered, searchQuery:', searchQuery);
+    
+    if (searchQuery.trim().length >= 2) {
+      setIsSearching(true);
+      console.log('🔍 Performing backend event search for:', searchQuery);
+      dispatch(searchEvents(searchQuery.trim()))
+        .then((result) => {
+          console.log('✅ Search completed:', result);
+          setIsSearching(false);
+        })
+        .catch((error) => {
+          console.error('❌ Search failed:', error);
+          setIsSearching(false);
+        });
+    } else if (searchQuery.trim().length === 0) {
+      // If search is cleared, fetch all events
+      console.log('🔄 Search cleared, fetching all events');
+      dispatch(fetchEvents());
+    }
+  }, [searchQuery, dispatch]);
+
+  // Handle Enter key press for search
+  const handleSearchKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      console.log('🔍 Enter pressed, triggering search for:', searchTerm);
+      setSearchQuery(searchTerm);
+    }
+  };
+
+  // Handle search clear
+  const handleSearchClear = () => {
+    setSearchTerm("");
+    setSearchQuery("");
+  };
+
+  useEffect(() => {
+    // Only fetch events on initial load if there's no search query
+    if (!searchQuery.trim()) {
+      console.log('🔄 EventManagement: Fetching events (with backend team_members support)...')
+      dispatch(fetchEvents());
+    } else {
+      console.log('⏸️ EventManagement: Skipping initial fetch, search query present:', searchQuery);
+    }
+  }, [dispatch]); // Removed searchQuery from dependencies to prevent conflicts
 
   // Debug: Log current user and events for troubleshooting
   useEffect(() => {
@@ -63,17 +108,49 @@ export default function EventManagement() {
     });
     console.log('📋 Events loaded:', events.length);
     
+    // Update selectedEvent if it exists and events have changed
+    if (selectedEvent && events.length > 0) {
+      const updatedEvent = events.find(e => e.id === selectedEvent.id);
+      if (updatedEvent && updatedEvent !== selectedEvent) {
+        console.log('🔄 EventManagement: Updating selectedEvent with new data:', {
+          previousTeamMembers: selectedEvent.team_members?.length || 0,
+          newTeamMembers: updatedEvent.team_members?.length || 0
+        });
+        setSelectedEvent(updatedEvent);
+      }
+    }
+    
     if (events.length > 0) {
       console.log('📋 Events with team member access:');
       events.forEach((event, index) => {
         const teamMembers = event.team_members || event.teamMembers || [];
-        const isUserTeamMember = teamMembers.some(tm => 
-          tm.id === user?.id || 
-          tm.user_id === user?.id ||
-          tm.email === user?.email ||
-          (typeof tm === 'string' && tm === user?.email) ||
-          (typeof tm === 'number' && tm === user?.id)
-        );
+        console.log(`Event ${event.title}:`, {
+          id: event.id,
+          team_members: teamMembers,
+          team_members_structure: teamMembers.map(tm => ({
+            id: tm.id,
+            user_id: tm.user_id,
+            email: tm.email,
+            first_name: tm.first_name,
+            last_name: tm.last_name
+          }))
+        });
+        
+        const isUserTeamMember = teamMembers.some(tm => {
+          const matches = tm.id === user?.id || 
+                         tm.user_id === user?.id ||
+                         tm.email === user?.email ||
+                         (typeof tm === 'string' && tm === user?.email) ||
+                         (typeof tm === 'number' && tm === user?.id);
+          
+          if (matches) {
+            console.log(`✅ User IS team member of "${event.title}":`, tm);
+          }
+          return matches;
+        });
+        
+        console.log(`User is team member of "${event.title}":`, isUserTeamMember);
+        
         const isUserAdmin = event.admin?.id === user?.id || 
                            event.admin?.user_id === user?.id ||
                            event.admin?.email === user?.email ||
@@ -133,7 +210,17 @@ export default function EventManagement() {
     if (events.length > 0 && user) {
       // Debug functionality removed
     }
-  }, [events, is_vendor, user, loading, error]);
+  }, [events, user, is_vendor, selectedEvent]);
+
+  // Add event refresh logic when team members are added
+  useEffect(() => {
+    if (shouldRefreshEvents) {
+      console.log('🔄 Refreshing events due to team member changes...');
+      dispatch(fetchEvents());
+      // Clear the refresh flag
+      dispatch(clearRefreshFlag());
+    }
+  }, [shouldRefreshEvents, dispatch]);
 
   const handleCreateEvent = () => {
     if (is_vendor) {
@@ -193,18 +280,21 @@ export default function EventManagement() {
   };
 
   const filteredEvents = events.filter((event) => {
-    const matchesSearch = event.title
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+    // Only filter by category since search is now handled by backend
     const matchesCategory =
       filterCategory === "all" || event.category === filterCategory;
-    return matchesSearch && matchesCategory;
+    return matchesCategory;
   });
 
-  if (loading) {
+  if (loading || isSearching) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">
+            {isSearching ? 'Searching events...' : 'Loading events...'}
+          </p>
+        </div>
       </div>
     );
   }
@@ -290,11 +380,25 @@ export default function EventManagement() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                 <input
                   type="text"
-                  placeholder="Search events..."
+                  placeholder="Search events... (Press Enter to search)"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                  onKeyPress={handleSearchKeyPress}
+                  className="w-full pl-9 sm:pl-10 pr-12 py-2.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                 />
+                {searchTerm && (
+                  <button
+                    onClick={handleSearchClear}
+                    className="absolute right-8 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+                {isSearching && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  </div>
+                )}
               </div>
               <div className="relative">
                 <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
@@ -341,13 +445,13 @@ export default function EventManagement() {
                   No events found
                 </h3>
                 <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base max-w-md mx-auto">
-                  {searchTerm || filterCategory !== "all"
+                  {searchQuery || filterCategory !== "all"
                     ? "Try adjusting your search or filter criteria"
                     : is_vendor
                     ? "Get started by creating your first event"
                     : "No events available at the moment"}
                 </p>
-                {is_vendor && !searchTerm && filterCategory === "all" && (
+                {is_vendor && !searchQuery && filterCategory === "all" && (
                   <button
                     onClick={handleCreateEvent}
                     className="bg-blue-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base min-h-[44px]"
@@ -390,7 +494,7 @@ export default function EventManagement() {
                   <div className="p-4 sm:p-6">
                     <TeamManagement
                       eventId={selectedEvent.id}
-                      teamMembers={selectedEvent.teamMembers || []}
+                      teamMembers={selectedEvent.team_members || selectedEvent.teamMembers || []}
                       canManage={
                         is_vendor ||
                         selectedEvent.createdBy === "current_user_id"

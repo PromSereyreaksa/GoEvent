@@ -82,73 +82,46 @@ const authenticatedFetch = async (url, options = {}) => {
 }
 
 // Transform frontend event data to backend format
-const transformEventToBackend = (eventData, isEdit = false) => {
-  // Required fields for creation
+const transformEventToBackend = (eventData) => {
   const transformed = {
     title: eventData.title,
     description: eventData.description || "",
     date: eventData.date,
     start_time: eventData.startTime,
     end_time: eventData.endTime,
-    venue_name: eventData.venueName || eventData.venue_name || eventData.venue || "",
+    venue_name: eventData.venueName || eventData.venue_name || "",
+    google_map_embed_link: eventData.googleMapLink || eventData.google_map_embed_link || "",
+    youtube_embed_link: eventData.youtubeLink || eventData.youtube_embed_link || "",
+    video_message_embed_link: eventData.videoMessageLink || eventData.video_message_embed_link || "",
     category: eventData.category || "wedding",
+    original_category: eventData.original_category || null, // Preserve original category
+    package_plan: eventData.packagePlan || null,
+    invitation_template: eventData.invitationTemplate || null,
+    team_members: eventData.teamMembers || eventData.team_members || [],
   }
 
-  // Additional fields only for editing
-  if (isEdit) {
-    Object.assign(transformed, {
-      google_map_embed_link: eventData.googleMapLink || eventData.google_map_embed_link || "",
-      youtube_embed_link: eventData.youtubeLink || eventData.youtube_embed_link || "",
-      video_message_embed_link: eventData.videoMessageLink || eventData.video_message_embed_link || "",
-      
-      // New media and design fields (editing only)
-      invitation_background_music: eventData.invitationBackgroundMusic || null,
-      logo_kh: eventData.logoKh || null,
-      logo_en: eventData.logoEn || null,
-      loading_screen: eventData.loadingScreen || null,
-      event_banner: eventData.eventBanner || eventData.event_banner || eventData.image || null,
-      transition_video: eventData.transitionVideo || null,
-      
-      // Package and template selection (editing only)
-      package_plan: eventData.packagePlan || null,
-      invitation_template: eventData.invitationTemplate || null,
-      
-      // Team management (editing only)
-      team_members: eventData.teamMembers || eventData.team_members || [],
-    })
+  // Transform host data
+  if (eventData.hosts && eventData.hosts.length > 0) {
+    transformed.host = eventData.hosts.map((host) => ({
+      avatar: host.avatar || null,
+      host_names: host.names || [],
+    }))
+  }
 
-    // Transform host data (editing only)
-    if (eventData.hosts && eventData.hosts.length > 0) {
-      transformed.hosts = eventData.hosts.map((host) => ({
-        host_names: host.names || [{
-          language: 'en',
-          host_name: host.name || '',
-          parent_a_name: host.parentNames?.[0] || '',
-          parent_b_name: host.parentNames?.[1] || ''
-        }]
-      }))
-    }
+  // Transform agenda data
+  if (eventData.agenda && eventData.agenda.length > 0) {
+    transformed.agenda = eventData.agenda.map((agendaItem) => ({
+      date: agendaItem.date,
+      agenda_detail: agendaItem.details || [],
+    }))
+  }
 
-    // Transform agenda data (editing only)
-    if (eventData.agenda && eventData.agenda.length > 0) {
-      transformed.agenda = eventData.agenda.map((day) => ({
-        date: day.date,
-        agenda_details: day.activities?.filter(activity => activity.time && activity.activity).map((activity, index) => ({
-          language: 'en',
-          agenda_detail: activity.activity,
-          time_text: activity.time,
-          order: index + 1
-        })) || []
-      }))
-    }
-
-    // Transform sponsors data (editing only)
-    if (eventData.sponsors && eventData.sponsors.length > 0) {
-      transformed.sponsors = eventData.sponsors.map((sponsor) => ({
-        name: sponsor.name || "",
-        logo: sponsor.logo || null,
-      }))
-    }
+  // Transform sponsors data
+  if (eventData.sponsors && eventData.sponsors.length > 0) {
+    transformed.event_sponsors = eventData.sponsors.map((sponsor) => ({
+      name: sponsor.name || "",
+      logo: sponsor.logo || null,
+    }))
   }
 
   return transformed
@@ -156,6 +129,24 @@ const transformEventToBackend = (eventData, isEdit = false) => {
 
 // Transform backend event data to frontend format
 const transformEventFromBackend = (backendData) => {
+  // Ensure team_members are properly structured to match API documentation
+  const teamMembers = (backendData.team_members || []).map(member => ({
+    id: member.id || member.user_id,
+    email: member.email,
+    first_name: member.first_name || '',
+    last_name: member.last_name || '',
+    bio: member.bio || '',
+    profile_picture: member.profile_picture || null,
+    is_vendor: member.is_vendor || false,
+    is_partner: member.is_partner || false,
+    phone_number: member.phone_number || null,
+    // Keep legacy fields for compatibility
+    user_id: member.user_id || member.id,
+    role: member.role || 'member',
+    added_at: member.added_at,
+    added_by: member.added_by
+  }));
+
   return {
     id: backendData.id,
     title: backendData.title,
@@ -166,38 +157,21 @@ const transformEventFromBackend = (backendData) => {
     venue: backendData.venue_name, // Add compatibility field
     venueName: backendData.venue_name,
     venue_name: backendData.venue_name, // Keep original format
-    category: backendData.category,
-    
-    // Media and links
     googleMapLink: backendData.google_map_embed_link,
     youtubeLink: backendData.youtube_embed_link,
     videoMessageLink: backendData.video_message_embed_link,
-    
-    // New media and design fields
-    invitationBackgroundMusic: backendData.invitation_background_music,
-    logoKh: backendData.logo_kh,
-    logoEn: backendData.logo_en,
-    loadingScreen: backendData.loading_screen,
-    eventBanner: backendData.event_banner,
-    event_banner: backendData.event_banner, // Keep original format
+    category: backendData.category,
+    original_category: backendData.original_category, // Preserve original category from backend
+    eventType: backendData.original_category || backendData.category, // Add eventType field for display
+    event_banner: backendData.event_banner, // Add event banner field
     image: backendData.event_banner, // Compatibility field
-    transitionVideo: backendData.transition_video,
-    
-    // Package and template
     packagePlan: backendData.package_plan,
     invitationTemplate: backendData.invitation_template,
-    
-    // Team management
-    admin: backendData.admin,
-    teamMembers: backendData.team_members || [],
-    team_members: backendData.team_members || [], // Add both formats for compatibility
-    
-    // Event content
-    hosts: backendData.hosts || [],
+    teamMembers: teamMembers, // Use normalized team members
+    team_members: teamMembers, // Add both formats for compatibility
+    hosts: backendData.host || [],
     agenda: backendData.agenda || [],
-    sponsors: backendData.sponsors || [],
-    
-    // Metadata
+    sponsors: backendData.event_sponsors || [],
     createdAt: backendData.created_at,
     updatedAt: backendData.updated_at,
     is_published: backendData.is_published || false,
@@ -219,12 +193,6 @@ const getCachedData = (key) => {
 
 const setCachedData = (key, data) => {
   cache.set(key, { data, timestamp: Date.now() })
-}
-
-// Clear cache on page load for development
-if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-  cache.clear()
-  console.log('🧹 Cache cleared for development (updated for backend team_members support)')
 }
 
 // Create API object for default export
@@ -325,10 +293,70 @@ export const authAPI = {
   },
 
   updateProfile: async (profileData) => {
-    const response = await authenticatedFetch("/auth/profile/", {
+    const token = getAuthToken()
+    
+    if (!token) {
+      throw new Error("No authentication token found")
+    }
+
+    // Check if profileData is FormData (for file uploads)
+    const isFormData = profileData instanceof FormData
+    
+    const headers = {
+      Authorization: `Bearer ${token}`,
+    }
+    
+    // Only set Content-Type for JSON data, let browser set it for FormData
+    if (!isFormData) {
+      headers["Content-Type"] = "application/json"
+    }
+
+    const response = await fetch(`${API_BASE_URL}/auth/profile/`, {
       method: "PUT",
-      body: JSON.stringify(profileData),
+      headers,
+      body: isFormData ? profileData : JSON.stringify(profileData),
     })
+
+    // Handle token refresh if needed
+    if (response.status === 401) {
+      const refreshToken = localStorage.getItem("refresh_token") || sessionStorage.getItem("refresh_token")
+      if (refreshToken) {
+        try {
+          const refreshResponse = await fetch(`${API_BASE_URL}/auth/token/refresh/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh: refreshToken }),
+          })
+
+          if (refreshResponse.ok) {
+            const { access } = await refreshResponse.json()
+            localStorage.setItem("token", access)
+            localStorage.setItem("access_token", access)
+
+            // Retry original request with new token
+            const retryHeaders = {
+              Authorization: `Bearer ${access}`,
+            }
+            
+            if (!isFormData) {
+              retryHeaders["Content-Type"] = "application/json"
+            }
+
+            const retryResponse = await fetch(`${API_BASE_URL}/auth/profile/`, {
+              method: "PUT",
+              headers: retryHeaders,
+              body: isFormData ? profileData : JSON.stringify(profileData),
+            })
+            
+            return handleResponse(retryResponse)
+          }
+        } catch (error) {
+          console.error("Token refresh failed:", error)
+        }
+      }
+      throw new Error("Authentication failed")
+    }
+
     return handleResponse(response)
   },
 
@@ -391,58 +419,36 @@ export const eventAPI = {
     }
   },
 
-  // Get all events - now includes team_members from backend
+  // Renamed from getAll to getEvents
   getEvents: async () => {
-    console.log('🌐 API: Starting getEvents...')
     const cacheKey = "events_all"
     const cached = getCachedData(cacheKey)
-    if (cached) {
-      console.log('💾 API: Returning cached events:', cached.length)
-      return cached
-    }
+    if (cached) return cached
 
-    try {
-      console.log('🌐 API: Fetching events with team member data...')
-      const response = await authenticatedFetch("/events/")
-      const data = await handleResponse(response)
-      console.log('✅ API: Events fetched:', data.length, 'events')
-      
-      const transformedData = data.map((event, index) => {
-        const transformed = transformEventFromBackend(event)
-        console.log(`📋 API: Event ${index + 1} - "${transformed.title}":`, {
-          id: transformed.id,
-          admin: transformed.admin,
-          team_members: transformed.team_members || transformed.teamMembers || []
-        })
-        return transformed
+    const response = await authenticatedFetch("/events/")
+    const data = await handleResponse(response)
+    const transformedData = data.map(transformEventFromBackend)
+
+    // Get current user to filter events for non-vendors
+    const currentUser = JSON.parse(localStorage.getItem("user") || "{}")
+    const currentUserId = currentUser.id
+    const isVendor = currentUser.is_vendor
+
+    // If not a vendor, filter to only show events where user is a team member
+    let filteredData = transformedData
+    if (!isVendor && currentUserId) {
+      filteredData = transformedData.filter(event => {
+        // Check if user is in team members array
+        const isTeamMember = (event.team_members || []).some(member => 
+          member.id === currentUserId || member.user_id === currentUserId
+        )
+        return isTeamMember
       })
-
-      setCachedData(cacheKey, transformedData)
-      console.log('✅ API: All events transformed and cached')
-      return transformedData
-    } catch (error) {
-      console.error("❌ API: Error fetching events:", error)
-      
-      // Check if it's a server error related to team_members field
-      if (error.message.includes('team_members') || error.message.includes('500')) {
-        console.warn("⚠️ API: Backend serializer issue detected. Falling back to light events...")
-        try {
-          // Fallback to light events if there's a serializer issue
-          const fallbackResponse = await authenticatedFetch("/events/?fields=id,title,date,venue_name,category,is_publish")
-          const fallbackData = await handleResponse(fallbackResponse)
-          console.log('✅ API: Fallback events fetched:', fallbackData.length, 'events')
-          
-          const fallbackTransformed = fallbackData.map(transformEventFromBackend)
-          setCachedData(cacheKey, fallbackTransformed)
-          return fallbackTransformed
-        } catch (fallbackError) {
-          console.error("❌ API: Fallback also failed:", fallbackError)
-          throw new Error("Both main and fallback event fetching failed")
-        }
-      }
-      
-      throw error
+      console.log(`📊 Filtered ${filteredData.length} events out of ${transformedData.length} total events for team member ${currentUserId}`)
     }
+
+    setCachedData(cacheKey, filteredData)
+    return filteredData
   },
 
   // Renamed from getById to getEvent
@@ -461,7 +467,7 @@ export const eventAPI = {
 
   // Renamed from create to createEvent
   createEvent: async (eventData) => {
-    const transformedData = transformEventToBackend(eventData, false) // false = creation mode
+    const transformedData = transformEventToBackend(eventData)
 
     // Debug log to see what we're sending
     console.log("Sending event data:", transformedData)
@@ -481,9 +487,9 @@ export const eventAPI = {
 
   // Renamed from update to updateEvent
   updateEvent: async (id, eventData) => {
-    const transformedData = transformEventToBackend(eventData, true) // true = edit mode
+    const transformedData = transformEventToBackend(eventData)
     const response = await authenticatedFetch(`/events/${id}/`, {
-      method: "PUT",
+      method: "PATCH",
       body: JSON.stringify(transformedData),
     })
 
@@ -554,7 +560,7 @@ export const eventAPI = {
 
   // Team Management for Events - Direct API approach
   addTeamMember: async (eventId, memberData) => {
-    console.log('Adding team member to event:', { eventId, memberData });
+    console.log('🚀 Adding team member to event:', { eventId, memberData });
     
     try {
       // Use dedicated team member endpoint first
@@ -737,6 +743,25 @@ export const eventAPI = {
 
   getByCategory: async (category) => {
     return eventAPI.getEventsByCategory(category)
+  },
+
+  // Force refresh event data (bypass cache)
+  refreshEvent: async (eventId) => {
+    console.log('🔄 Force refreshing event data for:', eventId);
+    // Clear cache first
+    cache.delete(`event_${eventId}`);
+    cache.delete("events_all");
+    
+    // Fetch fresh data
+    const response = await authenticatedFetch(`/events/${eventId}/`)
+    const data = await handleResponse(response)
+    const transformedData = transformEventFromBackend(data)
+    
+    // Update cache with fresh data
+    setCachedData(`event_${eventId}`, transformedData)
+    
+    console.log('✅ Event refreshed, team_members count:', transformedData.team_members?.length || 0);
+    return transformedData
   },
 }
 
@@ -935,3 +960,4 @@ export { authenticatedFetch }
 
 // Default export for backward compatibility
 export default api
+
