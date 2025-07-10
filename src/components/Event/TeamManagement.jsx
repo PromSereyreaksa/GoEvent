@@ -14,14 +14,25 @@ export default function TeamManagement({ eventId, teamMembers = [], canManage = 
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [isSearching, setIsSearching] = useState(false);
 
-  const handleSearch = async (query) => {
+  // Debug: Log team members when they change
+  useEffect(() => {
+    console.log('🔍 TeamManagement: Team members updated:', {
+      eventId,
+      teamMembersCount: teamMembers.length,
+      teamMembers: teamMembers
+    });
+  }, [teamMembers, eventId]);
+
+  const handleSearch = async (query = searchInput) => {
     console.log('Searching for users with query:', query);
-    if (query.length >= 2) {
+    if (query.trim().length >= 2) {
       setIsSearching(true);
+      setSearchQuery(query.trim());
       try {
-        await dispatch(searchUsers(query));
+        await dispatch(searchUsers(query.trim()));
         console.log('Search completed, results:', searchResults);
       } catch (error) {
         console.error('Search failed:', error);
@@ -30,40 +41,52 @@ export default function TeamManagement({ eventId, teamMembers = [], canManage = 
       }
     } else {
       dispatch(clearSearchResults());
+      setSearchQuery('');
       setIsSearching(false);
     }
   };
 
-  const handleAddFromSearch = async (user) => {
-    try {
-      // Prepare member data for the API
-      const memberData = {
-        id: user.id, // This will be used as user_id in the API
-        first_name: user.first_name,
-        last_name: user.last_name,
-        email: user.email,
-        role: 'member', // Default role
-        permissions: ['view'], // Default permissions
-        invited_by: 'current_user', // You should replace with actual current user ID
-        event_id: eventId, // Include event ID for site_setting endpoint
-        addedAt: new Date().toISOString()
-      };
-      
-      // Add team member directly - no pending status
-      console.log('Adding team member with data:', memberData);
-      await dispatch(addTeamMember({ eventId, memberData })).unwrap();
-      
-      setShowAddModal(false);
-      setSearchQuery('');
-      dispatch(clearSearchResults());
-      
-      // Show success message
-      alert('Team member added successfully!');
-    } catch (error) {
-      console.error('Failed to add team member:', error);
-      alert(`Failed to add team member: ${error.message || 'Please try again.'}`);
+  const handleSearchKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSearch();
     }
   };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setSearchQuery('');
+    dispatch(clearSearchResults());
+    setIsSearching(false);
+  };
+
+  
+
+  const handleAddFromSearch = async (user) => {
+  try {
+    const memberData = {
+      id: user.id,
+      email: user.email,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      bio: user.bio || "",
+      profile_picture: user.profile_picture || null,
+      is_vendor: user.is_vendor || false,
+      is_partner: user.is_partner || false,
+      phone_number: user.phone_number || null
+    };
+    
+    console.log('🚀 Adding team member:', { eventId, memberData });
+    
+    const result = await dispatch(addTeamMember({ eventId, memberData })).unwrap();
+    console.log('✅ Team member added successfully:', result);
+    
+    // ... rest of success handling
+  } catch (error) {
+    console.error('❌ Failed to add team member:', error);
+    // ... error handling
+  }
+};
 
   const handleRemoveTeamMember = async (memberId) => {
     if (window.confirm('Are you sure you want to remove this team member?')) {
@@ -141,7 +164,10 @@ export default function TeamManagement({ eventId, teamMembers = [], canManage = 
             <div className="flex items-center justify-between mb-4">
               <h4 className="text-lg font-bold text-gray-900">Add Team Member</h4>
               <button
-                onClick={() => setShowAddModal(false)}
+                onClick={() => {
+                  setShowAddModal(false);
+                  handleClearSearch();
+                }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <X className="w-5 h-5" />
@@ -158,28 +184,43 @@ export default function TeamManagement({ eventId, teamMembers = [], canManage = 
             {/* User Search */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Search Users
+                Search Users (Press Enter to search)
               </label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    handleSearch(e.target.value);
-                  }}
-                  placeholder="Search by name or email"
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyPress={handleSearchKeyPress}
+                    placeholder="Search by name or email"
+                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <button
+                  onClick={() => handleSearch()}
+                  disabled={searchInput.trim().length < 2 || isSearching}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSearching ? 'Searching...' : 'Search'}
+                </button>
+                {(searchInput.length > 0 || searchQuery.length > 0) && (
+                  <button
+                    onClick={handleClearSearch}
+                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
               </div>
               
               {/* Debug: Test button to trigger search with mock data */}
               <div className="mt-2">
                 <button
                   onClick={() => {
-                    setSearchQuery('john');
-                    handleSearch('john');
+                    setSearchInput('john');
+                    setTimeout(() => handleSearch('john'), 100);
                   }}
                   className="text-xs text-blue-600 hover:text-blue-800 underline"
                 >
@@ -225,7 +266,7 @@ export default function TeamManagement({ eventId, teamMembers = [], canManage = 
                 </div>
               )}
               
-              {searchQuery.length > 0 && searchQuery.length < 2 && (
+              {searchInput.length > 0 && searchInput.length < 2 && (
                 <div className="mt-3 p-3 text-center text-gray-500 text-sm">
                   Type at least 2 characters to search
                 </div>
