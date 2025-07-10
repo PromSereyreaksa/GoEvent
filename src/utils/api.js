@@ -325,10 +325,70 @@ export const authAPI = {
   },
 
   updateProfile: async (profileData) => {
-    const response = await authenticatedFetch("/auth/profile/", {
+    const token = getAuthToken()
+    
+    if (!token) {
+      throw new Error("No authentication token found")
+    }
+
+    // Check if profileData is FormData (for file uploads)
+    const isFormData = profileData instanceof FormData
+    
+    const headers = {
+      Authorization: `Bearer ${token}`,
+    }
+    
+    // Only set Content-Type for JSON data, let browser set it for FormData
+    if (!isFormData) {
+      headers["Content-Type"] = "application/json"
+    }
+
+    const response = await fetch(`${API_BASE_URL}/auth/profile/`, {
       method: "PUT",
-      body: JSON.stringify(profileData),
+      headers,
+      body: isFormData ? profileData : JSON.stringify(profileData),
     })
+
+    // Handle token refresh if needed
+    if (response.status === 401) {
+      const refreshToken = localStorage.getItem("refresh_token") || sessionStorage.getItem("refresh_token")
+      if (refreshToken) {
+        try {
+          const refreshResponse = await fetch(`${API_BASE_URL}/auth/token/refresh/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh: refreshToken }),
+          })
+
+          if (refreshResponse.ok) {
+            const { access } = await refreshResponse.json()
+            localStorage.setItem("token", access)
+            localStorage.setItem("access_token", access)
+
+            // Retry original request with new token
+            const retryHeaders = {
+              Authorization: `Bearer ${access}`,
+            }
+            
+            if (!isFormData) {
+              retryHeaders["Content-Type"] = "application/json"
+            }
+
+            const retryResponse = await fetch(`${API_BASE_URL}/auth/profile/`, {
+              method: "PUT",
+              headers: retryHeaders,
+              body: isFormData ? profileData : JSON.stringify(profileData),
+            })
+            
+            return handleResponse(retryResponse)
+          }
+        } catch (error) {
+          console.error("Token refresh failed:", error)
+        }
+      }
+      throw new Error("Authentication failed")
+    }
+
     return handleResponse(response)
   },
 
@@ -896,3 +956,4 @@ export { authenticatedFetch }
 
 // Default export for backward compatibility
 export default api
+

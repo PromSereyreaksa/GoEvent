@@ -20,11 +20,475 @@ import {
   Menu,
   X,
   Loader2,
+  Camera,
+  Eye,
+  EyeOff,
+  Save,
+  Lock,
 } from "lucide-react";
 import { authAPI, eventAPI } from "../utils/api";
 import { SidebarProvider } from "../components/homepage/SidebarProvider";
 import AppSidebar from "../components/homepage/AppSidebar";
 import { fetchEvents } from "../redux/slices/eventSlice";
+
+// Edit Profile Modal Component
+function EditProfileModal({ isOpen, onClose, userData, onSave, loading }) {
+  const [formData, setFormData] = useState({
+    first_name: userData?.first_name || "",
+    last_name: userData?.last_name || "",
+    email: userData?.email || "",
+    phone_number: userData?.phone_number || "",
+    profile_picture: userData?.profile_picture || "",
+    current_password: "",
+    new_password: "",
+    confirm_password: "",
+  });
+  
+  const [errors, setErrors] = useState({});
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [changePassword, setChangePassword] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(userData?.profile_picture || "");
+  const [passwordError, setPasswordError] = useState("");
+
+  // Update form data when userData changes
+  useEffect(() => {
+    if (userData) {
+      setFormData({
+        first_name: userData.first_name || "",
+        last_name: userData.last_name || "",
+        email: userData.email || "",
+        phone_number: userData.phone_number || "",
+        profile_picture: userData.profile_picture || "",
+        current_password: "",
+        new_password: "",
+        confirm_password: "",
+      });
+      setImagePreview(userData.profile_picture || "");
+    }
+  }, [userData]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ""
+      }));
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors(prev => ({
+          ...prev,
+          profile_picture: "Image size must be less than 5MB"
+        }));
+        return;
+      }
+      
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        setErrors(prev => ({
+          ...prev,
+          profile_picture: "Please select a valid image file"
+        }));
+        return;
+      }
+      
+      setImageFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+      
+      // Clear any previous errors
+      setErrors(prev => ({
+        ...prev,
+        profile_picture: ""
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.first_name.trim()) {
+      newErrors.first_name = "First name is required";
+    }
+    
+    if (!formData.last_name.trim()) {
+      newErrors.last_name = "Last name is required";
+    }
+    
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+    
+    if (formData.phone_number && !/^\+?[\d\s\-\(\)]{10,}$/.test(formData.phone_number)) {
+      newErrors.phone_number = "Please enter a valid phone number";
+    }
+    
+    if (changePassword) {
+      if (!formData.current_password) {
+        newErrors.current_password = "Current password is required";
+      }
+      
+      if (!formData.new_password) {
+        newErrors.new_password = "New password is required";
+      } else if (formData.new_password.length < 8) {
+        newErrors.new_password = "Password must be at least 8 characters";
+      }
+      
+      if (formData.new_password !== formData.confirm_password) {
+        newErrors.confirm_password = "Passwords do not match";
+      }
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    const updateData = {
+      first_name: formData.first_name,
+      last_name: formData.last_name,
+      email: formData.email,
+      phone_number: formData.phone_number,
+    };
+    
+    // Add password fields if changing password
+    if (changePassword) {
+      updateData.current_password = formData.current_password;
+      updateData.new_password = formData.new_password;
+    }
+    
+    // Add image file if selected
+    if (imageFile) {
+      updateData.profile_picture = imageFile;
+    }
+    
+    await onSave(updateData, changePassword);
+  };
+
+  const handleClose = () => {
+    setFormData({
+      first_name: userData?.first_name || "",
+      last_name: userData?.last_name || "",
+      email: userData?.email || "",
+      phone_number: userData?.phone_number || "",
+      profile_picture: userData?.profile_picture || "",
+      current_password: "",
+      new_password: "",
+      confirm_password: "",
+    });
+    setErrors({});
+    setChangePassword(false);
+    setImageFile(null);
+    setImagePreview(userData?.profile_picture || "");
+    setPasswordError("");
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 rounded-t-2xl">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-gray-900">Edit Profile</h2>
+            <button
+              onClick={handleClose}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6">
+          {/* Profile Picture */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Profile Picture
+            </label>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <img
+                  src={userData.profile_picture || "https://via.placeholder.com/150"}
+                  alt="Profile preview"
+                  className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+                />
+                <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors cursor-pointer">
+                  <Camera className="w-4 h-4" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-gray-600">
+                  Choose a new profile picture. Max size: 5MB
+                </p>
+                {errors.profile_picture && (
+                  <p className="text-red-600 text-sm mt-1">{errors.profile_picture}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Name Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                First Name *
+              </label>
+              <input
+                type="text"
+                name="first_name"
+                value={formData.first_name}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.first_name ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Enter your first name"
+              />
+              {errors.first_name && (
+                <p className="text-red-600 text-sm mt-1">{errors.first_name}</p>
+              )}
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Last Name *
+              </label>
+              <input
+                type="text"
+                name="last_name"
+                value={formData.last_name}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.last_name ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Enter your last name"
+              />
+              {errors.last_name && (
+                <p className="text-red-600 text-sm mt-1">{errors.last_name}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Email */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Email *
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                errors.email ? 'border-red-500' : 'border-gray-300'
+              }`}
+              placeholder="Enter your email"
+            />
+            {errors.email && (
+              <p className="text-red-600 text-sm mt-1">{errors.email}</p>
+            )}
+          </div>
+
+          {/* Phone Number */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Phone Number
+            </label>
+            <input
+              type="tel"
+              name="phone_number"
+              value={formData.phone_number}
+              onChange={handleInputChange}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                errors.phone_number ? 'border-red-500' : 'border-gray-300'
+              }`}
+              placeholder="Enter your phone number"
+            />
+            {errors.phone_number && (
+              <p className="text-red-600 text-sm mt-1">{errors.phone_number}</p>
+            )}
+          </div>
+
+          {/* Password Section */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <label className="block text-sm font-medium text-gray-700">
+                Change Password
+              </label>
+              <button
+                type="button"
+                onClick={() => setChangePassword(!changePassword)}
+                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                  changePassword
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {changePassword ? 'Cancel' : 'Change Password'}
+              </button>
+            </div>
+
+            {changePassword && (
+              <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                {passwordError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-700 text-sm">{passwordError}</p>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Current Password *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showCurrentPassword ? "text" : "password"}
+                      name="current_password"
+                      value={formData.current_password}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${
+                        errors.current_password ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="Enter current password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {errors.current_password && (
+                    <p className="text-red-600 text-sm mt-1">{errors.current_password}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    New Password *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showNewPassword ? "text" : "password"}
+                      name="new_password"
+                      value={formData.new_password}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${
+                        errors.new_password ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="Enter new password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {errors.new_password && (
+                    <p className="text-red-600 text-sm mt-1">{errors.new_password}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Confirm New Password *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      name="confirm_password"
+                      value={formData.confirm_password}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${
+                        errors.confirm_password ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="Confirm new password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {errors.confirm_password && (
+                    <p className="text-red-600 text-sm mt-1">{errors.confirm_password}</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Save Changes
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 export default function UserProfile() {
   const navigate = useNavigate();
@@ -37,6 +501,9 @@ export default function UserProfile() {
   const [error, setError] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const [userStats, setUserStats] = useState({
     eventsCreated: 0,
     teamEvents: 0,
@@ -130,20 +597,85 @@ export default function UserProfile() {
   }, []);
 
   // Handle profile update
-  const handleUpdateProfile = async (updates) => {
+  const handleUpdateProfile = async (updates, hasPasswordChange = false) => {
     try {
-      setLoading(true);
-      const updatedProfile = await authAPI.updateProfile(updates);
-      setProfileData(updatedProfile);
+      setUpdateLoading(true);
+      setError(null);
       
-      // Update Redux store if needed
-      // You might want to add an action to update user in authSlice
+      // Separate password fields from profile fields
+      const { current_password, new_password, ...profileFields } = updates;
+      
+      // Handle password change if requested
+      if (current_password && new_password) {
+        try {
+          await authAPI.changePassword({
+            current_password: current_password,
+            new_password: new_password
+          });
+          
+          // Password changed successfully
+          setSuccessMessage("Password changed successfully!");
+        } catch (passwordError) {
+          console.error("Error changing password:", passwordError);
+          // Check for specific error messages
+          let errorMessage = "Failed to change password.";
+          if (passwordError.message) {
+            if (passwordError.message.includes("401") || passwordError.message.includes("incorrect") || passwordError.message.includes("wrong")) {
+              errorMessage = "Current password is incorrect. Please try again.";
+            } else if (passwordError.message.includes("weak") || passwordError.message.includes("strong")) {
+              errorMessage = "New password is too weak. Please use a stronger password.";
+            } else {
+              errorMessage = passwordError.message;
+            }
+          }
+          setError(errorMessage);
+          setUpdateLoading(false);
+          return; // Stop here if password change fails
+        }
+      }
+      
+      // Handle profile update if there are profile fields to update
+      if (Object.keys(profileFields).length > 0) {
+        // Create FormData for file upload
+        const formData = new FormData();
+        
+        // Add all profile fields to FormData
+        Object.keys(profileFields).forEach(key => {
+          if (profileFields[key] !== null && profileFields[key] !== undefined) {
+            formData.append(key, profileFields[key]);
+          }
+        });
+        
+        const updatedProfile = await authAPI.updateProfile(formData);
+        setProfileData(updatedProfile);
+        
+        // Show appropriate success message
+        if (current_password && new_password) {
+          setSuccessMessage("Profile and password updated successfully!");
+        } else {
+          setSuccessMessage("Profile updated successfully!");
+        }
+      }
+      
+      // If password was changed successfully, we need to clear the password fields
+      // in the modal by resetting the form
+      if (hasPasswordChange && current_password && new_password) {
+        // Force a re-render of the modal with cleared password fields
+        setEditModalOpen(false);
+        // Small delay to ensure modal closes before clearing success message
+        setTimeout(() => {
+          setSuccessMessage("");
+        }, 5000);
+      } else {
+        setEditModalOpen(false);
+        setTimeout(() => setSuccessMessage(""), 5000); // Clear after 5 seconds
+      }
       
     } catch (error) {
       console.error("Error updating profile:", error);
-      setError("Failed to update profile");
+      setError(error.message || "Failed to update profile. Please try again.");
     } finally {
-      setLoading(false);
+      setUpdateLoading(false);
     }
   };
 
@@ -256,7 +788,10 @@ export default function UserProfile() {
                     alt="Profile"
                     className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-blue-100"
                   />
-                  <button className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors">
+                  <button 
+                    onClick={() => setEditModalOpen(true)}
+                    className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors"
+                  >
                     <Edit3 className="w-4 h-4" />
                   </button>
                   
@@ -299,7 +834,7 @@ export default function UserProfile() {
                   {/* Quick Actions */}
                   <div className="flex flex-col sm:flex-row gap-3">
                     <button 
-                      onClick={() => navigate("/settings")}
+                      onClick={() => setEditModalOpen(true)}
                       className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                     >
                       <Edit3 className="w-4 h-4" />
@@ -395,8 +930,20 @@ export default function UserProfile() {
                 </div>
               )}
               
+              {/* Success message */}
+              {successMessage && (
+                <div className="mt-6 p-4 rounded-xl bg-green-50 border border-green-200 animate-fade-in">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <p className="text-green-800 text-sm font-medium">{successMessage}</p>
+                  </div>
+                </div>
+              )}
+              
               {/* Loading indicator for updates */}
-              {loading && (
+              {updateLoading && (
                 <div className="mt-6 p-4 rounded-xl bg-blue-50 border border-blue-200">
                   <div className="flex items-center gap-2">
                     <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
@@ -414,6 +961,15 @@ export default function UserProfile() {
             </div>
           </div>
         </div>
+
+        {/* Edit Profile Modal */}
+        <EditProfileModal
+          isOpen={editModalOpen}
+          onClose={() => setEditModalOpen(false)}
+          userData={userData}
+          onSave={handleUpdateProfile}
+          loading={updateLoading}
+        />
       </div>
     </SidebarProvider>
   );
