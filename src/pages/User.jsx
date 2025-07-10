@@ -315,7 +315,8 @@ export default function UserProfile() {
                         className="w-full h-full rounded-full object-cover bg-white"
                         onError={(e) => {
                           e.target.onerror = null;
-                          e.target.src = "/default-avatar.svg";
+                          e.target.src =
+                            "/placeholder.svg?height=160&width=160";
                         }}
                       />
                     </div>
