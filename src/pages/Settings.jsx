@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Menu, ArrowLeft, Bell, Shield, Palette, Save } from "lucide-react";
+import { Menu, ArrowLeft, Bell, Shield, Palette, Save, User, Camera, Eye, EyeOff, Loader2, Lock, AlertCircle } from "lucide-react";
 import AppSidebar from "../components/layout/AppSidebar";
 import { SidebarProvider } from "../components/shared/SidebarProvider";
+import { useSearchParams } from "react-router-dom";
+
 
 export default function Settings() {
   const navigate = useNavigate()
-  const dispatch = useDispatch()
+  // const dispatch = useDispatch()
   const { user } = useSelector((state) => state.auth)
   const [searchParams] = useSearchParams()
 

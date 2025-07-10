@@ -47,7 +47,7 @@ export default function TeamManagement({ eventId, teamMembers = [], canManage = 
     }
   };
 
-  const handleAddFromSearch = async (user) => {
+  /* const handleAddFromSearch = async (user) => {
     try {
       // Prepare member data for the API
       const memberData = {
@@ -75,7 +75,7 @@ export default function TeamManagement({ eventId, teamMembers = [], canManage = 
       console.error('Failed to add team member:', error);
       alert(`Failed to add team member: ${error.message || 'Please try again.'}`);
     }
-  };
+  }; */
 
   const handleClearSearch = () => {
     setSearchInput('');
