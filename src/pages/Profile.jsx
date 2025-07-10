@@ -19,9 +19,9 @@ import {
   Award,
   Edit3,
 } from "lucide-react";
-import AppSidebar from "../components/homepage/AppSidebar";
-import { SidebarProvider } from "../components/homepage/SidebarProvider";
-import NotificationsDropdown from "../components/homepage/NotificationsDropdown";
+import AppSidebar from "../components/layout/AppSidebar";
+import { SidebarProvider } from "../components/shared/SidebarProvider";
+import NotificationsDropdown from "../components/shared/NotificationsDropdown";
 import UserProfileDropdown from "../components/homepage/UserProfileDropdown";
 
 export default function Profile() {

@@ -22,8 +22,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { authAPI, eventAPI } from "../utils/api";
-import { SidebarProvider } from "../components/homepage/SidebarProvider";
-import AppSidebar from "../components/homepage/AppSidebar";
+import { SidebarProvider } from "../components/shared/SidebarProvider";
+import AppSidebar from "../components/layout/AppSidebar";
 import { fetchEvents } from "../redux/slices/eventSlice";
 
 export default function UserProfile() {

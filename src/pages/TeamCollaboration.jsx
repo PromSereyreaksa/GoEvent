@@ -22,8 +22,8 @@ import {
   Clock,
   Send,
 } from "lucide-react";
-import AppSidebar from "../components/homepage/AppSidebar";
-import { SidebarProvider } from "../components/homepage/SidebarProvider";
+import AppSidebar from "../components/layout/AppSidebar";
+import { SidebarProvider } from "../components/shared/SidebarProvider";
 import {
   fetchTeamMembers,
   inviteTeamMember,

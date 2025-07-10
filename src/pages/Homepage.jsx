@@ -19,10 +19,10 @@ import {
 } from "lucide-react";
 
 // Import homepage components
-import { SidebarProvider } from "../components/homepage/SidebarProvider";
-import AppSidebar from "../components/homepage/AppSidebar";
+import { SidebarProvider } from "../components/shared/SidebarProvider";
+import AppSidebar from "../components/layout/AppSidebar";
 import UserProfileDropdown from "../components/homepage/UserProfileDropdown";
-import NotificationsDropdown from "../components/homepage/NotificationsDropdown";
+import NotificationsDropdown from "../components/shared/NotificationsDropdown";
 import QuickStatsCard from "../components/homepage/QuickStatsCard";
 import NavigationCard from "../components/homepage/NavigationCard";
 import RecentActivityCard from "../components/homepage/RecentActivityCard";

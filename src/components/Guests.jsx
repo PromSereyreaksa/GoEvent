@@ -25,8 +25,8 @@ import {
   Send,
   ArrowLeft,
 } from "lucide-react";
-import { SidebarProvider } from "../components/homepage/SidebarProvider";
-import AppSidebar from "../components/homepage/AppSidebar";
+import { SidebarProvider } from "../components/shared/SidebarProvider";
+import AppSidebar from "../components/layout/AppSidebar";
 
 // Add custom styles for mobile touch targets and responsiveness
 const mobileStyles = `

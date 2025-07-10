@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Navigate, useLocation } from "react-router-dom"
 import { useSelector, useDispatch } from "react-redux"
-import { initializeAuth } from "../redux/slices/authSlice"
+import { initializeAuth } from "../../redux/slices/authSlice"
 
 export default function ProtectedRoute({ children }) {
   const location = useLocation()

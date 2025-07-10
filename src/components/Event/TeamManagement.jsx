@@ -5,7 +5,8 @@ import {
   addTeamMember, 
   removeTeamMember, 
   searchUsers,
-  clearSearchResults
+  clearSearchResults,
+  fetchEvents
 } from "../../redux/slices/eventSlice";
 
 export default function TeamManagement({ eventId, teamMembers = [], canManage = false, eventTitle = "" }) {
@@ -44,20 +45,19 @@ export default function TeamManagement({ eventId, teamMembers = [], canManage = 
         email: user.email,
         role: 'member', // Default role
         permissions: ['view'], // Default permissions
-        invited_by: 'current_user', // You should replace with actual current user ID
-        event_id: eventId, // Include event ID for site_setting endpoint
-        addedAt: new Date().toISOString()
       };
       
-      // Add team member directly - no pending status
       console.log('Adding team member with data:', memberData);
-      await dispatch(addTeamMember({ eventId, memberData })).unwrap();
+      const result = await dispatch(addTeamMember({ eventId, memberData })).unwrap();
+      
+      // Refresh events to get updated team member data
+      await dispatch(fetchEvents()).unwrap();
       
       setShowAddModal(false);
       setSearchQuery('');
       dispatch(clearSearchResults());
       
-      // Show success message
+      console.log('Team member added successfully:', result);
       alert('Team member added successfully!');
     } catch (error) {
       console.error('Failed to add team member:', error);
@@ -69,6 +69,11 @@ export default function TeamManagement({ eventId, teamMembers = [], canManage = 
     if (window.confirm('Are you sure you want to remove this team member?')) {
       try {
         await dispatch(removeTeamMember({ eventId, memberId })).unwrap();
+        
+        // Refresh events to get updated team member data
+        await dispatch(fetchEvents()).unwrap();
+        
+        alert('Team member removed successfully!');
       } catch (error) {
         console.error('Failed to remove team member:', error);
         alert(`Failed to remove team member: ${error.message || 'Please try again.'}`);

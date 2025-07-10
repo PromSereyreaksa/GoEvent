@@ -3,8 +3,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
 import { Provider } from "react-redux"
 import { store } from "./redux/store"
-import Header from "./components/Header"
-import ProtectedRoute from "./components/ProtectedRoute"
+import Header from "./components/layout/Header"
+import ProtectedRoute from "./components/auth/ProtectedRoute"
 import EventManagementWrapper from "./components/EventManagementWrapper"
 import SecurityMonitor from "./components/SecurityMonitor"
 

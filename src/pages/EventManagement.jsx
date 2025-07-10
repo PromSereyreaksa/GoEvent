@@ -18,8 +18,8 @@ import { useVendorCheck } from "../components/SecurityMonitor";
 import EventCard from "../components/Event/EventCard";
 import ConfirmationModal from "../components/Event/ConfirmationModal";
 import TeamManagement from "../components/Event/TeamManagement";
-import { SidebarProvider } from "../components/homepage/SidebarProvider";
-import AppSidebar from "../components/homepage/AppSidebar";
+import { SidebarProvider } from "../components/shared/SidebarProvider";
+import AppSidebar from "../components/layout/AppSidebar";
 
 export default function EventManagement() {
   const dispatch = useDispatch();

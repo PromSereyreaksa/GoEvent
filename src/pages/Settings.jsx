@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Menu, ArrowLeft, Bell, Shield, Palette, Save } from "lucide-react";
-import AppSidebar from "../components/homepage/AppSidebar";
-import { SidebarProvider } from "../components/homepage/SidebarProvider";
+import AppSidebar from "../components/layout/AppSidebar";
+import { SidebarProvider } from "../components/shared/SidebarProvider";
 
 export default function Settings() {
   const navigate = useNavigate();

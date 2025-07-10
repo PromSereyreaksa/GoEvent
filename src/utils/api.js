@@ -552,52 +552,55 @@ export const eventAPI = {
     return transformedData
   },
 
-  // Team Management for Events - Updated to work with event object updates
+  // Team Management for Events - Direct API approach
   addTeamMember: async (eventId, memberData) => {
     console.log('Adding team member to event:', { eventId, memberData });
     
     try {
-      // Step 1: Fetch the current event data
-      console.log('Fetching current event data...');
-      const currentEvent = await eventAPI.getEvent(eventId);
+      // Use dedicated team member endpoint first
+      const response = await authenticatedFetch(`/events/${eventId}/team-members/`, {
+        method: "POST",
+        body: JSON.stringify({
+          user_id: memberData.id,
+          role: memberData.role || 'member',
+          permissions: memberData.permissions || ['view']
+        })
+      });
       
-      // Step 2: Prepare the new team member object
-      const newTeamMember = {
-        id: memberData.id,
-        first_name: memberData.first_name,
-        last_name: memberData.last_name,
-        email: memberData.email,
-        added_at: new Date().toISOString(),
-        added_by: 'current_user_id' // Replace with actual current user ID
-      };
-      
-      // Step 3: Check if user is already a team member
-      const existingTeamMembers = currentEvent.team_members || [];
-      const isAlreadyMember = existingTeamMembers.some(member => member.id === memberData.id);
-      
-      if (isAlreadyMember) {
-        throw new Error('User is already a team member');
+      if (response.ok) {
+        const data = await handleResponse(response);
+        console.log('Team member added via dedicated endpoint:', data);
+        return data;
       }
-      
-      // Step 4: Add new member to team members array
-      const updatedTeamMembers = [...existingTeamMembers, newTeamMember];
-      
-      // Step 5: Prepare the event update data (only include team_members field)
-      const eventUpdateData = {
-        ...currentEvent,
-        team_members: updatedTeamMembers
-      };
-      
-      console.log('Updating event with new team member:', { updatedTeamMembers });
-      
-      // Step 6: Update the event using existing updateEvent method
-      const updatedEvent = await eventAPI.updateEvent(eventId, eventUpdateData);
-      
-      console.log('Team member added successfully:', newTeamMember);
-      return newTeamMember;
-      
     } catch (error) {
-      console.error('Failed to add team member:', error);
+      console.warn('Dedicated endpoint failed, trying alternative approach:', error);
+    }
+    
+    try {
+      // Fallback: Add team member via site_setting endpoint
+      const response = await authenticatedFetch(`/site_setting/team-members/`, {
+        method: "POST",
+        body: JSON.stringify({
+          user_id: memberData.id,
+          event_id: eventId,
+          first_name: memberData.first_name,
+          last_name: memberData.last_name,
+          email: memberData.email,
+          role: memberData.role || 'member',
+          added_at: new Date().toISOString()
+        })
+      });
+      
+      const data = await handleResponse(response);
+      console.log('Team member added via site_setting endpoint:', data);
+      
+      // Clear cache to force refresh
+      cache.delete("events_all");
+      cache.delete(`event_${eventId}`);
+      
+      return data;
+    } catch (error) {
+      console.error('All team member endpoints failed:', error);
       throw new Error(`Failed to add team member: ${error.message}`);
     }
   },
@@ -605,20 +608,38 @@ export const eventAPI = {
   // Remove team member from event
   removeTeamMember: async (eventId, memberId) => {
     try {
-      // For many-to-many, we typically delete by user ID, not the relationship ID
+      // Try dedicated event team member endpoint first
       const response = await authenticatedFetch(`/events/${eventId}/team-members/${memberId}/`, {
         method: "DELETE"
-      })
+      });
+      
+      if (response.ok) {
+        // Clear cache to force refresh
+        cache.delete("events_all");
+        cache.delete(`event_${eventId}`);
+        return { success: true, userId: memberId };
+      }
+    } catch (error) {
+      console.warn('Dedicated endpoint failed, trying alternative approach:', error);
+    }
+    
+    try {
+      // Fallback: Remove via site_setting endpoint
+      const response = await authenticatedFetch(`/site_setting/team-members/${memberId}/`, {
+        method: "DELETE"
+      });
       
       if (!response.ok) {
-        throw new Error(`Failed to remove team member: ${response.status}`)
+        throw new Error(`Failed to remove team member: ${response.status}`);
       }
       
-      return { success: true, userId: memberId }
+      // Clear cache to force refresh
+      cache.delete("events_all");
+      cache.delete(`event_${eventId}`);
+      
+      return { success: true, userId: memberId };
     } catch (error) {
-      throw new Error(
-        error.response?.data?.message || "Failed to remove team member"
-      )
+      throw new Error(`Failed to remove team member: ${error.message}`);
     }
   },
 
@@ -658,20 +679,38 @@ export const eventAPI = {
   },
 
   // Search users by email for team collaboration
-  searchUsers: async (email) => {
+  searchUsers: async (query) => {
     try {
-      // Use the specific email search endpoint
-      const response = await authenticatedFetch(`/site_setting/search/?email=${encodeURIComponent(email)}`)
-      const data = await handleResponse(response)
-      // Return as array to maintain consistency with UI expectations
-      return [data]
-    } catch (error) {
-      console.log('Email search failed:', error)
-      // If user not found or other error, return empty array
-      if (error.message.includes('User with this email does not exist')) {
-        return []
+      // Use the specific search endpoint with query parameter
+      const response = await authenticatedFetch(`/site_setting/search/?q=${encodeURIComponent(query)}`);
+      const data = await handleResponse(response);
+      
+      // Handle different response formats
+      if (Array.isArray(data)) {
+        return data;
+      } else if (data && typeof data === 'object') {
+        // Single user response
+        return [data];
+      } else {
+        return [];
       }
-      throw error
+    } catch (error) {
+      console.log('User search failed:', error);
+      
+      // Try alternative endpoint with email parameter
+      try {
+        const response = await authenticatedFetch(`/site_setting/search/?email=${encodeURIComponent(query)}`);
+        const data = await handleResponse(response);
+        return Array.isArray(data) ? data : [data];
+      } catch (fallbackError) {
+        console.log('Fallback search also failed:', fallbackError);
+        // If user not found or other error, return empty array
+        if (error.message.includes('User with this email does not exist') || 
+            error.message.includes('not found')) {
+          return [];
+        }
+        throw error;
+      }
     }
   },
 

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Menu, X, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { logout } from "../redux/slices/authSlice";
+import { logout } from "../../redux/slices/authSlice";
 
 export default function Header() {
   const navigate = useNavigate();
